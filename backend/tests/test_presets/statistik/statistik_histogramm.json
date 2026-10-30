@@ -1,0 +1,40 @@
+{
+  "type": "Histogramm",
+  "datasets": [
+    {
+      "name": "Messreihe",
+      "data_mode": "Raw",
+      "raw_data": [1.2, 1.5, 1.8, 2.1, 2.3, 2.4, 2.7, 3.1, 3.2, 3.5, 3.8, 4.0, 4.2, 4.9],
+      "raw_data_string": "1.2, 1.5, 1.8, 2.1, 2.3, 2.4, 2.7, 3.1, 3.2, 3.5, 3.8, 4.0, 4.2, 4.9",
+      "color": "teal",
+      "show_outliers": false
+    }
+  ],
+  "x_axis": {
+    "min": 1.0,
+    "max": 5.0,
+    "step": 1.0,
+    "label": "Intervall",
+    "show_grid": true,
+    "grid_style": "kaestchen"
+  },
+  "y_axis": {
+    "min": 0.0,
+    "max": 6.0,
+    "step": 1.0,
+    "label": "Häufigkeit",
+    "show_grid": true
+  },
+  "histogram_opts": {
+    "bin_width": 1.0,
+    "density": false
+  },
+  "title_opts": {
+    "show": false,
+    "text": ""
+  },
+  "font_family": "Fira",
+  "font_size": "normalsize",
+  "width_cm": 11.0,
+  "height_cm": 7.0
+}

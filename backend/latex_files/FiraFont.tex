@@ -1,0 +1,44 @@
+%%\setmainfont{FiraSans-Regular}[RawFeature={+lnum}]
+%%\setmathfont[Extension = .otf]{FiraMath-Regular}
+%%\setmathfont[version = bold, FakeBold=4, Extension = .otf]{FiraMath-Regular}
+%
+%
+%\usepackage[sfdefault,lining]{FiraSans}
+%\usepackage{firamath-otf}
+%\setmathfont[version=bold,FakeBold=3, Extension=.otf]{FiraMath-Regular}
+%\setboldmathrm{FiraSans}[
+%	UprightFont=*-Bold,
+%	BoldFont=*-ExtraBold,
+%	ItalicFont=*-BoldItalic,
+%	BoldItalicFont=*-ExtraBoldItalic,
+%	Extension=.ttf]
+%\usepackage{sfmath}               % wandelt Mathe-„Roman“ → Sans um
+%\setmainfont{Fira Sans}      % Fließtext
+%\setsansfont{Fira Sans}      % \textsf u.ä.
+%\setmonofont{Fira Mono}      % Typewriter
+%\setmathfont{Fira Math}      % alle Mathe-Glyphen
+%
+%%\usepackage[default,scale=1]{opensans}
+
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage{fontspec}
+  \usepackage[math-style=ISO]{unicode-math}
+  \setmainfont{Fira Sans}
+  \setsansfont{Fira Sans}
+  \setmonofont{Fira Mono}
+  \setmathfont{Fira Math}
+  \setmathfont[version=bold, FakeBold=3]{Fira Math}
+\else\ifLuaTeX
+  \usepackage{fontspec}
+  \usepackage[math-style=ISO]{unicode-math}
+  \setmainfont{Fira Sans}
+  \setsansfont{Fira Sans}
+  \setmonofont{Fira Mono}
+  \setmathfont{Fira Math}
+  \setmathfont[version=bold, FakeBold=3]{Fira Math}
+\else
+  % Fallback fuer pdfLaTeX
+  \usepackage[sfdefault]{FiraSans}
+  \usepackage{FiraMono}
+\fi\fi

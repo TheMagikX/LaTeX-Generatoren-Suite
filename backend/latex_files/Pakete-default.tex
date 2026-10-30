@@ -1,0 +1,101 @@
+% SPDX-License-Identifier: AGPL-3.0-or-later
+%
+% Standard-Paketvorlage (Default/Fallback) für die Generator-Suite.
+% Diese Datei wird verwendet, wenn keine benutzerdefinierte Pakete.tex
+% in den Einstellungen angegeben ist.
+
+\PassOptionsToPackage{dvipsnames,table,xcdraw}{xcolor}
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage{fontspec}
+\else\ifLuaTeX
+  \usepackage{fontspec}
+\else
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+\fi\fi
+
+\usepackage[export]{adjustbox}
+\usepackage{amsfonts}	
+\usepackage{amsmath}	
+\usepackage{amssymb}	
+\usepackage{amsthm}		
+\usepackage{array}
+\usepackage[ngerman]{babel}
+\AtBeginDocument{\shorthandoff{"}}
+\usepackage{bigints}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{circuitikz}
+\usepackage{colortbl}
+\usepackage[autostyle=true,german=quotes]{csquotes}
+\usepackage{diagbox}
+\usepackage[shortlabels]{enumitem}
+	\setlist[enumerate]{topsep=0pt,itemsep=-1.5pt}
+	\setlist[itemize]{topsep=0pt,itemsep=-1.5pt}
+\usepackage[c]{esvect}
+\usepackage{float}
+\usepackage{footmisc}
+\usepackage{framed}
+\usepackage{graphicx}
+\usepackage{layouts}
+\usepackage{lipsum}
+\usepackage{makecell}
+\usepackage{menukeys}
+\usepackage[version=4]{mhchem}
+\usepackage{multicol}
+\usepackage{mwe}
+\usepackage[all]{nowidow}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepackage{physics}
+\usepackage{rotating}
+\usepackage{scalerel}
+\usepackage{siunitx}
+		\let\svqty\qty			
+		\sisetup{locale = DE,separate-uncertainty,per-mode=fraction,reset-math-version=false,mode=text,detect-weight=true,display-per-mode=fraction,inline-per-mode=symbol}
+		\DeclareSIUnit{\litre}{l}
+\usepackage{stackengine}
+\usepackage{subcaption}
+\usepackage{svg}
+\usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usepackage{ulem}
+\usepackage{upgreek}
+\usepackage{wrapfig}
+\usepackage[dvipsnames,table,xcdraw]{xcolor}
+\usepackage{xparse}
+
+%% TIKZ
+\usetikzlibrary{datavisualization.formats.functions}
+\usetikzlibrary{datavisualization}
+\usetikzlibrary{angles}
+\usetikzlibrary{automata}
+\usetikzlibrary{quotes}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{matrix}
+\usetikzlibrary{arrows}
+\usetikzlibrary{decorations.pathmorphing,decorations.markings}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{calc}
+\usetikzlibrary{math}
+\usetikzlibrary{decorations}
+\usetikzlibrary{patterns,patterns.meta}
+\usetikzlibrary{shadings}
+\usetikzlibrary{positioning}
+\usetikzlibrary{intersections}
+\usetikzlibrary{backgrounds}
+\usetikzlibrary{decorations.softclip}
+\usetikzlibrary{3d}
+\usepgfplotslibrary{fillbetween}
+\usepgfplotslibrary{patchplots}
+\usetikzlibrary{shapes.misc}
+
+%% Sonstiges
+\tcbuselibrary{skins}
+
+%% Warnungen ausblenden
+\usepackage{silence}
+\WarningFilter{transparent}{Loading aborted}

@@ -1,0 +1,49 @@
+{
+  "light_sources": [
+    {
+      "x": -5.0,
+      "y": 3.0,
+      "angle": -30.0,
+      "spread": 20.0,
+      "num_rays": 3,
+      "extended_width": 0.0,
+      "ray_color": "orange",
+      "label": "$L$",
+      "show_light_zone": false,
+      "light_zone_opacity": 0.2,
+      "source_size": 3.0,
+      "ray_line_width": 0.8
+    }
+  ],
+  "barriers": [
+    {
+      "nodes": [
+        { "x": 0.0, "y": -4.0, "connection": "line", "bend": 0.0, "out_angle": 0.0, "in_angle": 0.0 },
+        { "x": 0.0, "y": 4.0, "connection": "line", "bend": 0.0, "out_angle": 0.0, "in_angle": 0.0 }
+      ],
+      "barrier_type": "mirror",
+      "hatch_side": "right",
+      "color": "gray!70!black",
+      "line_width": 1.2
+    }
+  ],
+  "refraction_areas": [],
+  "refraction_annotations": {},
+  "max_reflections": 3,
+  "show_shadow_zones": false,
+  "shadow_color": "black",
+  "shadow_opacity": 0.35,
+  "partial_shadow_color": "black",
+  "partial_shadow_opacity": 0.15,
+  "canvas_x_min": -8.0,
+  "canvas_x_max": 8.0,
+  "canvas_y_min": -5.0,
+  "canvas_y_max": 5.0,
+  "show_grid": false,
+  "grid_step": 1.0,
+  "show_axes": true,
+  "ray_line_width": 0.8,
+  "ray_arrow": true,
+  "font_family": "Latin Modern",
+  "show_partial_reflection": false
+}

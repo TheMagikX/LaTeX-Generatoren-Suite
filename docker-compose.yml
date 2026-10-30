@@ -1,0 +1,24 @@
+services:
+  generator-suite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: generator-suite
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - PRESETS_DIR=/app/presets
+      - FRONTEND_DIST_DIR=/app/frontend/dist
+      # Optional: Komma-separierte erlaubte Host-Header (Standard: localhost,127.0.0.1)
+      # - ALLOWED_HOSTS=localhost,127.0.0.1
+      # - LATEX_FILE_ACCESS_GUARD=enforce  # warn | off for troubleshooting
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./presets:/app/presets
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G

@@ -1,0 +1,102 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+import { Layers, Microscope } from 'lucide-react'
+import { Card, CodeSection, PreviewCard, FloatingToolbar } from '../../../components/ui'
+
+interface OptikPreviewProps {
+  latexCode?: string
+  compileData: {
+    ok: boolean
+    png_base64?: string
+    pdf_base64?: string
+    svg_base64?: string
+    log?: string
+  } | null
+  isCompiling: boolean
+  previewDpi: number
+  setPreviewDpi: (dpi: number) => void
+  onCopyLatex: () => void
+}
+
+export const OptikPreview = ({
+  latexCode,
+  compileData,
+  isCompiling,
+  previewDpi,
+  setPreviewDpi,
+  onCopyLatex
+}: OptikPreviewProps) => {
+
+  const downloadPng = () => {
+    if (!compileData?.png_base64) return
+    const link = document.createElement('a')
+    link.href = `data:image/png;base64,${compileData.png_base64}`
+    link.download = 'optik.png'
+    link.click()
+  }
+
+  const downloadPdf = () => {
+    if (!compileData?.pdf_base64) return
+    const link = document.createElement('a')
+    link.href = `data:application/pdf;base64,${compileData.pdf_base64}`
+    link.download = 'optik.pdf'
+    link.click()
+  }
+
+  const downloadSvg = () => {
+    if (!compileData?.svg_base64) return
+    const link = document.createElement('a')
+    link.href = `data:image/svg+xml;base64,${compileData.svg_base64}`
+    link.download = 'optik.svg'
+    link.click()
+  }
+
+  const onCopyPng = async () => {
+    if (!compileData?.png_base64) return
+    const blob = await (await fetch(`data:image/png;base64,${compileData.png_base64}`)).blob()
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+  }
+
+  return (
+    <div className="w-[450px] flex flex-col gap-6">
+      <Card className="flex-1 flex flex-col p-6 bg-panel border-line relative shadow-2xl overflow-hidden">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Layers size={20} className="text-primary" /> Vorschau
+          </h2>
+          {isCompiling && (
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          )}
+        </div>
+
+        {/* LaTeX code preview */}
+        <CodeSection
+          code={latexCode}
+          isLoading={isCompiling}
+          onCopy={onCopyLatex}
+        />
+
+        {/* Image preview */}
+        <div className="flex-1 mt-4">
+          <PreviewCard
+            isLoading={false}
+            isCompiling={isCompiling}
+            imgSrc={compileData?.png_base64 ? `data:image/png;base64,${compileData.png_base64}` : null}
+            errorLog={compileData?.log || null}
+            emptyIcon={<Microscope size={48} />}
+          />
+        </div>
+
+        <FloatingToolbar
+          dpi={previewDpi}
+          setDpi={setPreviewDpi}
+          isReady={!!(compileData?.ok && compileData.png_base64)}
+          onDownloadPng={downloadPng}
+          onDownloadPdf={downloadPdf}
+          onDownloadSvg={downloadSvg}
+          onCopyPng={onCopyPng}
+        />
+      </Card>
+    </div>
+  )
+}

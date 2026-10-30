@@ -1,0 +1,21 @@
+{
+  "zaehler": 2,
+  "nenner": 6,
+  "form": "Rechteck",
+  "fill_color": "#F59E0B",
+  "border_color": "#78350F",
+  "seed": 7,
+  "show_label": true,
+  "label_override": null,
+  "rect_mode": "Automatisch",
+  "rect_rows": 1,
+  "erweiter_faktor": 3,
+  "split_mode": "Vertikal",
+  "split_style": "Hervorgehoben",
+  "border_width": 0.8,
+  "fill_pattern": "solid",
+  "mixed_number": false,
+  "show_erweitern": true,
+  "show_kuerzen": true,
+  "font_family": "Fira"
+}

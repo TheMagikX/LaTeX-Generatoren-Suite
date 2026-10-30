@@ -1,0 +1,36 @@
+{
+  "mode": "standard",
+  "anzahl": 6,
+  "seed": 42,
+  "radius": 2.5,
+  "sectors": [
+    { "farbe": "#E74C3C", "haeufigkeit": 1.0, "label": "1" },
+    { "farbe": "#3498DB", "haeufigkeit": 1.0, "label": "2" },
+    { "farbe": "#2ECC71", "haeufigkeit": 1.0, "label": "3" },
+    { "farbe": "#F1C40F", "haeufigkeit": 1.0, "label": "4" },
+    { "farbe": "#9B59B6", "haeufigkeit": 1.0, "label": "5" },
+    { "farbe": "#E67E22", "haeufigkeit": 1.0, "label": "6" }
+  ],
+  "show_labels": true,
+  "label_fontsize": "\\small",
+  "label_mode": "Radial (Standard)",
+  "show_rim": true,
+  "show_pins": true,
+  "center_style": "Punkt",
+  "arrow_style": "Kein Pfeil",
+  "pointer_pos": "Oben",
+  "arrow_params": {
+    "color": "#104861",
+    "handdrawn": false,
+    "length": 1.5,
+    "shaftwidth": 0.2,
+    "circleradius": 0.2,
+    "widthtip": 0.4,
+    "heighttip": 0.5,
+    "tailwingwidth": 0.2,
+    "tailheight": 0.3,
+    "taildrop": 0.1,
+    "segment_length": 1.5,
+    "amplitude": 0.1
+  }
+}

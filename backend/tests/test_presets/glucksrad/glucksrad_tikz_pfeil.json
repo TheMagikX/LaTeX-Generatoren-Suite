@@ -1,0 +1,33 @@
+{
+  "mode": "variable",
+  "anzahl": 4,
+  "seed": 12,
+  "radius": 3.0,
+  "sectors": [
+    { "farbe": "#EF4444", "haeufigkeit": 2.0, "label": "Rot (50\\%)" },
+    { "farbe": "#3B82F6", "haeufigkeit": 1.0, "label": "Blau (25\\%)" },
+    { "farbe": "#10B981", "haeufigkeit": 1.0, "label": "Grün (25\\%)" }
+  ],
+  "show_labels": true,
+  "label_fontsize": "\\scriptsize",
+  "label_mode": "Außen",
+  "show_rim": true,
+  "show_pins": false,
+  "center_style": "Schraube",
+  "arrow_style": "TikZ-Pfeil",
+  "pointer_pos": "Oben",
+  "arrow_params": {
+    "color": "#1F2937",
+    "handdrawn": true,
+    "length": 1.8,
+    "shaftwidth": 0.2,
+    "circleradius": 0.25,
+    "widthtip": 0.45,
+    "heighttip": 0.6,
+    "tailwingwidth": 0.25,
+    "tailheight": 0.4,
+    "taildrop": 0.15,
+    "segment_length": 1.8,
+    "amplitude": 0.12
+  }
+}
