@@ -7,6 +7,9 @@ import {
   Plus, Minus, Maximize2, X, AlertTriangle,
 } from 'lucide-react'
 import { extractTikzCode } from '../utils/extractTikzCode'
+import { Textload, CodeSkeleton } from './Textload'
+
+export { Textload, CodeSkeleton }
 
 /* ─── Button ─────────────────────────────────────────────────────────────────── */
 
@@ -687,6 +690,23 @@ export const CodeSection = ({ code, isLoading, onCopy }: {
 }) => {
   const [copied, setCopied] = React.useState(false)
   const tikzCode = code ? extractTikzCode(code) : null
+  const [isCodeGenerating, setIsCodeGenerating] = React.useState(false)
+  const prevLoading = React.useRef(isLoading)
+
+  React.useEffect(() => {
+    if (!prevLoading.current && isLoading) {
+      setIsCodeGenerating(true)
+      const timer = setTimeout(() => {
+        setIsCodeGenerating(false)
+      }, 80)
+      return () => clearTimeout(timer)
+    } else if (!isLoading) {
+      setIsCodeGenerating(false)
+    }
+    prevLoading.current = isLoading
+  }, [isLoading])
+
+  const isCodeLoading = isCodeGenerating || Boolean(isLoading && !code)
 
   const showCopiedState = () => {
     setCopied(true)
@@ -732,11 +752,17 @@ export const CodeSection = ({ code, isLoading, onCopy }: {
           )}
         </div>
       </div>
-      <textarea
-        readOnly
-        value={code || (isLoading ? 'Generiere LaTeX-Code…' : 'Warte auf Eingabe…')}
-        className="w-full h-48 px-3 py-2 bg-canvas border border-line rounded-lg text-mono-xs text-muted focus:outline-none resize-none"
-      />
+      <Textload
+        isLoading={isCodeLoading}
+        reserveHeight="12rem"
+        skeleton={<CodeSkeleton lines={7} />}
+      >
+        <textarea
+          readOnly
+          value={code || 'Warte auf Eingabe…'}
+          className="w-full h-48 px-3 py-2 bg-canvas border border-line rounded-lg text-mono-xs text-muted focus:outline-none resize-none"
+        />
+      </Textload>
     </div>
   )
 }
