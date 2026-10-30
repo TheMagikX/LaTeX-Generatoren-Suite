@@ -36,12 +36,8 @@ const normalizeConfig = (raw: Partial<ZahlenstrahlConfig>): ZahlenstrahlConfig =
 }
 
 const ZahlenPage = () => {
-  const [config, setConfig] = useLocalStorage<ZahlenstrahlConfig>('ks-zahlenstrahl', DEFAULT_CONFIG)
-
-  // Ensure legacy localStorage configs without width_cm get normalized
-  if (config.width_cm == null) {
-    config.width_cm = DEFAULT_CONFIG.width_cm
-  }
+  const [storedConfig, setConfig] = useLocalStorage<ZahlenstrahlConfig>('ks-zahlenstrahl', DEFAULT_CONFIG)
+  const config = storedConfig.width_cm == null ? normalizeConfig(storedConfig) : storedConfig
 
   const [activeTab, setActiveTab] = useState('achse')
   const [previewDpi, setPreviewDpi] = useState(600)

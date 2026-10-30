@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Sparkles, X, RefreshCw, AlertCircle, CheckCircle2,
   Cpu, Send, RotateCcw, Undo2, ChevronRight, HelpCircle, Cloud
@@ -54,7 +54,7 @@ export function AiPromptDialog<T extends object>({
   const [inputPrompt, setInputPrompt] = useState('')
   const [messages, setMessages] = useState<ChatMessageItem<T>[]>([])
   const [activeConfig, setActiveConfig] = useState<T | undefined>(currentConfig)
-  const initialConfigRef = useRef<T | undefined>(currentConfig)
+  const [initialConfig, setInitialConfig] = useState<T | undefined>(() => currentConfig ? JSON.parse(JSON.stringify(currentConfig)) : undefined)
 
   const [status, setStatus] = useState<AiStatusResponse | null>(null)
   const [selectedModel, setSelectedModel] = useState<string>('')
@@ -72,22 +72,7 @@ export function AiPromptDialog<T extends object>({
     }
   }, [messages, isGenerating, isOpen])
 
-  // Sync initial config on opening
-  useEffect(() => {
-    if (isOpen) {
-      if (!initialConfigRef.current && currentConfig) {
-        initialConfigRef.current = JSON.parse(JSON.stringify(currentConfig))
-      }
-      setActiveConfig(currentConfig)
-      checkStatus()
-      setErrorMsg(null)
-      setTimeout(() => textareaRef.current?.focus(), 150)
-    }
-  }, [isOpen])
-
-  const checkStatus = async () => {
-    setIsCheckingStatus(true)
-    setErrorMsg(null)
+  const checkStatus = useCallback(async () => {
     try {
       const res = await getAiStatus()
       setStatus(res)
@@ -108,9 +93,59 @@ export function AiPromptDialog<T extends object>({
     } finally {
       setIsCheckingStatus(false)
     }
+  }, [activeProvider, selectedModel])
+
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen)
+    if (isOpen) {
+      if (currentConfig) {
+        setInitialConfig(JSON.parse(JSON.stringify(currentConfig)))
+      }
+      setActiveConfig(currentConfig)
+      setIsCheckingStatus(true)
+      setErrorMsg(null)
+    }
   }
 
-  if (!isOpen) return null
+  // Focus and fetch status on opening
+  useEffect(() => {
+    if (!isOpen) return
+
+    let isMounted = true
+    const initStatus = async () => {
+      try {
+        const res = await getAiStatus()
+        if (!isMounted) return
+        setStatus(res)
+        if (res.available && res.models && res.models.length > 0) {
+          if (!selectedModel || !res.models.includes(selectedModel)) {
+            setSelectedModel(res.default_model || res.models[0])
+          }
+        } else if (activeProvider === 'gemini' && !selectedModel) {
+          setSelectedModel(res.default_model || res.model || 'gemini-3-flash-preview')
+        }
+      } catch (e: unknown) {
+        if (!isMounted) return
+        setStatus({
+          available: false,
+          url: 'http://localhost:11434',
+          models: [],
+          error: (e as Error)?.message || 'Verbindungsfehler zu Ollama'
+        })
+      } finally {
+        if (isMounted) setIsCheckingStatus(false)
+      }
+    }
+
+    void initStatus()
+    const timer = setTimeout(() => textareaRef.current?.focus(), 150)
+    return () => {
+      isMounted = false
+      clearTimeout(timer)
+    }
+  }, [isOpen, activeProvider, selectedModel])
+
 
   const handleSendMessage = async (textToSend?: string) => {
     const promptText = (textToSend !== undefined ? textToSend : inputPrompt).trim()
@@ -119,7 +154,7 @@ export function AiPromptDialog<T extends object>({
     setErrorMsg(null)
     setInputPrompt('')
 
-    const userMessageId = `user_${Date.now()}`
+    const userMessageId = `user_${crypto.randomUUID()}`
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
     const userItem: ChatMessageItem<T> = {
@@ -150,7 +185,7 @@ export function AiPromptDialog<T extends object>({
 
       if (res.ok && res.config) {
         const assistantItem: ChatMessageItem<T> = {
-          id: `assistant_${Date.now()}`,
+          id: `assistant_${crypto.randomUUID()}`,
           role: 'assistant',
           content: res.message || 'Konfiguration wurde erfolgreich aktualisiert.',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -190,9 +225,9 @@ export function AiPromptDialog<T extends object>({
   const handleResetChat = () => {
     setMessages([])
     setErrorMsg(null)
-    if (initialConfigRef.current) {
-      setActiveConfig(initialConfigRef.current)
-      onApplyConfig(initialConfigRef.current)
+    if (initialConfig) {
+      setActiveConfig(initialConfig)
+      onApplyConfig(initialConfig)
     }
   }
 
@@ -202,6 +237,8 @@ export function AiPromptDialog<T extends object>({
     }
     onClose()
   }
+
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-canvas/75 backdrop-blur-md p-4 animate-in fade-in duration-200">
@@ -307,7 +344,7 @@ export function AiPromptDialog<T extends object>({
             )}
 
             <button
-              onClick={checkStatus}
+              onClick={() => { setIsCheckingStatus(true); setErrorMsg(null); void checkStatus(); }}
               disabled={isCheckingStatus}
               className="p-1 rounded-lg text-muted hover:text-ink hover:bg-panel transition-colors"
               title="KI-Verbindung neu prüfen"

@@ -21,29 +21,29 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
   const [updateResult, setUpdateResult] = useState<UpdateCheckResult | null>(null)
   const [isChecking, setIsChecking] = useState<boolean>(false)
   const [checkError, setCheckError] = useState<string | null>(null)
-  const [isDismissed, setIsDismissed] = useState<boolean>(false)
-
-  // Sync dismissal with sessionStorage based on latest_version
-  useEffect(() => {
-    if (!updateResult?.latest_version) return
+  const [dismissedVersion, setDismissedVersion] = useState<string | null>(() => {
     try {
-      const dismissedVer = sessionStorage.getItem(SESSION_DISMISS_KEY)
-      setIsDismissed(dismissedVer === updateResult.latest_version)
+      return sessionStorage.getItem(SESSION_DISMISS_KEY)
     } catch {
-      // ignore storage error
+      return null
     }
-  }, [updateResult?.latest_version])
+  })
+
+  const isDismissed = Boolean(
+    updateResult?.latest_version && dismissedVersion === updateResult.latest_version
+  )
 
   const dismissBanner = useCallback(() => {
-    setIsDismissed(true)
-    if (updateResult?.latest_version) {
+    const latest = updateResult?.latest_version
+    if (latest) {
+      setDismissedVersion(latest)
       try {
-        sessionStorage.setItem(SESSION_DISMISS_KEY, updateResult.latest_version)
+        sessionStorage.setItem(SESSION_DISMISS_KEY, latest)
       } catch {
         // ignore storage error
       }
     }
-  }, [updateResult?.latest_version])
+  }, [updateResult])
 
   const checkForUpdatesNow = useCallback(
     async (force: boolean = true): Promise<UpdateCheckResult | null> => {

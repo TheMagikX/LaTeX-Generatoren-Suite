@@ -109,41 +109,46 @@ export function useLatexSettings() {
     }
   }
 
-  const fetchLatexSettings = async () => {
-    try {
-      const res = await fetch('/api/settings/latex', { headers: CSRF_HEADERS })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.commands) {
-          setCommandsStatus(data.commands)
-          setCommandsInputPath(data.commands.custom_path || '')
-        }
-        if (data.packages) {
-          setPackagesStatus(data.packages)
-          setPackagesInputPath(data.packages.custom_path || '')
-        }
-        if (data.additional_inputs) {
-          setAdditionalStatus(data.additional_inputs)
-          setAdditionalInputs(data.additional_inputs.map((it: AdditionalItemStatus) => it.path))
-        }
-        if (data.suggested_additional) {
-          setSuggestedAdditional(data.suggested_additional)
-        }
-        if (data.custom_sty_packages) {
-          setCustomStyStatus(data.custom_sty_packages)
-          setCustomStyPackages(data.custom_sty_packages.map((it: AdditionalItemStatus) => it.path))
-        }
-        if (data.suggested_sty) {
-          setSuggestedSty(data.suggested_sty)
-        }
-      }
-    } catch (err) {
-      console.error('Failed to load LaTeX settings', err)
-    }
-  }
-
   useEffect(() => {
-    fetchLatexSettings()
+    let isMounted = true
+
+    const loadSettings = async () => {
+      try {
+        const res = await fetch('/api/settings/latex', { headers: CSRF_HEADERS })
+        if (res.ok && isMounted) {
+          const data = await res.json()
+          if (data.commands) {
+            setCommandsStatus(data.commands)
+            setCommandsInputPath(data.commands.custom_path || '')
+          }
+          if (data.packages) {
+            setPackagesStatus(data.packages)
+            setPackagesInputPath(data.packages.custom_path || '')
+          }
+          if (data.additional_inputs) {
+            setAdditionalStatus(data.additional_inputs)
+            setAdditionalInputs(data.additional_inputs.map((it: AdditionalItemStatus) => it.path))
+          }
+          if (data.suggested_additional) {
+            setSuggestedAdditional(data.suggested_additional)
+          }
+          if (data.custom_sty_packages) {
+            setCustomStyStatus(data.custom_sty_packages)
+            setCustomStyPackages(data.custom_sty_packages.map((it: AdditionalItemStatus) => it.path))
+          }
+          if (data.suggested_sty) {
+            setSuggestedSty(data.suggested_sty)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load LaTeX settings', err)
+      }
+    }
+
+    loadSettings()
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const handleSaveCommands = async (pathOverride?: string | null) => {

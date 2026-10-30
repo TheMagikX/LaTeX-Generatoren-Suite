@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Sparkles, AlertCircle, RefreshCw, Server, Cloud, Key,
   CheckCircle2, Power
@@ -22,12 +22,8 @@ export function AiSettingsSection() {
   const [toggleError, setToggleError] = useState<string | null>(null)
   const [actionMsg, setActionMsg] = useState<string | null>(null)
 
-  // Wenn Ollama verfügbar wird, alten Toggle-Fehler automatisch ausblenden
-  useEffect(() => {
-    if (ollamaStatus?.available && toggleError) {
-      setToggleError(null)
-    }
-  }, [ollamaStatus?.available, toggleError])
+  // Wenn Ollama verfügbar ist, alten Toggle-Fehler ausblenden
+  const displayedToggleError = ollamaStatus?.available ? null : toggleError
 
   const handleSaveGeminiKey = async () => {
     if (!geminiInputKey.trim()) return
@@ -141,11 +137,11 @@ export function AiSettingsSection() {
             <p className="text-xs text-muted leading-relaxed">
               Aktiviert den Button „KI-Assistent“ in den Generatoren (z. B. Baumdiagramm), um Konfigurationen per natürlicher Sprache entweder über die lokale GPU/CPU (Ollama) oder per Cloud-Turbo (Google Gemini Flash) zu erstellen.
             </p>
-            {toggleError && (
+            {displayedToggleError && (
               <div className="text-xs text-red-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2 bg-red-500/10 p-2.5 rounded-xl border border-red-500/20 animate-in fade-in duration-150">
                 <div className="flex items-center gap-1.5">
                   <AlertCircle size={14} className="shrink-0 text-red-500" />
-                  <span>{toggleError}</span>
+                  <span>{displayedToggleError}</span>
                 </div>
                 <button
                   type="button"

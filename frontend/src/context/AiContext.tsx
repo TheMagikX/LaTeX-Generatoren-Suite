@@ -178,21 +178,30 @@ export const AiProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 
   // Initial check on mount + Window Focus & Polling
   useEffect(() => {
-    refreshAiConfig()
-    checkOllama(false)
+    let isMounted = true
+
+    const initAi = async () => {
+      await refreshAiConfig()
+      if (isMounted) {
+        await checkOllama(true)
+      }
+    }
+
+    void initAi()
 
     // Automatisch prüfen, sobald der Nutzer aus dem Terminal/Desktop zurück in den Browser klickt
     const handleFocus = () => {
-      checkOllama(true)
+      void checkOllama(true)
     }
     window.addEventListener('focus', handleFocus)
 
     // Sanftes Hintergrund-Polling alle 5 Sekunden, damit der Status synchronisiert bleibt
     const interval = setInterval(() => {
-      checkOllama(true)
+      void checkOllama(true)
     }, 5000)
 
     return () => {
+      isMounted = false
       window.removeEventListener('focus', handleFocus)
       clearInterval(interval)
     }
