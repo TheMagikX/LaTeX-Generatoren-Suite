@@ -38,7 +38,7 @@
     "qr-code-styling": "^1.9.2",
     "qrcode": "^1.5.4",
     "react": "^19.3.1",
-    "react-ace": "^14.0.1",
+    "react-ace": "^15.0.0",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.5",
     "tailwindcss": "^4.2.2"
