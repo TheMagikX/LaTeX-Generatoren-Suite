@@ -62,7 +62,7 @@ def test_upload_latex_file_commands():
     data = response.json()
     assert data["status"] == "ok"
     assert data["filename"] == "meine_befehle.tex"
-    assert data["saved_path"] == "presets/custom_latex/meine_befehle.tex"
+    assert data["saved_path"] == "user_data/custom_latex/meine_befehle.tex"
 
     # Check file exists on disk
     saved_file = config.PROJECT_ROOT / data["saved_path"]
@@ -106,4 +106,4 @@ def test_browse_latex_endpoint():
         data = response.json()
         assert "available" in data
         assert "path" in data
-        assert data["path"] == "presets/custom_latex/commands.tex"
+        assert data["path"] == "user_data/custom_latex/commands.tex"

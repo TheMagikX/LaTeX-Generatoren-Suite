@@ -23,9 +23,16 @@ PROJECT_ROOT = BACKEND_ROOT.parent
 LATEX_FILES_DIR = BACKEND_ROOT / "latex_files"
 FONTS_DIR = LATEX_FILES_DIR / "fonts"
 
-# Allow overriding PRESETS_DIR and FRONTEND_DIST_DIR via environment variable
+# User Data Configuration (presets, custom LaTeX files, etc.)
+_env_user_data = os.getenv("USER_DATA_DIR")
+USER_DATA_DIR = pathlib.Path(_env_user_data).resolve() if _env_user_data else (PROJECT_ROOT / "user_data")
+
+# Allow overriding PRESETS_DIR, CUSTOM_LATEX_DIR and FRONTEND_DIST_DIR via environment variable
 _env_presets = os.getenv("PRESETS_DIR")
-PRESETS_DIR = pathlib.Path(_env_presets).resolve() if _env_presets else (PROJECT_ROOT / "presets")
+PRESETS_DIR = pathlib.Path(_env_presets).resolve() if _env_presets else (USER_DATA_DIR / "presets")
+
+_env_custom_latex = os.getenv("CUSTOM_LATEX_DIR")
+CUSTOM_LATEX_DIR = pathlib.Path(_env_custom_latex).resolve() if _env_custom_latex else (USER_DATA_DIR / "custom_latex")
 
 _env_frontend = os.getenv("FRONTEND_DIST_DIR")
 FRONTEND_DIST_DIR = pathlib.Path(_env_frontend).resolve() if _env_frontend else (PROJECT_ROOT / "frontend" / "dist")
@@ -44,11 +51,22 @@ GEMINI_FALLBACK_MODELS = [
 ]
 
 # User Settings (unversioned, stores custom paths and preferences)
-USER_SETTINGS_FILE = pathlib.Path(os.getenv("USER_SETTINGS_FILE", PROJECT_ROOT / "user_settings.json")).resolve()
+# Placed in USER_DATA_DIR for persistence in Docker and clean backups.
+_env_user_settings = os.getenv("USER_SETTINGS_FILE")
+if _env_user_settings:
+    USER_SETTINGS_FILE = pathlib.Path(_env_user_settings).resolve()
+else:
+    _user_data_settings = USER_DATA_DIR / "user_settings.json"
+    _root_settings = PROJECT_ROOT / "user_settings.json"
+    if _user_data_settings.is_file():
+        USER_SETTINGS_FILE = _user_data_settings
+    elif _root_settings.is_file():
+        USER_SETTINGS_FILE = _root_settings
+    else:
+        USER_SETTINGS_FILE = _user_data_settings
 COMMANDS_DEFAULT_FILE = LATEX_FILES_DIR / "commands-default.tex"
 PACKAGES_DEFAULT_FILE = LATEX_FILES_DIR / "Pakete-default.tex"
 GLUCKSRAD_PFEIL_PATH = LATEX_FILES_DIR / "GlücksradPfeilGeradeNeuTransp.png"
-CUSTOM_LATEX_DIR = PRESETS_DIR / "custom_latex"
 
 
 def is_within_allowed_latex_dirs(path: pathlib.Path) -> bool:
@@ -88,6 +106,9 @@ def resolve_allowed_latex_path(
         candidates.append(p)
     else:
         candidates.append(PROJECT_ROOT / p)
+        # Smoothly handle legacy "presets/custom_latex/..." paths from older settings
+        if len(p.parts) >= 2 and p.parts[0] == "presets" and p.parts[1] == "custom_latex":
+            candidates.append(CUSTOM_LATEX_DIR / pathlib.Path(*p.parts[2:]))
         if len(p.parts) == 1:
             candidates.append(CUSTOM_LATEX_DIR / p.name)
             candidates.append(LATEX_FILES_DIR / p.name)
@@ -108,8 +129,12 @@ def to_display_path(path: pathlib.Path) -> str:
         resolved = path.resolve()
         if resolved.is_relative_to(PROJECT_ROOT.resolve()):
             return resolved.relative_to(PROJECT_ROOT.resolve()).as_posix()
+        if resolved.is_relative_to(CUSTOM_LATEX_DIR.resolve()):
+            return f"user_data/custom_latex/{resolved.relative_to(CUSTOM_LATEX_DIR.resolve()).as_posix()}"
         if resolved.is_relative_to(PRESETS_DIR.resolve()):
-            return f"presets/{resolved.relative_to(PRESETS_DIR.resolve()).as_posix()}"
+            return f"user_data/presets/{resolved.relative_to(PRESETS_DIR.resolve()).as_posix()}"
+        if resolved.is_relative_to(USER_DATA_DIR.resolve()):
+            return f"user_data/{resolved.relative_to(USER_DATA_DIR.resolve()).as_posix()}"
     except Exception:
         pass
     return path.name
@@ -129,8 +154,17 @@ def get_user_settings() -> dict:
 def save_user_settings(data: dict) -> None:
     """Save user settings to user_settings.json."""
     try:
+        USER_SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(USER_SETTINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+        # Mirror to root user_settings.json if it exists on host for developer convenience
+        root_file = PROJECT_ROOT / "user_settings.json"
+        if USER_SETTINGS_FILE != root_file and root_file.is_file():
+            try:
+                with open(root_file, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+            except Exception:
+                pass
     except Exception as e:
         logger.error(f"Failed to write user_settings.json: {e}")
         raise

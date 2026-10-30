@@ -20,7 +20,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PORT=8000 \
-    PRESETS_DIR=/app/presets \
+    USER_DATA_DIR=/app/user_data \
     FRONTEND_DIST_DIR=/app/frontend/dist
 
 WORKDIR /app
@@ -59,7 +59,7 @@ COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
 # Copy backend code and templates, create presets directory
 COPY backend /app/backend
-RUN mkdir -p /app/presets \
+RUN mkdir -p /app/user_data/presets /app/user_data/custom_latex \
     && if [ -d /app/backend/latex_files/fonts ]; then \
          mkdir -p /usr/local/share/fonts/truetype/custom \
          && cp /app/backend/latex_files/fonts/*.ttf /usr/local/share/fonts/truetype/custom/ 2>/dev/null || true \

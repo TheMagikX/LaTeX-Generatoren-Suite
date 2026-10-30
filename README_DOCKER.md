@@ -49,9 +49,9 @@ Die Generator-Suite ist architektonisch als **lokales Einzelnutzer-Werkzeug (Loc
 ## ⚙️ Konfiguration & Persistenz
 
 ### Presets & Eigene LaTeX-Dateien
-Alle Vorlagen sowie benutzerdefinierte LaTeX-Dateien (`commands.tex`, `Pakete.tex`, eigene `.sty`-Pakete) werden automatisch über das gemountete Volume im lokalen Projektordner `./presets` persistiert:
-* Vorlagen der Generatoren: `./presets/<generator_id>/...`
-* Hochgeladene LaTeX-Dateien: `./presets/custom_latex/...`
+Alle Vorlagen sowie benutzerdefinierte LaTeX-Dateien (`commands.tex`, `Pakete.tex`, eigene `.sty`-Pakete) werden automatisch über das gemountete Volume im lokalen Projektordner `./user_data` persistiert:
+* Vorlagen der Generatoren: `./user_data/presets/<generator_id>/...`
+* Hochgeladene LaTeX-Dateien: `./user_data/custom_latex/...`
 
 Diese Dateien bleiben auch bei Container-Updates oder Neustarts dauerhaft erhalten und können direkt auf dem Host-Rechner mit einem beliebigen Texteditor bearbeitet werden.
 
