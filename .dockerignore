@@ -27,6 +27,7 @@ frontend/public/pyodide
 **/*.sqlite3
 **/*.db
 presets/
+user_data/
 plans/
 docs/
 OLD_FILES/

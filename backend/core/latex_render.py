@@ -170,6 +170,7 @@ def sanitize_latex_log(text: str, *, tmpdir: Optional[str] = None) -> str:
         (config.CUSTOM_LATEX_DIR, "<custom_latex>"),
         (config.LATEX_FILES_DIR, "<latex_files>"),
         (config.PRESETS_DIR, "<presets>"),
+        (config.USER_DATA_DIR, "<user_data>"),
         (config.PROJECT_ROOT, "<project>"),
         (pathlib.Path.home(), "<user_home>"),
     ):

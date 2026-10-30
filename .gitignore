@@ -2,6 +2,7 @@
 # Project Specific & Local Directories
 # ==============================================================================
 plans/
+user_data/
 presets/
 docs/
 OLD_FILES/

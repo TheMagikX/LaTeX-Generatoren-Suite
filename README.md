@@ -60,7 +60,7 @@ Die **Generator-Suite** verbindet eine reaktive, intuitive React-Benutzeroberfl�
 1. **Python-Codeausführung im Browser (Pyodide WebAssembly Sandbox) & Jinja2-Sandbox:**  
    Im **Arbeitsblatt-Generator** können Lehrkräfte benutzerdefinierten Python-Code sowie Jinja2-Templates eingeben, um Aufgabenstellungen, Zufallswerte und mathematische Formeln dynamisch zu berechnen. Die Python-Ausführung erfolgt clientseitig im Browser innerhalb eines isolierten **Pyodide Web Workers (WebAssembly)** mit 5-Sekunden-Timeout (ohne Zugriff auf das Host-Dateisystem oder Server-Secrets), und Jinja2-Templates werden serverseitig in einer restriktiven `ImmutableSandboxedEnvironment` gerendert.
 2. **Freie LaTeX- und XeLaTeX-Kompilierung:**  
-   Die Editoren für LaTeX- und TikZ-Bilder erlauben das freie Eingeben und Rendern von TeX-Quelltext (`-no-shell-escape`, `openin_any=p` / `openout_any=p` für TeX Live sowie ein applikationsseitiger Pre-Compilation-Filter gegen Pfad-Traversals und TeX-I/O-Primitiven für Windows/MiKTeX sind aktiv; eigene `.tex`- und `.sty`-Dateien sind strikt auf das Projekt- bzw. `presets/custom_latex`-Verzeichnis beschränkt).
+   Die Editoren für LaTeX- und TikZ-Bilder erlauben das freie Eingeben und Rendern von TeX-Quelltext (`-no-shell-escape`, `openin_any=p` / `openout_any=p` für TeX Live sowie ein applikationsseitiger Pre-Compilation-Filter gegen Pfad-Traversals und TeX-I/O-Primitiven für Windows/MiKTeX sind aktiv; eigene `.tex`- und `.sty`-Dateien sind strikt auf das Projekt- bzw. `user_data/custom_latex`-Verzeichnis beschränkt).
 3. **⚠️ Fremde Vorlagen (Presets) niemals arglos verwenden:**  
    Übernehme oder importiere Arbeitsblatt- und Generator-Presets (`.json`) sowie fremde `.tex`-/`sty`-Dateien **niemals ungesehen aus unbekannten Quellen**! Da Presets ausführbaren Python-, Jinja2- und LaTeX-Code enthalten können, solltest du fremde Vorlagen vor dem ersten Kompilieren stets auf verdächtige Befehle oder ungewohnte Dateipfade prüfen.
 4. **Keine Authentifizierung oder Benutzerverwaltung:**  
@@ -157,7 +157,7 @@ Die Suite umfasst aktuell **19 spezialisierte Generatoren und Fachwerkzeuge**, d
 
 * **Preset-Manager:** Speichern, Exportieren und Wiederherstellen von benutzerdefinierten Generator-Konfigurationen als JSON-Dateien.
 * **Optionaler KI-Assistent (Lokal & Cloud):** Unterstützte Generatoren bieten einen optionalen KI-Assistenten zur natürlichsprachlichen Diagrammerstellung – wahlweise komplett lokal über **Ollama** oder über einen eigenen **Google Gemini API-Key** (konfigurierbar in den Einstellungen).
-* **Eigene LaTeX-Erweiterungen:** Einbindung eigener Makros (`commands.tex`), zusätzlicher LaTeX-Pakete (`Pakete.tex`) und `.sty`-Dateien über die Systemeinstellungen bzw. den `presets/custom_latex`-Ordner.
+* **Eigene LaTeX-Erweiterungen:** Einbindung eigener Makros (`commands.tex`), zusätzlicher LaTeX-Pakete (`Pakete.tex`) und `.sty`-Dateien über die Systemeinstellungen bzw. den `user_data/custom_latex`-Ordner.
 * **Modernes UI & Theme-Support:** Mehrfarbige Design-Themes, Hell-, Dunkel- und System-Modus (Tailwind CSS 4), responsive Oberflächen und übersichtliche Seiten-Navigation.
 
 ---
@@ -350,17 +350,17 @@ Falls du die Suite direkt nativ auf deinem Host-System ausführen möchtest:
 ## ⚙️ Konfiguration & Persistenz
 
 ### Presets & Eigene TeX-Vorlagen
-Alle erstellten Generator-Presets sowie benutzerdefinierte TeX-Snippets werden im Ordner `./presets` auf dem Rechner abgelegt:
-* **Generator-Vorlagen:** `./presets/<generator_id>/meine_vorlage.json`
-* **Eigene LaTeX-Befehle & Makros:** `./presets/custom_latex/commands.tex`
-* **Zusätzliche LaTeX-Pakete:** `./presets/custom_latex/Pakete.tex`
+Alle erstellten Generator-Presets sowie benutzerdefinierte TeX-Snippets werden im Ordner `./user_data` auf dem Rechner abgelegt:
+* **Generator-Vorlagen:** `./user_data/presets/<generator_id>/meine_vorlage.json`
+* **Eigene LaTeX-Befehle & Makros:** `./user_data/custom_latex/commands.tex`
+* **Zusätzliche LaTeX-Pakete:** `./user_data/custom_latex/Pakete.tex`
 
 > [!WARNING]
 > **Fremde Presets & `.tex`-Vorlagen nicht arglos verwenden:**  
 > Generator-Presets (`.json`) – insbesondere für den Arbeitsblatt-, LaTeX- und TikZ-Generator – sowie eigene `.tex`- und `.sty`-Dateien enthalten ausführbaren Python-, Jinja2- bzw. LaTeX-Code. Obwohl die Suite mehrstufige Schutzmechanismen (isolierter Pyodide-WebWorker im Browser, Jinja2-Sandbox, LaTeX-Dateizugriffsfilter) einsetzt, sollten fremde Vorlagen nur aus vertrauenswürdigen Quellen übernommen und vor der ersten Verwendung kurz im Editor geprüft werden.
 
 > [!TIP]
-> Bei der Docker-Installation ist dieser Ordner als Volume (`./presets:/app/presets`) eingebunden. Sämtliche Presets bleiben somit bei Updates des Docker-Images oder Container-Neustarts dauerhaft erhalten.
+> Bei der Docker-Installation ist dieser Ordner als Volume (`./user_data:/app/user_data`) eingebunden. Sämtliche Presets bleiben somit bei Updates des Docker-Images oder Container-Neustarts dauerhaft erhalten.
 
 ### Umgebungsvariablen (Nativ ohne Docker)
 
