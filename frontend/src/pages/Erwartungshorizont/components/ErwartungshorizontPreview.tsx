@@ -58,13 +58,6 @@ const ErwartungshorizontPreview: React.FC<Props> = ({
   const activePage = Math.min(currentPage, Math.max(0, totalPages - 1))
   const currentLetter = String.fromCharCode(97 + activePage) // a, b, c, ...
 
-  // Reset page when total pages change
-  useEffect(() => {
-    if (currentPage >= totalPages && totalPages > 0) {
-      setCurrentPage(totalPages - 1)
-    }
-  }, [totalPages, currentPage])
-
   // Fullscreen escape key
   useEffect(() => {
     if (!fullscreen) return
