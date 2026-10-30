@@ -26,3 +26,9 @@ Corresponding Source code of your version at no charge.
 - User-Created Content: Custom diagrams and configurations created entirely by the
   user without relying on the author's proprietary presets remain the intellectual
   property of the respective creator.
+
+3. Third-Party Software & Components
+------------------------------------
+Certain components and micro-interactions in this project are based on or derived
+from open-source libraries under permissive licenses (such as the MIT License).
+For details and full copyright notices, see THIRD_PARTY_LICENSES.md.
