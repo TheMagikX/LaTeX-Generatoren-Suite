@@ -40,7 +40,7 @@ const DEFAULT_FOLLOWUP_SUGGESTIONS = [
   'Eine weitere Stufe hinzufügen'
 ]
 
-export function AiPromptDialog<T extends Record<string, any>>({
+export function AiPromptDialog<T extends object>({
   generator,
   generatorTitle,
   isOpen,
@@ -98,12 +98,12 @@ export function AiPromptDialog<T extends Record<string, any>>({
       } else if (activeProvider === 'gemini' && !selectedModel) {
         setSelectedModel(res.default_model || res.model || 'gemini-3-flash-preview')
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       setStatus({
         available: false,
         url: 'http://localhost:11434',
         models: [],
-        error: e?.message || 'Verbindungsfehler zu Ollama'
+        error: (e as Error)?.message || 'Verbindungsfehler zu Ollama'
       })
     } finally {
       setIsCheckingStatus(false)
@@ -143,7 +143,7 @@ export function AiPromptDialog<T extends Record<string, any>>({
       const res = await chatToConfig<T>({
         generator,
         messages: apiMessages,
-        current_config: activeConfig || currentConfig,
+        current_config: (activeConfig || currentConfig) as Record<string, unknown> | undefined,
         model: selectedModel || undefined,
         provider: activeProvider,
       })
@@ -164,7 +164,7 @@ export function AiPromptDialog<T extends Record<string, any>>({
       } else {
         setErrorMsg('Die Konfiguration konnte vom Modell nicht erzeugt werden.')
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Chat to config error:', err)
       const detail = extractApiErrorMessage(err, 'Unbekannter Fehler bei der Generierung')
       setErrorMsg(detail)

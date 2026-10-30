@@ -163,7 +163,7 @@ export const compileLatex = async (
     lastGeneratorName = ''
 
     return data
-  } catch (error: any) {
+  } catch (error: unknown) {
     const totalClientSeconds = (performance.now() - t0) / 1000
     console.error('Compilation failed:', error)
     
@@ -175,7 +175,7 @@ export const compileLatex = async (
       latexChars: chars,
       latexLines: lines,
       dpi,
-      errorMessage: error?.message || 'Verbindungsfehler zur API',
+      errorMessage: (error as Error)?.message || 'Verbindungsfehler zur API',
     })
 
     lastGeneratorTimeMs = 0
@@ -310,7 +310,7 @@ export const downloadPresetFolder = async (generator: string, folder: string = '
     }
   }
   if (!filename) {
-    const cleanFolder = folder.replace(/\s*\/\s*/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '') || 'all'
+    const cleanFolder = folder.replace(/\s*\/\s*/g, '_').replace(/[^a-zA-Z0-9_-]/g, '') || 'all'
     filename = `presets_${generator}_${cleanFolder}.zip`
   }
 
@@ -439,16 +439,17 @@ export interface StopOllamaResponse {
   error?: string
 }
 
-export const extractApiErrorMessage = (err: any, fallback: string): string => {
-  const detail = err?.response?.data?.detail
+export const extractApiErrorMessage = (err: unknown, fallback: string): string => {
+  const errObj = err as { response?: { data?: { detail?: unknown } }; message?: string }
+  const detail = errObj?.response?.data?.detail
   if (typeof detail === 'string') return detail
   if (Array.isArray(detail)) {
-    return detail.map((d: any) => (typeof d === 'string' ? d : d.msg || JSON.stringify(d))).join(', ')
+    return detail.map((d: unknown) => (typeof d === 'string' ? d : (d as { msg?: string })?.msg || JSON.stringify(d))).join(', ')
   }
   if (detail && typeof detail === 'object') {
-    return detail.message || JSON.stringify(detail)
+    return (detail as { message?: string }).message || JSON.stringify(detail)
   }
-  return err?.message || fallback
+  return errObj?.message || fallback
 }
 
 export const stopOllama = async (mode: 'stop_server' | 'unload_models' = 'stop_server'): Promise<StopOllamaResponse> => {

@@ -25,7 +25,7 @@ export const ZahlenTabTicks = ({ config, set, batchSet }: ZahlenTabTicksProps) =
       (Object.keys(presetValues) as Array<keyof ZahlenstrahlConfig>).forEach(key => {
         const val = presetValues[key]
         if (val !== undefined) {
-          set(key, val as any)
+          set(key, val as never)
         }
       })
     }
@@ -241,7 +241,7 @@ export const ZahlenTabTicks = ({ config, set, batchSet }: ZahlenTabTicksProps) =
             <Label>Beschriftungsdichte</Label>
             <select
               value={config.label_density}
-              onChange={e => set('label_density', e.target.value as any)}
+              onChange={e => set('label_density', e.target.value as ZahlenstrahlConfig['label_density'])}
               className="w-full rounded-lg border border-rim bg-panel px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="major_only">Nur Hauptticks (Empfohlen)</option>
@@ -343,7 +343,7 @@ export const ZahlenTabTicks = ({ config, set, batchSet }: ZahlenTabTicksProps) =
                   <Label>Bruch-Stil</Label>
                   <select
                     value={config.fraction_style}
-                    onChange={e => set('fraction_style', e.target.value as any)}
+                    onChange={e => set('fraction_style', e.target.value as ZahlenstrahlConfig['fraction_style'])}
                     className="w-full rounded-lg border border-rim bg-panel px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="auto">Gekürzt (Standard: 1/2, 3/4)</option>

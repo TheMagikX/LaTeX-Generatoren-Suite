@@ -379,7 +379,7 @@ export const CanvasSvgViewport = forwardRef<SVGSVGElement, CanvasSvgViewportProp
                 textAnchor="middle"
                 className="fill-slate-200 text-[11px] font-mono select-none"
               >
-                {m.label ? m.label.replace(/[\$\\]/g, '') : (m.name || 'm')}
+                {m.label ? m.label.replace(/[$\\]/g, '') : (m.name || 'm')}
               </text>
             </g>
           )

@@ -119,12 +119,12 @@ export const AiProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         setMaskedGeminiKey(res.masked_gemini_key)
       }
       return res
-    } catch (e: any) {
+    } catch (e: unknown) {
       const fallback: AiStatusResponse = {
         available: false,
         url: 'http://localhost:11434',
         models: [],
-        error: e?.message || 'Verbindungsfehler'
+        error: (e as Error)?.message || 'Verbindungsfehler'
       }
       setOllamaStatus(fallback)
       return fallback
@@ -150,7 +150,7 @@ export const AiProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       setHasGeminiKey(true)
       await refreshAiConfig()
       return { success: true, masked_key: res.masked_key }
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg = extractApiErrorMessage(err, 'Fehler beim Speichern des Schlüssels')
       return { success: false, error: msg }
     }
@@ -166,7 +166,7 @@ export const AiProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       }
       setGeminiStatus(sanitizedRes)
       return sanitizedRes
-    } catch (err: any) {
+    } catch (err: unknown) {
       const fallback: GeminiTestResponse = {
         available: false,
         error: extractApiErrorMessage(err, 'Verbindungsfehler zur Gemini API')
@@ -206,12 +206,12 @@ export const AiProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       // Status nach dem Stoppen neu abfragen
       await checkOllama(false)
       return res
-    } catch (err: any) {
+    } catch (err: unknown) {
       return {
         ok: false,
         mode: targetMode,
         stopped: false,
-        error: err?.message || 'Fehler beim Stoppen von Ollama'
+        error: (err as Error)?.message || 'Fehler beim Stoppen von Ollama'
       }
     } finally {
       setIsStopping(false)
