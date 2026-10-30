@@ -1,0 +1,50 @@
+{
+  "nodes": [
+    { "name": "A", "x": 0.0, "y": 3.0, "id": "node-a" },
+    { "name": "B", "x": 4.0, "y": 3.0, "id": "node-b" },
+    { "name": "C", "x": 4.0, "y": 0.0, "id": "node-c" },
+    { "name": "D", "x": 0.0, "y": 0.0, "id": "node-d" }
+  ],
+  "components": [
+    {
+      "type_name": "Batterie",
+      "from_node": "D",
+      "to_node": "A",
+      "label": "$U_0$",
+      "value": "12\\,V",
+      "style": "",
+      "id": "comp-1"
+    },
+    {
+      "type_name": "Schalter (Geschlossen)",
+      "from_node": "A",
+      "to_node": "B",
+      "label": "S1",
+      "value": "",
+      "style": "",
+      "id": "comp-2"
+    },
+    {
+      "type_name": "Widerstand (R)",
+      "from_node": "B",
+      "to_node": "C",
+      "label": "R",
+      "value": "220\\,\\Omega",
+      "style": "",
+      "id": "comp-3"
+    },
+    {
+      "type_name": "Draht (Verbindung)",
+      "from_node": "C",
+      "to_node": "D",
+      "label": "",
+      "value": "",
+      "style": "",
+      "id": "comp-4"
+    }
+  ],
+  "show_grid": false,
+  "pakete_laden": true,
+  "command_laden": true,
+  "font_family": "Fira"
+}

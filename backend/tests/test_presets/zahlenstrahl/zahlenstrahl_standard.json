@@ -1,0 +1,15 @@
+{
+  "min_val": -5.0,
+  "max_val": 5.0,
+  "step_main": 1.0,
+  "step_mid": 0.5,
+  "step_sub": 0.1,
+  "width_cm": 14.0,
+  "padding": 0.5,
+  "arrow_type": "->",
+  "font_family": "Fira",
+  "tick_main_h": 0.2,
+  "tick_mid_h": 0.15,
+  "tick_sub_h": 0.08,
+  "label_density": "major_only"
+}

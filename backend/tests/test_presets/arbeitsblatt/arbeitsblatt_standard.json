@@ -1,0 +1,13 @@
+{
+  "template_text": "\\begin{questions}\n\\question Berechne die folgenden Aufgaben:\n\\begin{parts}\n\\part $3x + 5 = 20$\n\\part $x^2 - 4 = 0$\n\\end{parts}\n\\end{questions}",
+  "python_code": "",
+  "variables": {},
+  "header_title": "Mathe-Arbeitsblatt",
+  "header_class": "Klasse 9",
+  "header_dozent": "Fachlehrkraft",
+  "header_subject": "Mathematik",
+  "add_qrcode": false,
+  "pakete_laden": true,
+  "command_laden": true,
+  "font_family": "Fira"
+}

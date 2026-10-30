@@ -1,0 +1,9 @@
+{
+  "code": "\\begin{subtask}\n\\textbf{a)} Nullstellen bestimmen: $f(x)=0 \\iff x_1=0, x_2=3$ \\hfill [3 BE]\n\\end{subtask}\n\n\\begin{subtask}\n\\textbf{b)} Extrempunkte mit hinreichendem Kriterium: $H(1 \\mid 4)$ \\hfill [4 BE]\n\\end{subtask}",
+  "spacing": "onehalfspacing",
+  "latex_width": 15.0,
+  "feste_breite": true,
+  "pakete_laden": true,
+  "command_laden": true,
+  "font_family": "Fira"
+}

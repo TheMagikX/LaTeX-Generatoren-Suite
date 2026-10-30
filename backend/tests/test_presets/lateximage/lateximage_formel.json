@@ -1,0 +1,8 @@
+{
+  "code": "\\textbf{Satz des Pythagoras:}\n\\[ a^2 + b^2 = c^2 \\]\nIn jedem rechtwinkligen Dreieck ist die Summe der Flächeninhalte der Kathetenquadrate gleich dem Flächeninhalt des Hypotenusenquadrates.",
+  "spacing": "onehalfspacing",
+  "latex_width": 14.0,
+  "pakete_laden": true,
+  "command_laden": true,
+  "font_family": "Fira"
+}

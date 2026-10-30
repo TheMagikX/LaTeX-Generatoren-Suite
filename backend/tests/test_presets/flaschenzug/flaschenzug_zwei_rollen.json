@@ -1,0 +1,92 @@
+{
+  "pulleys": [
+    {
+      "id": "p1",
+      "name": "Rolle_Oben",
+      "x": 0.0,
+      "y": 2.0,
+      "radius": 0.5,
+      "label": "R1",
+      "label_pos": "above right",
+      "mount": "Decke",
+      "mount_angle": 90.0,
+      "mount_length": 0.5
+    },
+    {
+      "id": "p2",
+      "name": "Rolle_Unten",
+      "x": 0.0,
+      "y": 0.0,
+      "radius": 0.5,
+      "label": "R2",
+      "label_pos": "below right",
+      "mount": "Keine",
+      "mount_angle": 90.0,
+      "mount_length": 0.5
+    }
+  ],
+  "anchors": [
+    {
+      "id": "a1",
+      "name": "Anker_Decke",
+      "x": 0.5,
+      "y": 2.5,
+      "label": "",
+      "shape": "Kreis",
+      "size": 2.0
+    }
+  ],
+  "ropes": [
+    {
+      "id": "r1",
+      "name": "Hauptseil",
+      "path": [
+        { "name": "Anker_Decke", "side": "cw" },
+        { "name": "Rolle_Unten", "side": "ccw" },
+        { "name": "Rolle_Oben", "side": "cw" }
+      ],
+      "style": "plain",
+      "color": "black",
+      "width": 1.0
+    }
+  ],
+  "masses": [
+    {
+      "id": "m1",
+      "ref": "Rolle_Unten",
+      "name": "Last",
+      "length": 1.0,
+      "label": "$m = 50\\,\\text{kg}$",
+      "relation": "Mitte"
+    }
+  ],
+  "forces": [
+    {
+      "id": "f1",
+      "ref_type": "pulley",
+      "ref_name": "Rolle_Oben",
+      "magnitude": 1.2,
+      "angle": 270.0,
+      "label": "$\\vec{F}_{Zug}$",
+      "color": "red"
+    }
+  ],
+  "manual_mounts": [],
+  "global_opts": {
+    "style_scale": 1.0,
+    "tikz_opts": "",
+    "preview_grid": false,
+    "coordinate_helpers_preview_only": false,
+    "show_labels": true,
+    "rope_style": "plain",
+    "rope_color": "black"
+  },
+  "environment": {
+    "show_boden": false,
+    "boden_y": -2.0,
+    "boden_width": 4.0,
+    "show_decke": true,
+    "decke_y": 2.5,
+    "decke_width": 4.0
+  }
+}

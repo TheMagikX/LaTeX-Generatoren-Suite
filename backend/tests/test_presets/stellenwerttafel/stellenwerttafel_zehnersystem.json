@@ -1,0 +1,30 @@
+{
+  "columns": [
+    { "id": "t", "label": "T", "color": "#2563eb", "active": true },
+    { "id": "h", "label": "H", "color": "#16a34a", "active": true },
+    { "id": "z", "label": "Z", "color": "#dc2626", "active": true },
+    { "id": "e", "label": "E", "color": "#2563eb", "active": true }
+  ],
+  "groups": [],
+  "rows": [
+    { "id": "r1", "label": "A", "values": { "t": 3, "h": 5, "z": 2, "e": 8 }, "active": true, "is_placeholder": false }
+  ],
+  "mode": "Beides",
+  "layout": {
+    "show_header": true,
+    "show_row_labels": false,
+    "show_grid": true,
+    "row_height": 1.5,
+    "col_width": 2.0,
+    "token_style": "filled",
+    "token_size": 0.18,
+    "max_tokens_per_row": 5,
+    "header_vertical": false,
+    "auto_header_height": true,
+    "header_height": 1.0,
+    "color_column_rows": false,
+    "column_bg_opacity": 0.1,
+    "header_bg_opacity": 0.85,
+    "column_bg_opacity_ratio": 0.8
+  }
+}

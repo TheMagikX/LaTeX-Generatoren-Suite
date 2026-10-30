@@ -1,0 +1,93 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+import type { StatistikConfig } from './typesStatistik'
+
+export const DEFAULT_CONFIG: StatistikConfig = {
+  type: 'Boxplot',
+  datasets: [
+    {
+      name: 'Datensatz 1',
+      data_mode: 'Raw',
+      raw_data: [1, 2, 2, 3, 4, 5, 5, 5, 6, 7, 8, 9],
+      raw_data_string: '1, 2, 2, 3, 4, 5, 5, 5, 6, 7, 8, 9',
+      freq_data_string: '',
+      bar_labels_string: '',
+      color: 'black',
+      show_outliers: true,
+      enabled: true,
+    }
+  ],
+  x_axis: {
+    min: 0,
+    max: 10,
+    step: 1,
+    label: '',
+    show_grid: true,
+    grid_style: 'kaestchen',
+    tick_mode: 'Automatisch',
+    tick_list: '',
+    tick_pos_manuell: '',
+    tick_label_manuell: '',
+    majorticklabels: true,
+    ticks_show: true,
+  },
+  y_axis: {
+    min: null,
+    max: null,
+    step: 1,
+    label: '',
+    show_grid: true,
+    grid_style: 'kaestchen',
+    tick_mode: 'Automatisch',
+    tick_list: '',
+    tick_pos_manuell: '',
+    tick_label_manuell: '',
+    majorticklabels: true,
+    ticks_show: true,
+  },
+  boxplot_opts: {
+    orientation: 'horizontal',
+    box_width: 0.6,
+    draw_mean: false,
+  },
+  histogram_opts: {
+    bin_width: 1.0,
+    density: false,
+  },
+  barchart_opts: {
+    orientation: 'vertical',
+    width_mode: 'boxes',
+    bar_width: 0.6,
+    bar_width_boxes: 2.0,
+    bar_gap_boxes: 1.0,
+    bar_gap: 0.5,
+    margin_boxes: 1.0,
+    show_grid: true,
+    opacity: 75,
+    vertical_labels: false,
+    show_values: false,
+  },
+  summenkurve_opts: {
+    smooth: false,
+    as_percent: true,
+  },
+  violin_opts: {
+    orientation: 'horizontal',
+    violin_width: 0.8,
+    bandwidth: 0.4,
+    show_inner_box: true,
+  },
+  title_opts: {
+    show: false,
+    text: '',
+    color: '#1e293b',
+    font_size: '\\large',
+    font_weight: 'bold',
+    align: 'center',
+    custom_style: '',
+  },
+  font_family: 'Fira',
+  font_size: 'normalsize',
+  width_cm: 12.0,
+  height_cm: 8.0,
+}

@@ -1,0 +1,49 @@
+{
+  "students": [
+    {
+      "name": "Anna",
+      "wants_neighbors": ["Ben"],
+      "dislikes_neighbors": ["Clara"],
+      "wants_front": true
+    },
+    {
+      "name": "Ben",
+      "wants_neighbors": ["Anna"],
+      "dislikes_neighbors": [],
+      "wants_front": false
+    },
+    {
+      "name": "Clara",
+      "wants_neighbors": [],
+      "dislikes_neighbors": ["Anna"],
+      "wants_front": false
+    },
+    {
+      "name": "David",
+      "wants_neighbors": [],
+      "dislikes_neighbors": [],
+      "wants_front": true
+    }
+  ],
+  "layout": {
+    "rows": 3,
+    "cols": 3,
+    "matrix": null,
+    "blocked_seats": [[0, 1]],
+    "front_rows": 1
+  },
+  "w_front": 3,
+  "w_neighbor": 5,
+  "include_vertical": true,
+  "include_diagonal": false,
+  "mutual_factor": 2,
+  "dislike_distance": 1,
+  "hard_rules": {
+    "not_same_row": [],
+    "not_same_col": [],
+    "min_distance": [],
+    "no_alone": false,
+    "no_alone_vertical": false,
+    "no_alone_diagonal": false
+  }
+}

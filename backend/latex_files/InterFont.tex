@@ -1,0 +1,53 @@
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage{fontspec}
+  \usepackage{unicode-math}
+  \ifdefined\fontdir\else\def\fontdir{}\fi
+  \setmainfont{Inter}[
+    Path = \fontdir,
+    Extension = .ttf,
+    UprightFont = *-RegularVariable,
+    BoldFont = *-Bold,
+    ItalicFont = *-ItalicVariable,
+    BoldItalicFont = *-BoldItalic,
+    Numbers = Lining
+  ]
+  \setmathfont{Fira Math}
+  \setmathfont{Inter-RegularVariable.ttf}[
+    Path = \fontdir,
+    range={up/{num,latin,Latin,greek,Greek}, 
+    	bfup/{latin,Latin,greek,Greek}}
+  ]
+  \setmathfont{Inter-ItalicVariable.ttf}[
+    Path = \fontdir,
+    range={it/{latin,Latin,greek,Greek}, 
+    	bfit/{latin,Latin,greek,Greek}}
+  ]
+\else\ifLuaTeX
+  \usepackage{fontspec}
+  \usepackage{unicode-math}
+  \ifdefined\fontdir\else\def\fontdir{}\fi
+  \setmainfont{Inter}[
+    Path = \fontdir,
+    Extension = .ttf,
+    UprightFont = *-RegularVariable,
+    BoldFont = *-Bold,
+    ItalicFont = *-ItalicVariable,
+    BoldItalicFont = *-BoldItalic,
+    Numbers = Lining
+  ]
+  \setmathfont{Fira Math}
+  \setmathfont{Inter-RegularVariable.ttf}[
+    Path = \fontdir,
+    range={up/{num,latin,Latin,greek,Greek}, 
+    	bfup/{latin,Latin,greek,Greek}}
+  ]
+  \setmathfont{Inter-ItalicVariable.ttf}[
+    Path = \fontdir,
+    range={it/{latin,Latin,greek,Greek}, 
+    	bfit/{latin,Latin,greek,Greek}}
+  ]
+\else
+  % Fallback fuer pdfLaTeX
+  \usepackage{lmodern}
+\fi\fi

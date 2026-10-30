@@ -1,0 +1,84 @@
+{
+  "shape": "Triangle",
+  "construction": {
+    "mode": "SWS",
+    "rotation": 0.0,
+    "a": 5.0,
+    "b": 4.0,
+    "c": 6.0,
+    "alpha": 45.0,
+    "beta": 60.0,
+    "step": 0
+  },
+  "quad_construction": {
+    "mode": "Rectangle",
+    "a": 5.0,
+    "b": 3.0,
+    "c": 4.0,
+    "alpha": 70.0,
+    "height": 3.0,
+    "offset_c": 1.0,
+    "p_ax": 0.0,
+    "p_ay": 0.0,
+    "p_bx": 5.0,
+    "p_by": 0.0,
+    "p_cx": 6.0,
+    "p_cy": 3.0,
+    "p_dx": 1.0,
+    "p_dy": 3.0
+  },
+  "elements": {
+    "points": {
+      "show": true,
+      "labels": { "A": "$A$", "B": "$B$", "C": "$C$", "D": "$D$" }
+    },
+    "angles": {
+      "show_arcs": true,
+      "show_labels": true,
+      "labels": { "alpha": "$\\alpha$", "beta": "$\\beta$", "gamma": "$\\gamma$", "delta": "$\\delta$" },
+      "colors": { "alpha": "F1C40F", "beta": "F1C40F", "gamma": "F1C40F", "delta": "F1C40F" },
+      "radii": { "alpha": 7.0, "beta": 7.0, "gamma": 7.0, "delta": 7.0 },
+      "opacities": { "alpha": 0.2, "beta": 0.2, "gamma": 0.2, "delta": 0.2 }
+    },
+    "measurements": {
+      "show_sides": { "a": false, "b": true, "c": true, "d": false },
+      "show_angles": { "alpha": true, "beta": false, "gamma": false, "delta": false }
+    },
+    "heights": {
+      "ha": { "show": false, "show_label": true, "show_right_angle": true, "label": "$h_a$", "options": "", "style": "dashed" },
+      "hb": { "show": false, "show_label": true, "show_right_angle": true, "label": "$h_b$", "options": "", "style": "dashed" },
+      "hc": { "show": false, "show_label": true, "show_right_angle": true, "label": "$h_c$", "options": "", "style": "dashed" }
+    },
+    "medians": {
+      "sa": { "show": false, "show_label": true, "show_right_angle": false, "label": "$s_a$", "options": "", "style": "dashed" },
+      "sb": { "show": false, "show_label": true, "show_right_angle": false, "label": "$s_b$", "options": "", "style": "dashed" },
+      "sc": { "show": false, "show_label": true, "show_right_angle": false, "label": "$s_c$", "options": "", "style": "dashed" }
+    },
+    "angle_bisectors": {
+      "wa": { "show": true, "show_label": true, "show_right_angle": false, "label": "$w_\\alpha$", "options": "pos=0.8, auto, font=\\tiny", "style": "dotted, color=blue" },
+      "wb": { "show": false, "show_label": true, "show_right_angle": false, "label": "$w_b$", "options": "", "style": "dashed" },
+      "wc": { "show": false, "show_label": true, "show_right_angle": false, "label": "$w_c$", "options": "", "style": "dashed" }
+    },
+    "perpendicular_bisectors": {
+      "ma": { "show": false, "show_label": true, "show_right_angle": true, "label": "$m_a$", "options": "", "style": "dashed" },
+      "mb": { "show": false, "show_label": true, "show_right_angle": true, "label": "$m_b$", "options": "", "style": "dashed" },
+      "mc": { "show": false, "show_label": true, "show_right_angle": true, "label": "$m_c$", "options": "", "style": "dashed" }
+    },
+    "others": {
+      "circumcircle": false,
+      "incircle": true,
+      "grid": false
+    }
+  },
+  "style": {
+    "fill_color": "{rgb,255:red,52; green,152; blue,219}",
+    "fill_opacity": 0.15,
+    "stroke_color": "black",
+    "line_width": "semithick",
+    "helper_style_default": "dashed, color=gray"
+  },
+  "pakete_laden": true,
+  "command_laden": true,
+  "font_family": "Fira",
+  "preamble_add": ""
+}

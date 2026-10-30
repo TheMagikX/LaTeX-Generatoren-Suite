@@ -1,0 +1,28 @@
+% SPDX-License-Identifier: AGPL-3.0-or-later
+% 
+% Standard-Vorlage (Dummy) für benutzerdefinierte LaTeX-Befehle und Makros.
+% Diese Datei wird als Fallback eingebunden, wenn in den Einstellungen keine
+% private 'commands.tex' angegeben ist.
+%
+% Eigene Makros können in den Einstellungen der Generator-Suite über eine
+% externe Datei eingebunden werden.
+
+% --- Beispiel-/Dummy-Befehle ---
+\newcommand{\dummycommand}{%
+  % Platzhalter für eigene LaTeX-Befehle
+}
+
+% Grundlegende mathematische Operatoren als Fallback
+\providecommand{\eig}{\operatorname{Eig}}
+\providecommand{\spann}{\operatorname{Span}}
+\providecommand{\rang}{\operatorname{rang}}
+
+% Exam-Klassen-Fallbacks für Arbeitsblätter
+\providecommand{\abstaendeexam}{}
+\providecommand{\aufgabenbezeichnungalseigenezeile}{%
+  \totalformat{\textbf{(\totalpoints \space Punkte)}}%
+  \qformat{\textbf{Aufgabe \thequestion} \hfill}%
+}
+\providecommand{\aufgabenbezeichnunginzeile}{%
+  \renewcommand{\questionlabel}{\bfseries A\thequestion \quad}%
+}

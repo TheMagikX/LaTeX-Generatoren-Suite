@@ -1,0 +1,17 @@
+{
+  "min_val": 0.0,
+  "max_val": 2.0,
+  "step_main": 0.5,
+  "step_mid": 0.25,
+  "step_sub": 0.0,
+  "width_cm": 12.0,
+  "padding": 0.5,
+  "arrow_type": "->",
+  "font_family": "Fira",
+  "label_as_fraction": true,
+  "fraction_style": "fixed_denominator",
+  "fraction_denominator": 4,
+  "label_density": "major_and_mid",
+  "hidden_ticks": [0.75, 1.25],
+  "hide_style": "box"
+}

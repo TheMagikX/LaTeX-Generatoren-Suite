@@ -1,0 +1,102 @@
+{
+  "pulleys": [
+    {
+      "id": "p1",
+      "name": "R1",
+      "x": -1.5,
+      "y": 2.0,
+      "radius": 0.4,
+      "label": "R1-Oben-Links",
+      "label_pos": "above left",
+      "mount": "Einseitig",
+      "mount_angle": 90.0,
+      "mount_length": 0.5
+    },
+    {
+      "id": "p2",
+      "name": "R2",
+      "x": 1.5,
+      "y": 2.0,
+      "radius": 0.4,
+      "label": "R2-Oben-Rechts",
+      "label_pos": "above right",
+      "mount": "Einseitig",
+      "mount_angle": 90.0,
+      "mount_length": 0.5
+    },
+    {
+      "id": "p3",
+      "name": "R3",
+      "x": 0.0,
+      "y": 0.0,
+      "radius": 0.5,
+      "label": "R3-Unten",
+      "label_pos": "below",
+      "mount": "Keine",
+      "mount_angle": 90.0,
+      "mount_length": 0.5
+    }
+  ],
+  "anchors": [
+    {
+      "id": "a1",
+      "name": "A1",
+      "x": -1.5,
+      "y": 0.0,
+      "label": "Fixpunkt",
+      "shape": "Kreis",
+      "size": 2.5
+    }
+  ],
+  "ropes": [
+    {
+      "id": "rope1",
+      "name": "Seil 1",
+      "path": [
+        { "name": "A1", "side": "none" },
+        { "name": "R3", "side": "ccw" },
+        { "name": "R1", "side": "cw" }
+      ],
+      "style": "plain",
+      "color": "black",
+      "width": 1.0
+    }
+  ],
+  "masses": [
+    {
+      "id": "m1",
+      "name": "M1",
+      "ref": "R3",
+      "length": 0.8,
+      "label": "$m = 20\\,\\text{kg}$",
+      "relation": "Mitte"
+    },
+    {
+      "id": "m2",
+      "name": "M2",
+      "ref": "A1",
+      "length": 0.5,
+      "label": "$m_2$",
+      "relation": "Mitte"
+    }
+  ],
+  "forces": [],
+  "manual_mounts": [],
+  "global_opts": {
+    "style_scale": 1.0,
+    "tikz_opts": "",
+    "preview_grid": false,
+    "coordinate_helpers_preview_only": false,
+    "show_labels": true,
+    "rope_style": "plain",
+    "rope_color": "black"
+  },
+  "environment": {
+    "show_boden": false,
+    "boden_y": -1.5,
+    "boden_width": 5.0,
+    "show_decke": true,
+    "decke_y": 2.6,
+    "decke_width": 5.0
+  }
+}

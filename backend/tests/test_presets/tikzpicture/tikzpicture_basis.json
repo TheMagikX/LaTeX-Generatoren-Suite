@@ -1,0 +1,7 @@
+{
+  "code": "\\draw[thick, blue, fill=blue!10] (0,0) circle (2cm);\n\\node at (0,0) {Kreis $r=2\\,\\text{cm}$};",
+  "options": "line join=round",
+  "pakete_laden": true,
+  "command_laden": true,
+  "font_family": "Fira"
+}
