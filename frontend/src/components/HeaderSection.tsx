@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { Check, Copy, FileText, Palette, Play, RotateCcw } from 'lucide-react'
 import { Button, ConfirmDialog } from './ui'
+import { LoadingButton } from './LoadingButton'
 
 type PaletteColor = {
   name: string
@@ -226,7 +227,7 @@ export const GeneratorHeader = ({
   resetConfirmation,
   onCompile,
   isCompiling = false,
-  showCompileSpinner = true,
+
   compileLabel = 'Kompilieren',
   compilingLabel = 'Kompiliere…',
   latexCode,
@@ -323,18 +324,16 @@ export const GeneratorHeader = ({
             </Button>
           )}
           {onCompile && (
-            <Button
+            <LoadingButton
               onClick={onCompile}
-              disabled={isCompiling}
+              pending={isCompiling}
               title={`${compileLabel} (Ctrl+Enter)`}
-              aria-keyshortcuts="Control+Enter"
+              pendingLabel={compilingLabel}
+              icon={<Play size={16} />}
               className="flex items-center gap-2 whitespace-nowrap"
             >
-              {isCompiling && showCompileSpinner
-                ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                : <Play size={16} />}
-              {isCompiling && showCompileSpinner ? compilingLabel : compileLabel}
-            </Button>
+              {compileLabel}
+            </LoadingButton>
           )}
           {actionsAfter}
         </div>

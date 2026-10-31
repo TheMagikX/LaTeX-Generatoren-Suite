@@ -1,15 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import {
   ChevronDown, ChevronUp, ChevronLeft, RotateCw, XCircle,
   Download, FileText, Clipboard, Copy, Check, CheckCircle2,
-  Plus, Minus, Maximize2, X, AlertTriangle,
+  Plus, Minus, Maximize2, AlertTriangle,
 } from 'lucide-react'
 import { extractTikzCode } from '../utils/extractTikzCode'
 import { Textload, CodeSkeleton } from './Textload'
 
 export { Textload, CodeSkeleton }
+import { BlurUpImage } from './BlurUpImage'
+import { Lightbox } from './Lightbox'
+import { LoadingButton } from './LoadingButton'
+import { ReorderList } from './ReorderList'
+
+export { BlurUpImage, Lightbox, LoadingButton, ReorderList }
 
 /* ─── Button ─────────────────────────────────────────────────────────────────── */
 
@@ -463,13 +469,8 @@ export const PreviewCard = ({ isLoading, isCompiling, imgSrc, errorLog, emptyIco
   isLoading: boolean; isCompiling: boolean; imgSrc: string | null; errorLog: string | null; emptyIcon: React.ReactNode
 }) => {
   const [fullscreen, setFullscreen] = useState(false)
-
-  useEffect(() => {
-    if (!fullscreen) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setFullscreen(false) }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [fullscreen])
+  const imgRef = useRef<HTMLImageElement>(null)
+  const activeCompiling = isCompiling || isLoading
 
   return (
     <>
@@ -479,30 +480,44 @@ export const PreviewCard = ({ isLoading, isCompiling, imgSrc, errorLog, emptyIco
         {/* Vignette */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/4 via-transparent to-secondary/4 pointer-events-none" />
 
-        {imgSrc && !isCompiling && !isLoading && (
+        {imgSrc && !activeCompiling && (
           <button
             onClick={() => setFullscreen(true)}
-            title="Vollbild"
-            className="absolute top-3 left-3 z-20 p-1.5 rounded-lg bg-panel/90 hover:bg-overlay border border-line text-ghost hover:text-muted transition-all"
+            title="Vollbild & Zoom (Lightbox)"
+            className="absolute top-3 left-3 z-20 p-1.5 rounded-lg bg-panel/90 hover:bg-overlay border border-line text-ghost hover:text-muted transition-all cursor-pointer shadow-md"
           >
             <Maximize2 size={15} />
           </button>
         )}
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden flex items-center justify-center p-8 relative z-10 w-full h-full">
-          {isCompiling || isLoading ? (
+          {errorLog ? (
+            <LatexErrorPanel log={errorLog} />
+          ) : imgSrc ? (
+            <div className="relative max-w-full max-h-full flex items-center justify-center">
+              <BlurUpImage
+                ref={imgRef}
+                src={imgSrc}
+                alt="LaTeX Vorschau"
+                isCompiling={activeCompiling}
+                onClick={() => !activeCompiling && setFullscreen(true)}
+                className="cursor-zoom-in"
+                imgClassName="hover:scale-[1.015] transition-transform duration-300"
+              />
+              {activeCompiling && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-canvas/10 rounded-xl pointer-events-none">
+                  <div className="animate-spin text-primary"><RotateCw size={28} /></div>
+                  <span className="text-sm font-medium tracking-wide animate-pulse font-display text-ink drop-shadow-sm">
+                    Rendere LaTeX…
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : activeCompiling ? (
             <div className="flex flex-col items-center gap-4 text-muted">
               <div className="animate-spin text-primary"><RotateCw size={28} /></div>
               <span className="text-sm font-medium tracking-wide animate-pulse font-display">Rendere LaTeX…</span>
             </div>
-          ) : imgSrc ? (
-            <img
-              src={imgSrc}
-              alt="Vorschau"
-              className="max-w-full max-h-full object-contain drop-shadow-xl hover:scale-[1.015] transition-transform duration-500 will-change-transform"
-            />
-          ) : errorLog ? (
-            <LatexErrorPanel log={errorLog} />
           ) : (
             <div className="flex flex-col items-center text-ghost gap-3">
               <div className="opacity-15">{emptyIcon}</div>
@@ -512,25 +527,15 @@ export const PreviewCard = ({ isLoading, isCompiling, imgSrc, errorLog, emptyIco
         </div>
       </Card>
 
-      {fullscreen && imgSrc && (
-        <div
-          className="fixed inset-0 z-[9999] bg-canvas/95 backdrop-blur-sm flex items-center justify-center"
-          onClick={() => setFullscreen(false)}
-        >
-          <button
-            onClick={() => setFullscreen(false)}
-            className="absolute top-4 right-4 p-2 rounded-full bg-raised border border-line hover:bg-overlay text-muted hover:text-ink transition-all"
-            title="Schließen (Esc)"
-          >
-            <X size={18} />
-          </button>
-          <img
-            src={imgSrc}
-            alt="Vorschau (Vollbild)"
-            className="max-w-[90vw] max-h-[90vh] object-contain drop-shadow-2xl"
-            onClick={e => e.stopPropagation()}
-          />
-        </div>
+      {imgSrc && (
+        <Lightbox
+          open={fullscreen}
+          onClose={() => setFullscreen(false)}
+          src={imgSrc}
+          alt="LaTeX Vorschau"
+          originRef={imgRef}
+          caption="LaTeX Vorschau (Zoom: Mausrad / Tasten +/-)"
+        />
       )}
     </>
   )
@@ -701,7 +706,8 @@ export const CodeSection = ({ code, isLoading, onCopy }: {
       }, 80)
       return () => clearTimeout(timer)
     } else if (!isLoading) {
-      setIsCodeGenerating(false)
+      const t = setTimeout(() => setIsCodeGenerating(false), 0)
+      return () => clearTimeout(t)
     }
     prevLoading.current = isLoading
   }, [isLoading])
