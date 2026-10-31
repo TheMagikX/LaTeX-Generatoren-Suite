@@ -2,13 +2,23 @@
 
 import { useState } from 'react'
 import { Eye, EyeOff, Info, ChartSpline, Plus, ChartScatter, TrendingUp, MapPin, Pin, Sparkles } from 'lucide-react'
-import { Accordion, Button } from '../../../components/ui'
+import { Accordion, Button, ReorderList } from '../../../components/ui'
 import { KoordPlotCard } from './items/KoordPlotCard'
 import { KoordCSVCard } from './items/KoordCSVCard'
 import { KoordParamCard } from './items/KoordParamCard'
 import { KoordPointCard } from './items/KoordPointCard'
 import { KoordNodeCard } from './items/KoordNodeCard'
 import type { Config, Plot, CSVPlot, ParametricPlot, PointItem, NodeItem } from '../typesKoord'
+
+const plotKeyMap = new WeakMap<object, string>()
+const getPlotKey = (plot: object) => {
+  let key = plotKeyMap.get(plot)
+  if (!key) {
+    key = 'plot-' + Math.random().toString(36).slice(2)
+    plotKeyMap.set(plot, key)
+  }
+  return key
+}
 
 interface KoordTabLayersProps {
   config: Config
@@ -379,26 +389,35 @@ export const KoordTabLayers = ({
             </div>
           </div>
           <div className="space-y-3">
-            {config.plots.map((plot, i) => (
-              <KoordPlotCard
-                key={i}
-                plot={plot}
-                index={i}
-                config={config}
-                expanded={isExpanded(`plots-${i}`)}
-                onToggleExpand={() => toggleExpand(`plots-${i}`)}
-                onUpdate={(key, val) => updatePlot(i, key, val)}
-                onDuplicate={() => updateConfig('plots', [...config.plots, JSON.parse(JSON.stringify(plot))])}
-                onRemove={() => updateConfig('plots', config.plots.filter((_, idx) => idx !== i))}
-                onAddPlot={addPlot}
-                subTab={plotSubTabs[i] ?? 'label'}
-                onSetSubTab={(tab) => setPlotSubTabs(prev => ({ ...prev, [i]: tab }))}
-                onCopyStyle={() => copyPlotStyle(plot)}
-                onPasteStyle={() => pastePlotStyle(i)}
-                onApplyStyleToAll={() => applyPlotStyleToAll(plot)}
-                hasCopiedStyle={!!copiedStyles.plots}
-              />
-            ))}
+            <ReorderList
+              items={config.plots}
+              getId={(plot) => getPlotKey(plot)}
+              getLabel={(plot) => `Funktion ${plot.func || ''}`}
+              onReorder={(next) => updateConfig('plots', next)}
+              label="Funktionsgraphen"
+            >
+              {(plot, i) => (
+                <div className="w-full">
+                  <KoordPlotCard
+                    plot={plot}
+                    index={i}
+                    config={config}
+                    expanded={isExpanded(`plots-${i}`)}
+                    onToggleExpand={() => toggleExpand(`plots-${i}`)}
+                    onUpdate={(key, val) => updatePlot(i, key, val)}
+                    onDuplicate={() => updateConfig('plots', [...config.plots, JSON.parse(JSON.stringify(plot))])}
+                    onRemove={() => updateConfig('plots', config.plots.filter((_, idx) => idx !== i))}
+                    onAddPlot={addPlot}
+                    subTab={plotSubTabs[i] ?? 'label'}
+                    onSetSubTab={(tab) => setPlotSubTabs(prev => ({ ...prev, [i]: tab }))}
+                    onCopyStyle={() => copyPlotStyle(plot)}
+                    onPasteStyle={() => pastePlotStyle(i)}
+                    onApplyStyleToAll={() => applyPlotStyleToAll(plot)}
+                    hasCopiedStyle={!!copiedStyles.plots}
+                  />
+                </div>
+              )}
+            </ReorderList>
           </div>
         </div>
       </Accordion>

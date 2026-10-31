@@ -34,15 +34,11 @@ export function useTextload({
 
     if (isLoading) {
       if (!showSkeleton) {
-        if (delayMs <= 0) {
+        const timeoutMs = Math.max(0, delayMs)
+        timer = setTimeout(() => {
           startTimeRef.current = performance.now()
           setShowSkeleton(true)
-        } else {
-          timer = setTimeout(() => {
-            startTimeRef.current = performance.now()
-            setShowSkeleton(true)
-          }, delayMs)
-        }
+        }, timeoutMs)
       }
     } else {
       if (showSkeleton) {

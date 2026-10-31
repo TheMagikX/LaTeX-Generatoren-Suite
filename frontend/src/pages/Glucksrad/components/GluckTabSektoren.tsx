@@ -1,10 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Plus, Trash2, Info } from 'lucide-react'
-import { Button, Input, Label, Card, Slider, NumberInput } from '../../../components/ui'
+import { Button, Input, Label, Card, Slider, NumberInput, ReorderList } from '../../../components/ui'
 import type { ColorSectorUpdater, GluckConfig, GluckSetter } from '../typesGluck'
 import { PALETTES } from '../constantsGluck'
 import { SecHeadComponent } from '../utilsGluck'
+
+const sectorKeyMap = new WeakMap<object, string>()
+const getSectorKey = (s: object) => {
+  let key = sectorKeyMap.get(s)
+  if (!key) {
+    key = Math.random().toString(36).slice(2)
+    sectorKeyMap.set(s, key)
+  }
+  return key
+}
 
 interface GluckTabSektorenProps {
   config: GluckConfig;
@@ -60,28 +70,53 @@ export const GluckTabSektoren = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-          {config.sectors.map((s, idx) => (
-            <div key={idx} className="bg-raised/30 border border-line rounded-xl p-3 flex items-center gap-4">
-              <div className="flex flex-col gap-1">
-                <span className="text-caption tracking-tight">Farbe</span>
-                <input type="color" value={s.farbe} onChange={e => updateSector(idx, 'farbe', e.target.value)}
-                  className="w-10 h-10 rounded cursor-pointer bg-transparent border-none" />
+        <div className="max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
+          <ReorderList
+            items={config.sectors}
+            getId={(s) => getSectorKey(s)}
+            getLabel={(s) => `Sektor ${s.label || s.farbe}`}
+            onReorder={(next) => updateConfig('sectors', next)}
+            label="Glücksrad Sektoren"
+          >
+            {(s, idx) => (
+              <div className="flex items-center gap-4 w-full">
+                <div className="flex flex-col gap-1">
+                  <span className="text-caption tracking-tight">Farbe</span>
+                  <input
+                    type="color"
+                    value={s.farbe}
+                    onChange={e => updateSector(idx, 'farbe', e.target.value)}
+                    className="w-10 h-10 rounded cursor-pointer bg-transparent border-none"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label>{config.mode === 'variable' ? 'Gewicht' : 'Anzahl'}</Label>
+                  <NumberInput
+                    step={config.mode === 'variable' ? 0.5 : 1}
+                    min={0}
+                    value={s.haeufigkeit}
+                    onChange={e => updateSector(idx, 'haeufigkeit', parseFloat(e.target.value))}
+                  />
+                </div>
+                <div className="flex-[2]">
+                  <Label>Bezeichnung (Label)</Label>
+                  <Input
+                    value={s.label}
+                    onChange={e => updateSector(idx, 'label', e.target.value)}
+                    placeholder="z.B. Gewinn"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeSector(idx)}
+                  className="mt-5 p-2 text-ghost hover:text-red-400 transition-colors cursor-pointer"
+                  title="Sektor entfernen"
+                >
+                  <Trash2 size={18} />
+                </button>
               </div>
-              <div className="flex-1">
-                <Label>{config.mode === 'variable' ? 'Gewicht' : 'Anzahl'}</Label>
-                <NumberInput step={config.mode === 'variable' ? 0.5 : 1} min={0}
-                  value={s.haeufigkeit} onChange={e => updateSector(idx, 'haeufigkeit', parseFloat(e.target.value))} />
-              </div>
-              <div className="flex-[2]">
-                <Label>Bezeichnung (Label)</Label>
-                <Input value={s.label} onChange={e => updateSector(idx, 'label', e.target.value)} placeholder="z.B. Gewinn" />
-              </div>
-              <button onClick={() => removeSector(idx)} className="mt-5 p-2 text-ghost hover:text-red-400 transition-colors">
-                <Trash2 size={18} />
-              </button>
-            </div>
-          ))}
+            )}
+          </ReorderList>
         </div>
       </div>
 

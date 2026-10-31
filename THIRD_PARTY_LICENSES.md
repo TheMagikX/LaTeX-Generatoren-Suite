@@ -10,8 +10,11 @@ This project includes or derives components and utilities from the following ope
 - **Author:** ozzy
 - **License:** MIT License
 - **Usage in this project:**
-  - `frontend/src/components/Textload.tsx`
-  - `frontend/src/hooks/useTextload.ts`
+  - `frontend/src/components/Textload.tsx` & `frontend/src/hooks/useTextload.ts`
+  - `frontend/src/components/LoadingButton.tsx` & `frontend/src/hooks/useAsyncAction.ts`
+  - `frontend/src/components/BlurUpImage.tsx` & `frontend/src/hooks/useBlurUpImage.ts`
+  - `frontend/src/components/Lightbox.tsx` & `frontend/src/hooks/useLightbox.ts`
+  - `frontend/src/components/ReorderList.tsx` & `frontend/src/hooks/useReorderList.ts`
 
 ### MIT License Text:
 
@@ -38,4 +41,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
