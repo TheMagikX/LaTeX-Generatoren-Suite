@@ -2,14 +2,45 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { listPresets, savePreset, deletePreset, downloadPresetFolder } from '../api/client'
+import { listPresetsDetailed, savePreset, savePresetThumbnail, deletePreset, downloadPresetFolder } from '../api/client'
+import type { DetailedPresetMap } from '../api/client'
+import { generateThumbnailFromBase64 } from '../utils/thumbnail'
+import { PresetCard } from './PresetCard'
 import { Button, Input, ConfirmDialog } from './ui'
-import { ChevronDown, Download, FileJson, FolderPlus, RotateCw, Save, Trash2, Search, Check, FilterX } from 'lucide-react'
+import { ChevronDown, Download, FileJson, FolderPlus, RotateCw, Save, Trash2, Search, Check, FilterX, LayoutGrid, List } from 'lucide-react'
 
 interface PresetManagerProps<TConfig> {
   generator: string
   currentConfig: TConfig
   onLoad: (config: TConfig) => void
+  /** PNG (Base64) der aktuellen Vorschau; wird beim Speichern als Thumbnail abgelegt. */
+  thumbnailSource?: string | null
+}
+
+type ViewMode = 'list' | 'gallery'
+type SortMode = 'name' | 'recent'
+
+// Generatoren mit textlastigen Presets starten in der Listenansicht, alle anderen in der Galerie.
+const LIST_DEFAULT_GENERATORS: ReadonlySet<string> = new Set(['arbeitsblatt', 'erwartungshorizont'])
+
+const viewModeKey = (generator: string) => `preset-view-mode:${generator}`
+const defaultViewMode = (generator: string): ViewMode => (LIST_DEFAULT_GENERATORS.has(generator) ? 'list' : 'gallery')
+
+function readStored<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
+  try {
+    const v = window.localStorage.getItem(key)
+    return allowed.includes(v as T) ? (v as T) : fallback
+  } catch {
+    return fallback
+  }
+}
+
+function writeStored(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value)
+  } catch {
+    // Nur Komfort-Praeferenz
+  }
 }
 
 const ALL_USERS = 'Alle Nutzer'
@@ -148,7 +179,7 @@ function loadFormState(generator: string): PresetManagerFormState {
   }
 }
 
-export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad }: PresetManagerProps<TConfig>) => {
+export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad, thumbnailSource }: PresetManagerProps<TConfig>) => {
   const queryClient = useQueryClient()
   const initialFormState = useMemo(() => loadFormState(generator), [generator])
 
@@ -158,6 +189,9 @@ export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad }: Pr
   const [selectedYear, setSelectedYear] = useState(initialFormState.selectedYear || ALL_YEARS)
   const [isSaveOpen, setIsSaveOpen] = useState(false)
   const [isPresetsOpen, setIsPresetsOpen] = useState(true)
+  const [viewMode, setViewMode] = useState<ViewMode>(() => readStored(viewModeKey(generator), ['list', 'gallery'] as const, defaultViewMode(generator)))
+  const [sortMode, setSortMode] = useState<SortMode>(() => readStored('preset-sort-mode', ['name', 'recent'] as const, 'name'))
+  const [pendingOverwriteName, setPendingOverwriteName] = useState<string | null>(null)
 
   // Save-form state (3 separate tiers + name)
   const [saveUser, setSaveUser] = useState(initialFormState.saveUser || 'USER')
@@ -181,10 +215,18 @@ export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad }: Pr
   const [pendingOverwrite, setPendingOverwrite] = useState(false)
   const [activePresetName, setActivePresetName] = useState<string | null>(initialFormState.activePresetName)
 
-  const { data: presets = {}, isLoading } = useQuery<Record<string, TConfig>>({
-    queryKey: ['presets', generator],
-    queryFn: async () => (await listPresets(generator)) as Record<string, TConfig>
+  const { data: detailedPresets, isLoading } = useQuery<DetailedPresetMap<TConfig>>({
+    queryKey: ['presets', generator, 'detailed'],
+    queryFn: () => listPresetsDetailed<TConfig>(generator)
   })
+
+  const presets = useMemo(() => {
+    const configs: Record<string, TConfig> = {}
+    for (const [name, item] of Object.entries(detailedPresets ?? {})) {
+      configs[name] = item.config
+    }
+    return configs
+  }, [detailedPresets])
 
   const { filterUsers, filterSubjects, filterYears } = useMemo(() => {
     const users = new Set<string>()
@@ -328,7 +370,18 @@ export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad }: Pr
   const fullSaveName = effectiveFolder ? `${effectiveFolder} / ${saveName.trim()}` : saveName.trim()
 
   const saveMutation = useMutation({
-    mutationFn: ({ name, data }: { name: string; data: TConfig }) => savePreset(generator, name, data),
+    mutationFn: async ({ name, data }: { name: string; data: TConfig }) => {
+      const result = await savePreset(generator, name, data)
+      if (thumbnailSource) {
+        // Das Thumbnail ist optional: ein Fehler darf das Speichern nicht scheitern lassen.
+        try {
+          await savePresetThumbnail(generator, name, await generateThumbnailFromBase64(thumbnailSource))
+        } catch (err) {
+          console.warn('Preset-Thumbnail konnte nicht gespeichert werden:', err)
+        }
+      }
+      return result
+    },
     onSuccess: (_data, variables) => {
       const parsed = parsePresetPath(variables.name)
 
@@ -371,6 +424,11 @@ export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad }: Pr
   const filteredNames = useMemo(() => {
     let names = Object.keys(presets).sort((a, b) => a.localeCompare(b))
 
+    if (sortMode === 'recent') {
+      const updated = (n: string) => detailedPresets?.[n]?.updated_at ?? 0
+      names = names.sort((a, b) => updated(b) - updated(a) || a.localeCompare(b))
+    }
+
     if (selectedUser !== ALL_USERS) {
       names = names.filter(name => parsePresetPath(name).user === selectedUser)
     }
@@ -389,7 +447,7 @@ export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad }: Pr
     }
 
     return names
-  }, [presets, searchTerm, selectedUser, selectedSubject, selectedYear])
+  }, [presets, detailedPresets, sortMode, searchTerm, selectedUser, selectedSubject, selectedYear])
 
   useEffect(() => {
     try {
@@ -424,6 +482,36 @@ export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad }: Pr
   function confirmOverwrite() {
     saveMutation.mutate({ name: fullSaveName, data: currentConfig })
     setPendingOverwrite(false)
+  }
+
+  function confirmOverwriteExisting() {
+    if (!pendingOverwriteName) return
+    const parsed = parsePresetPath(pendingOverwriteName)
+    setSaveUser(parsed.user || 'USER')
+    setNewUserInput('')
+    setSaveSubject(parsed.subject || '')
+    setNewSubjectInput('')
+    setSaveYear(parsed.year || '')
+    setNewYearInput('')
+    setSaveName(parsed.name)
+    saveMutation.mutate({ name: pendingOverwriteName, data: currentConfig })
+    setPendingOverwriteName(null)
+  }
+
+  function requestDelete(name: string) {
+    if (confirm(`Preset "${name}" wirklich löschen?`)) {
+      deleteMutation.mutate(name)
+    }
+  }
+
+  function changeViewMode(mode: ViewMode) {
+    setViewMode(mode)
+    writeStored(viewModeKey(generator), mode)
+  }
+
+  function changeSortMode(mode: SortMode) {
+    setSortMode(mode)
+    writeStored('preset-sort-mode', mode)
   }
 
   function confirmLoad() {
@@ -470,6 +558,17 @@ export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad }: Pr
           confirmClass="bg-amber-600 hover:bg-amber-500"
           onConfirm={confirmOverwrite}
           onCancel={() => setPendingOverwrite(false)}
+        />
+      )}
+
+      {pendingOverwriteName !== null && (
+        <ConfirmDialog
+          title="Preset überschreiben?"
+          message={`Das Preset „${pendingOverwriteName}" wird mit den aktuellen Einstellungen überschrieben.`}
+          confirmLabel="Überschreiben"
+          confirmClass="bg-amber-600 hover:bg-amber-500"
+          onConfirm={confirmOverwriteExisting}
+          onCancel={() => setPendingOverwriteName(null)}
         />
       )}
 
@@ -716,12 +815,68 @@ export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad }: Pr
                 </div>
               </div>
 
-              {/* Filtered Presets list below (scrollable container) */}
-              <div className="max-h-80 overflow-y-auto space-y-1.5 pr-1">
+              {/* View mode + sort */}
+              <div className="flex items-center justify-between gap-2 shrink-0">
+                <div className="inline-flex rounded-lg border border-line overflow-hidden" role="group" aria-label="Ansicht">
+                  <button
+                    type="button"
+                    className={`flex items-center gap-1 px-2.5 py-1.5 text-xs transition-colors ${viewMode === 'list' ? 'bg-primary/15 text-primary font-medium' : 'text-ghost hover:text-ink'}`}
+                    aria-pressed={viewMode === 'list'}
+                    onClick={() => changeViewMode('list')}
+                  >
+                    <List size={13} /> Liste
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex items-center gap-1 px-2.5 py-1.5 text-xs transition-colors border-l border-line ${viewMode === 'gallery' ? 'bg-primary/15 text-primary font-medium' : 'text-ghost hover:text-ink'}`}
+                    aria-pressed={viewMode === 'gallery'}
+                    onClick={() => changeViewMode('gallery')}
+                  >
+                    <LayoutGrid size={13} /> Galerie
+                  </button>
+                </div>
+                <select
+                  value={sortMode}
+                  onChange={(e) => changeSortMode(e.target.value as SortMode)}
+                  className="rounded-lg border border-rim bg-panel px-2 py-1.5 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-primary"
+                  aria-label="Sortierung"
+                >
+                  <option value="name">Name (A–Z)</option>
+                  <option value="recent">Zuletzt geändert</option>
+                </select>
+              </div>
+
+              {/* Filtered Presets (scrollable container) */}
+              <div className={viewMode === 'gallery' ? 'max-h-[28rem] overflow-y-auto pr-1' : 'max-h-80 overflow-y-auto space-y-1.5 pr-1'}>
                 {isLoading ? (
                   <div className="text-center py-8 text-ghost text-sm">Lade Presets...</div>
                 ) : filteredNames.length === 0 ? (
                   <div className="text-center py-8 text-ghost text-sm">Keine Presets gefunden.</div>
+                ) : viewMode === 'gallery' ? (
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                    {filteredNames.map(name => {
+                      const parsed = parsePresetPath(name)
+                      const item = detailedPresets?.[name]
+                      return (
+                        <PresetCard
+                          key={name}
+                          generator={generator}
+                          fullName={name}
+                          displayName={parsed.name}
+                          user={parsed.user}
+                          subject={parsed.subject}
+                          year={parsed.year}
+                          hasThumbnail={Boolean(item?.has_thumbnail)}
+                          updatedAt={item?.updated_at}
+                          isActive={activePresetName === name}
+                          canOverwrite={!saveMutation.isPending}
+                          onLoad={() => setPendingLoadName(name)}
+                          onOverwrite={() => setPendingOverwriteName(name)}
+                          onDelete={() => requestDelete(name)}
+                        />
+                      )
+                    })}
+                  </div>
                 ) : (
                   filteredNames.map(name => (
                     <div
@@ -739,9 +894,7 @@ export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad }: Pr
                         className="shrink-0 opacity-0 group-hover:opacity-100 p-1 text-ghost hover:text-red-500 transition-all"
                         onClick={(e) => {
                           e.stopPropagation()
-                          if (confirm(`Preset "${name}" wirklich löschen?`)) {
-                            deleteMutation.mutate(name)
-                          }
+                          requestDelete(name)
                         }}
                       >
                         <Trash2 size={15} />

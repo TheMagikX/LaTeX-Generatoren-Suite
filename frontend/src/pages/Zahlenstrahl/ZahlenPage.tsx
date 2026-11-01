@@ -156,6 +156,7 @@ const ZahlenPage = () => {
               <PresetManager
                 generator="zahlenstrahl"
                 currentConfig={config}
+                thumbnailSource={compileData?.png_base64}
                 onLoad={loaded => setConfig(normalizeConfig(loaded))}
               />
             </TabContent>

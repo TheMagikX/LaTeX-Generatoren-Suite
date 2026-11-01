@@ -106,7 +106,7 @@ export default function FlaschenzugPage() {
           <FlascheTabGlobal cfg={cfg} updGlobal={updGlobal} updEnv={updEnv} />
 
           <Accordion title="Presets Speichern / Laden" icon={<Settings size={18} />}>
-            <PresetManager generator="flaschenzug" currentConfig={cfg} onLoad={setCfg} />
+            <PresetManager generator="flaschenzug" currentConfig={cfg} thumbnailSource={compileResult?.png_base64} onLoad={setCfg} />
           </Accordion>
         </div>
 

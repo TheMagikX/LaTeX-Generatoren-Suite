@@ -297,6 +297,7 @@ const BaumPage = () => {
               <PresetManager
                 generator="baum"
                 currentConfig={config}
+                thumbnailSource={compileData?.png_base64}
                 onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>

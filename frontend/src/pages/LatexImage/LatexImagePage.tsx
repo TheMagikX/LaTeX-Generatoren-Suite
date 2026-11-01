@@ -78,6 +78,7 @@ const LatexImagePage = () => {
               <PresetManager
                 generator="latex"
                 currentConfig={config}
+                thumbnailSource={compileData?.png_base64}
                 onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>

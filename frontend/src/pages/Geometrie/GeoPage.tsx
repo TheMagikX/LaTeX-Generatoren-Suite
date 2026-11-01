@@ -240,6 +240,7 @@ export default function GeoPage() {
             <PresetManager
               generator="geo"
               currentConfig={cfg}
+              thumbnailSource={compileResult?.png_base64}
               onLoad={setCfg}
             />
           </Accordion>
