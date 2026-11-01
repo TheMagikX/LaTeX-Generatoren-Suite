@@ -523,3 +523,38 @@ export const checkForUpdates = async (force: boolean = false): Promise<UpdateChe
   })
   return response.data
 }
+
+export interface DatasetItem {
+  filename: string
+  size_bytes: number
+  rows_count: number
+  columns: string[]
+  modified_at?: number
+  path?: string
+}
+
+export interface DatasetUploadResponse {
+  status: string
+  dataset: DatasetItem
+}
+
+export const getDatasets = async (): Promise<DatasetItem[]> => {
+  const response = await apiClient.get<DatasetItem[]>('datasets')
+  return response.data
+}
+
+export const uploadDataset = async (file: File): Promise<DatasetUploadResponse> => {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await apiClient.post<DatasetUploadResponse>('datasets/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+  return response.data
+}
+
+export const deleteDataset = async (filename: string): Promise<{ status: string; deleted: string }> => {
+  const response = await apiClient.delete<{ status: string; deleted: string }>(`datasets/${encodeURIComponent(filename)}`)
+  return response.data
+}
