@@ -276,6 +276,7 @@ def get_allowed_input_roots(tmpdir: pathlib.Path, engine: str = "xelatex") -> li
         config.LATEX_FILES_DIR,
         config.CUSTOM_LATEX_DIR,
         config.FONTS_DIR,
+        config.DATASETS_DIR,
         *get_tex_distribution_roots(engine),
     ]
 

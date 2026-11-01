@@ -34,6 +34,10 @@ PRESETS_DIR = pathlib.Path(_env_presets).resolve() if _env_presets else (USER_DA
 _env_custom_latex = os.getenv("CUSTOM_LATEX_DIR")
 CUSTOM_LATEX_DIR = pathlib.Path(_env_custom_latex).resolve() if _env_custom_latex else (USER_DATA_DIR / "custom_latex")
 
+_env_datasets = os.getenv("DATASETS_DIR")
+DATASETS_DIR = pathlib.Path(_env_datasets).resolve() if _env_datasets else (USER_DATA_DIR / "datasets")
+DATASETS_DIR.mkdir(parents=True, exist_ok=True)
+
 _env_frontend = os.getenv("FRONTEND_DIST_DIR")
 FRONTEND_DIST_DIR = pathlib.Path(_env_frontend).resolve() if _env_frontend else (PROJECT_ROOT / "frontend" / "dist")
 
@@ -123,6 +127,38 @@ def resolve_allowed_latex_path(
     return None
 
 
+def is_within_datasets_dir(path: pathlib.Path) -> bool:
+    """Checks whether a path resides inside DATASETS_DIR."""
+    try:
+        resolved = path.resolve()
+        return resolved.is_relative_to(DATASETS_DIR.resolve())
+    except Exception:
+        return False
+
+
+def resolve_dataset_path(raw_path: str | pathlib.Path) -> pathlib.Path | None:
+    """
+    Resolves a CSV dataset filename or path to a validated path strictly inside DATASETS_DIR.
+    Extracts the base filename to gracefully support legacy paths from older presets.
+    """
+    if not raw_path:
+        return None
+    raw_str = str(raw_path).strip()
+    if not raw_str:
+        return None
+    p = pathlib.Path(raw_str)
+    if p.suffix.lower() != ".csv":
+        return None
+
+    target = (DATASETS_DIR / p.name).resolve()
+    try:
+        if is_within_datasets_dir(target) and target.is_file():
+            return target
+    except Exception:
+        pass
+    return None
+
+
 def to_display_path(path: pathlib.Path) -> str:
     """Returns a privacy-safe project-relative POSIX path without exposing host OS usernames."""
     try:
@@ -131,6 +167,8 @@ def to_display_path(path: pathlib.Path) -> str:
             return resolved.relative_to(PROJECT_ROOT.resolve()).as_posix()
         if resolved.is_relative_to(CUSTOM_LATEX_DIR.resolve()):
             return f"user_data/custom_latex/{resolved.relative_to(CUSTOM_LATEX_DIR.resolve()).as_posix()}"
+        if resolved.is_relative_to(DATASETS_DIR.resolve()):
+            return f"user_data/datasets/{resolved.relative_to(DATASETS_DIR.resolve()).as_posix()}"
         if resolved.is_relative_to(PRESETS_DIR.resolve()):
             return f"user_data/presets/{resolved.relative_to(PRESETS_DIR.resolve()).as_posix()}"
         if resolved.is_relative_to(USER_DATA_DIR.resolve()):
