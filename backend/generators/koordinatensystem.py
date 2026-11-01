@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import re
+import pathlib
 from models.koordinatensystem import CoordinateSystemConfig, PlotConfig, CSVPlotConfig, ParametricPlotConfig, PointConfig, NodeConfig
 
 def _format_plot_style(p: PlotConfig) -> str:
@@ -273,14 +274,23 @@ def generate_koordinatensystem_latex(cfg: CoordinateSystemConfig) -> str:
     for p in cfg.csv_plots:
         if not p.show:
             continue
-        path = p.path.replace("\\", "/").strip()
-        if not (path and p.xcol and p.ycol):
+        raw_path = (p.path or "").replace("\\", "/").strip()
+        if not (raw_path and p.xcol and p.ycol):
             continue
+
+        # Falls ein absoluter Windows- oder Unix-Pfad vorliegt (aeltere Presets),
+        # extrahieren wir den reinen Dateinamen, um Pfad-Traversals zu verhindern
+        # und die Datei im Datensatz-Verzeichnis aufzuloesen.
+        if re.match(r"^[A-Za-z]:|^/", raw_path):
+            clean_path = pathlib.Path(raw_path).name
+        else:
+            clean_path = raw_path
+
         # Sicherheitsvalidierung gegen Path-Traversal und LaTeX-Injection
         if (
-            ".." in path.split("/")
-            or any(ch in path for ch in ("{", "}", "$", "%", "\\"))
-            or not path.lower().endswith((".csv", ".txt", ".dat"))
+            ".." in clean_path.split("/")
+            or any(ch in clean_path for ch in ("{", "}", "$", "%", "\\", ":"))
+            or not clean_path.lower().endswith((".csv", ".txt", ".dat"))
         ):
             continue
 
@@ -296,7 +306,7 @@ def generate_koordinatensystem_latex(cfg: CoordinateSystemConfig) -> str:
         if p.read_comma:
             table_opts.append("/pgf/number format/read comma as period")
 
-        csv_cmds.append(fr"\addplot[{', '.join(style_parts)}] table[{','.join(table_opts)}] {{{path}}};")
+        csv_cmds.append(fr"\addplot[{', '.join(style_parts)}] table[{','.join(table_opts)}] {{{clean_path}}};")
 
     curve_cmds = []
     shade_under_cmds = []
