@@ -408,6 +408,7 @@ const Koord3DPage = () => {
               <PresetManager
                 generator="koord3d"
                 currentConfig={config}
+                thumbnailSource={compileData?.png_base64}
                 onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>

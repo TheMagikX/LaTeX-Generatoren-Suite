@@ -139,6 +139,7 @@ const GluckPage = () => {
               <PresetManager
                 generator="glucksrad"
                 currentConfig={config}
+                thumbnailSource={compileData?.png_base64}
                 onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>

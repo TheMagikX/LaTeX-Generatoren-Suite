@@ -1,10 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import base64
+import binascii
 import io
 import urllib.parse
 import zipfile
 from fastapi import APIRouter, HTTPException, Response
+from fastapi.responses import FileResponse
 from pathlib import Path
+from pydantic import BaseModel
 import config
 import json
 from typing import Dict, Any
@@ -12,6 +16,13 @@ from typing import Dict, Any
 router = APIRouter(prefix="/presets", tags=["Presets"])
 
 MAX_PRESET_BYTES = 1 * 1024 * 1024  # 1 MB Maximum pro Preset-JSON
+MAX_THUMBNAIL_BYTES = 2 * 1024 * 1024  # 2 MB Maximum pro Thumbnail-PNG
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+THUMBNAIL_SUFFIX = ".thumb.png"
+
+
+class ThumbnailSaveRequest(BaseModel):
+    thumbnail_base64: str
 
 ALLOWED_GENERATORS: frozenset[str] = frozenset({
     "arbeitsblatt",
@@ -69,6 +80,30 @@ def _resolve_preset_file(generator: str, name: str) -> Path:
 
     return file_path
 
+def _thumbnail_path(preset_file: Path) -> Path:
+    """Das Thumbnail liegt neben <name>.json als <name>.thumb.png."""
+    return preset_file.with_name(preset_file.stem + THUMBNAIL_SUFFIX)
+
+
+def _decode_thumbnail(payload: str) -> bytes:
+    raw = payload.strip()
+    if raw.startswith("data:"):
+        _, sep, raw = raw.partition(",")
+        if not sep:
+            raise HTTPException(status_code=400, detail="Invalid thumbnail data URL")
+    if len(raw) > (MAX_THUMBNAIL_BYTES * 4) // 3 + 8:
+        raise HTTPException(status_code=413, detail="Thumbnail exceeds maximum allowed size (2 MB).")
+    try:
+        data = base64.b64decode(raw, validate=True)
+    except (binascii.Error, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid thumbnail encoding")
+    if len(data) > MAX_THUMBNAIL_BYTES:
+        raise HTTPException(status_code=413, detail="Thumbnail exceeds maximum allowed size (2 MB).")
+    if not data.startswith(PNG_SIGNATURE):
+        raise HTTPException(status_code=400, detail="Thumbnail must be a PNG image")
+    return data
+
+
 @router.get("/{generator}")
 async def list_presets(generator: str):
     base_dir = _validate_generator_name(generator)
@@ -86,6 +121,54 @@ async def list_presets(generator: str):
         except Exception:
             continue
     return presets
+
+@router.get("/{generator}/detailed")
+async def list_presets_detailed(generator: str):
+    """Wie list_presets, aber mit Metadaten (has_thumbnail, updated_at) je Preset."""
+    base_dir = _validate_generator_name(generator)
+    if not base_dir.exists():
+        return {}
+
+    presets = {}
+    for p in sorted(base_dir.rglob("*.json"), key=lambda p: str(p).lower()):
+        try:
+            rel = p.relative_to(base_dir)
+            name = " / ".join(rel.with_suffix("").parts)
+            thumb = _thumbnail_path(p)
+            has_thumb = thumb.is_file()
+            mtime = max(p.stat().st_mtime, thumb.stat().st_mtime) if has_thumb else p.stat().st_mtime
+            presets[name] = {
+                "config": json.loads(p.read_text("utf-8")),
+                "has_thumbnail": has_thumb,
+                "updated_at": int(mtime),
+            }
+        except Exception:
+            continue
+    return presets
+
+
+@router.get("/{generator}/thumbnail")
+async def get_preset_thumbnail(generator: str, name: str):
+    thumb = _thumbnail_path(_resolve_preset_file(generator, name))
+    if not thumb.is_file():
+        raise HTTPException(status_code=404, detail="Thumbnail not found")
+    # Die Client-URL enthaelt ?v=<updated_at>, daher ist langes Caching unkritisch.
+    return FileResponse(
+        thumb,
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=604800, immutable"},
+    )
+
+
+@router.put("/{generator}/thumbnail")
+async def save_preset_thumbnail(generator: str, name: str, body: ThumbnailSaveRequest):
+    file_path = _resolve_preset_file(generator, name)
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Preset not found")
+    data = _decode_thumbnail(body.thumbnail_base64)
+    _thumbnail_path(file_path).write_bytes(data)
+    return {"message": f"Thumbnail for {name} saved successfully"}
+
 
 @router.get("/{generator}/download-folder")
 async def download_preset_folder(generator: str, folder: str = ""):
@@ -155,6 +238,9 @@ async def delete_preset(generator: str, name: str):
     file_path = _resolve_preset_file(generator, name)
     if file_path.exists() and file_path.is_file():
         file_path.unlink()
+        thumb = _thumbnail_path(file_path)
+        if thumb.is_file():
+            thumb.unlink()
         return {"message": f"Preset {name} deleted successfully"}
     else:
         raise HTTPException(status_code=404, detail="Preset not found")

@@ -117,6 +117,7 @@ interface Props {
   pythonError: string | null
   pythonVars: Record<string, unknown> | null
   onConfigChange: (newConfig: ArbeitsblattConfig) => void
+  thumbnailSource?: string
 }
 
 export default function ArbeitsblattTabs({
@@ -126,7 +127,8 @@ export default function ArbeitsblattTabs({
   updateConfig,
   pythonError,
   pythonVars,
-  onConfigChange
+  onConfigChange,
+  thumbnailSource
 }: Props) {
   return (
     <div className="h-full min-h-0 w-full lg:w-[480px] xl:w-[540px] 2xl:w-[620px] shrink-0 min-w-0 flex flex-col gap-4 pr-0 lg:pr-2">
@@ -279,6 +281,7 @@ export default function ArbeitsblattTabs({
           <PresetManager
             generator="arbeitsblatt"
             currentConfig={config}
+            thumbnailSource={thumbnailSource}
             onLoad={onConfigChange}
           />
         </TabContent>
