@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { ChevronDown, ChevronRight, Copy, Trash2, Check, Upload, AlertCircle, Loader2 } from 'lucide-react'
 import { Card, Switch, Button, Field, Input, NumberInput } from '../../../../components/ui'
 import { StyleCopyMenu } from '../StyleCopyMenu'
+import { DatasetCombobox } from '../DatasetCombobox'
 import { COLOR_PRESETS, LINE_STYLE_PRESETS, LINE_WIDTH_OPTIONS } from '../../constantsStylePresets'
 import type { CSVPlot } from '../../typesKoord'
 import { getDatasets, uploadDataset, type DatasetItem } from '../../../../api/client'
@@ -173,23 +174,15 @@ export const KoordCSVCard = ({
           <Field label="CSV-Datensatz">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
-                <select
+                <DatasetCombobox
                   value={currentFilename}
-                  onChange={e => handleSelectDataset(e.target.value)}
-                  className="flex-1 h-9 px-2.5 bg-panel border border-line rounded-lg text-xs text-ink focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer"
-                >
-                  <option value="">-- CSV-Datei auswählen --</option>
-                  {datasets.map(d => (
-                    <option key={d.filename} value={d.filename}>
-                      {d.filename} ({d.rows_count} Zeilen, {(d.size_bytes / 1024).toFixed(1)} KB)
-                    </option>
-                  ))}
-                  {currentFilename && !selectedDataset && (
-                    <option value={currentFilename}>
-                      {currentFilename} (Lokal nicht gefunden)
-                    </option>
-                  )}
-                </select>
+                  datasets={datasets}
+                  loading={loadingDatasets}
+                  uploading={uploading}
+                  isMissingFile={isMissingFile}
+                  onSelect={handleSelectDataset}
+                  onUploadClick={() => fileInputRef.current?.click()}
+                />
 
                 <input
                   ref={fileInputRef}
