@@ -6,7 +6,6 @@ user_data/
 presets/
 docs/
 OLD_FILES/
-/scripts/
 
 # ==============================================================================
 # Environment Variables & Secrets (NEVER commit secrets!)
