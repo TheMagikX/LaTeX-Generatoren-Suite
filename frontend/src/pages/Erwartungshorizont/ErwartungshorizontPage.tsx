@@ -101,6 +101,7 @@ const ErwartungshorizontPage = () => {
               <PresetManager
                 generator="erwartungshorizont"
                 currentConfig={config}
+                thumbnailSource={compileData?.png_base64}
                 onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>

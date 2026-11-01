@@ -88,6 +88,7 @@ export default function BruchPage() {
               <PresetManager
                 generator="bruch"
                 currentConfig={config}
+                thumbnailSource={mainPreview?.png_base64}
                 onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>

@@ -81,6 +81,7 @@ export default function SchaltPage() {
                 <PresetManager
                   generator="schaltplan"
                   currentConfig={config}
+                  thumbnailSource={compileData?.png_base64}
                   onLoad={(c) => setConfig({ ...DEFAULT_CONFIG, ...c })}
                 />
               </TabContent>

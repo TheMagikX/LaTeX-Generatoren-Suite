@@ -295,6 +295,29 @@ export const deletePreset = async (generator: string, name: string): Promise<{ o
   return response.data
 }
 
+export interface PresetItemData<TConfig> {
+  config: TConfig
+  has_thumbnail?: boolean
+  updated_at?: number
+}
+
+export type DetailedPresetMap<TConfig> = Record<string, PresetItemData<TConfig>>
+
+export const listPresetsDetailed = async <TConfig>(generator: string): Promise<DetailedPresetMap<TConfig>> => {
+  const response = await apiClient.get<DetailedPresetMap<TConfig>>(`presets/${generator}/detailed`)
+  return response.data
+}
+
+export const savePresetThumbnail = async (generator: string, name: string, thumbnailBase64: string): Promise<void> => {
+  await apiClient.put(`presets/${generator}/thumbnail`, { thumbnail_base64: thumbnailBase64 }, { params: { name } })
+}
+
+export const getPresetThumbnailUrl = (generator: string, presetName: string, version?: number): string => {
+  const params = new URLSearchParams({ name: presetName })
+  if (version !== undefined) params.set('v', String(version))
+  return `${API_BASE_URL}presets/${generator}/thumbnail?${params.toString()}`
+}
+
 export const downloadPresetFolder = async (generator: string, folder: string = ''): Promise<void> => {
   const response = await apiClient.get(`presets/${generator}/download-folder`, {
     params: { folder },
