@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import { ChevronDown, ChevronRight, Copy, Trash2, Check, Pipette } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { ChevronDown, ChevronRight, Copy, Trash2, Check, Upload, AlertCircle, Loader2 } from 'lucide-react'
 import { Card, Switch, Button, Field, Input, NumberInput } from '../../../../components/ui'
 import { StyleCopyMenu } from '../StyleCopyMenu'
+import { DatasetCombobox } from '../DatasetCombobox'
 import { COLOR_PRESETS, LINE_STYLE_PRESETS, LINE_WIDTH_OPTIONS } from '../../constantsStylePresets'
 import type { CSVPlot } from '../../typesKoord'
+import { getDatasets, uploadDataset, type DatasetItem } from '../../../../api/client'
 
 interface KoordCSVCardProps {
   csv: CSVPlot
@@ -38,6 +41,82 @@ export const KoordCSVCard = ({
   const currentLineStyle = csv.line_style || 'solid'
   const isCustomColor = !COLOR_PRESETS.some(cp => cp.color.toLowerCase() === currentColor.toLowerCase())
 
+  const [datasets, setDatasets] = useState<DatasetItem[]>([])
+  const [loadingDatasets, setLoadingDatasets] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const currentFilename = csv.path ? csv.path.replace(/\\/g, '/').split('/').pop() || '' : ''
+
+  const refreshDatasets = async () => {
+    try {
+      setLoadingDatasets(true)
+      const list = await getDatasets()
+      setDatasets(list)
+    } catch (err) {
+      console.error('Fehler beim Laden der Datensätze:', err)
+    } finally {
+      setLoadingDatasets(false)
+    }
+  }
+
+  useEffect(() => {
+    let active = true
+    getDatasets()
+      .then(list => {
+        if (active) setDatasets(list)
+      })
+      .catch(err => {
+        console.error('Fehler beim Laden der Datensätze:', err)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const selectedDataset = datasets.find(d => d.filename.toLowerCase() === currentFilename.toLowerCase())
+  const hasPath = Boolean(currentFilename)
+  const isMissingFile = hasPath && !selectedDataset && !loadingDatasets
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setErrorMessage(null)
+    setUploading(true)
+    try {
+      const res = await uploadDataset(file)
+      await refreshDatasets()
+      onUpdate('path', res.dataset.filename)
+      if (!csv.xcol && res.dataset.columns.length > 0) {
+        onUpdate('xcol', res.dataset.columns[0])
+      }
+      if (!csv.ycol && res.dataset.columns.length > 1) {
+        onUpdate('ycol', res.dataset.columns[1])
+      }
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Upload fehlgeschlagen.'
+      setErrorMessage(msg)
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleSelectDataset = (val: string) => {
+    onUpdate('path', val)
+    setErrorMessage(null)
+    const match = datasets.find(d => d.filename.toLowerCase() === val.toLowerCase())
+    if (match) {
+      if (!csv.xcol && match.columns.length > 0) {
+        onUpdate('xcol', match.columns[0])
+      }
+      if (!csv.ycol && match.columns.length > 1) {
+        onUpdate('ycol', match.columns[1])
+      }
+    }
+  }
+
   return (
     <Card className="border-line bg-canvas/40 overflow-hidden transition-all hover:border-rim">
       <div
@@ -57,7 +136,8 @@ export const KoordCSVCard = ({
             <span className="text-xs font-bold text-ink">CSV-Plot {index + 1}</span>
             {!expanded && (
               <div className="flex items-center gap-2">
-                <span className="text-metadata truncate max-w-[150px]">{csv.path || '(kein Pfad)'}</span>
+                <span className="text-metadata truncate max-w-[150px]">{currentFilename || '(keine CSV)'}</span>
+                {isMissingFile && <span title="Datei fehlt im System"><AlertCircle size={12} className="text-amber-500 shrink-0" /></span>}
                 {(csv.xcol || csv.ycol) && (
                   <span className="text-metadata">
                     x: {csv.xcol || '-'} / y: {csv.ycol || '-'}
@@ -90,14 +170,84 @@ export const KoordCSVCard = ({
 
       {expanded && (
         <div className="px-4 pb-4 border-t border-line/50 space-y-4 pt-4">
-          {/* 1. Dateipfad */}
-          <Field label="Dateipfad">
-            <Input
-              value={csv.path}
-              onChange={e => onUpdate('path', e.target.value)}
-              className="h-9 text-xs font-mono"
-              placeholder="pfad/zu/daten.csv"
-            />
+          {/* 1. Dateiauswahl & In-Place Upload */}
+          <Field label="CSV-Datensatz">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <DatasetCombobox
+                  value={currentFilename}
+                  datasets={datasets}
+                  loading={loadingDatasets}
+                  uploading={uploading}
+                  isMissingFile={isMissingFile}
+                  onSelect={handleSelectDataset}
+                  onUploadClick={() => fileInputRef.current?.click()}
+                />
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
+
+                <Button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="h-9 px-3 bg-primary text-white hover:bg-primary-hover flex items-center gap-1.5 text-xs shrink-0 rounded-lg shadow-xs"
+                  title="Neue CSV-Datei hochladen"
+                >
+                  {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                  <span>{uploading ? 'Lädt...' : 'Upload'}</span>
+                </Button>
+              </div>
+
+              {/* Warnung bei fehlender Datei aus Preset */}
+              {isMissingFile && (
+                <div className="flex items-center gap-2 p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-600 dark:text-amber-400">
+                  <AlertCircle size={15} className="shrink-0" />
+                  <span>Die Datei <strong>{currentFilename}</strong> wurde noch nicht hochgeladen. Bitte per Upload hinzufügen.</span>
+                </div>
+              )}
+
+              {/* Fehlermeldung bei ungültigem Upload */}
+              {errorMessage && (
+                <div className="flex items-center gap-2 p-2 bg-red-500/10 border border-red-500/30 rounded-lg text-xs text-red-600 dark:text-red-400">
+                  <AlertCircle size={15} className="shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
+              {/* Erkannte Spalten als Schnellauswahl-Pills */}
+              {selectedDataset && selectedDataset.columns.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs text-metadata">
+                  <span className="font-medium text-ink">Erkannte Spalten:</span>
+                  {selectedDataset.columns.map(col => (
+                    <div key={col} className="inline-flex items-center gap-1 bg-raised border border-line rounded px-1.5 py-0.5 text-[11px]">
+                      <span className="font-mono text-ink font-semibold">{col}</span>
+                      <button
+                        type="button"
+                        onClick={() => onUpdate('xcol', col)}
+                        className={`px-1 rounded text-[10px] transition-colors cursor-pointer ${csv.xcol === col ? 'bg-primary text-white font-bold' : 'hover:bg-primary/20 text-ghost'}`}
+                        title={`Als X-Spalte setzen`}
+                      >
+                        X
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onUpdate('ycol', col)}
+                        className={`px-1 rounded text-[10px] transition-colors cursor-pointer ${csv.ycol === col ? 'bg-primary text-white font-bold' : 'hover:bg-primary/20 text-ghost'}`}
+                        title={`Als Y-Spalte setzen`}
+                      >
+                        Y
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </Field>
 
           {/* 2. CSV-Trenner, Titel X-Spalte und Titel Y-Spalte in EINER Zeile */}
@@ -158,103 +308,88 @@ export const KoordCSVCard = ({
               <label
                 className={`h-6 px-1.5 rounded-lg border flex items-center gap-1.5 cursor-pointer transition-all ml-0.5 ${
                   isCustomColor
-                    ? 'border-primary bg-primary/20 ring-2 ring-primary/40 text-primary shadow-xs'
-                    : 'border-line hover:border-rim bg-panel/90 text-ghost hover:text-ink'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-line hover:border-rim bg-panel text-ghost'
                 }`}
-                title={`Eigene Farbe wählen (Farbpipette, aktuell: ${currentColor})`}
+                title="Eigene Farbe wählen"
               >
-                <Pipette size={12} className={isCustomColor ? 'text-primary' : 'text-muted'} />
-                <span
-                  className="w-3 h-3 rounded-full border border-black/20 shrink-0 shadow-2xs"
-                  style={{ backgroundColor: currentColor }}
-                />
                 <input
                   type="color"
-                  value={currentColor.startsWith('#') ? currentColor : '#1e293b'}
+                  value={currentColor}
                   onChange={e => onUpdate('color', e.target.value)}
                   className="sr-only"
                 />
+                <span
+                  className="w-3.5 h-3.5 rounded-full border border-black/20 shrink-0 shadow-2xs"
+                  style={{ backgroundColor: currentColor }}
+                />
+                <span className="text-[10px] font-mono font-medium uppercase">
+                  {currentColor}
+                </span>
               </label>
             </div>
 
-            <div className="h-4 w-px bg-line/60 hidden sm:block" />
-
             {/* Linienstärke */}
-            <div>
-              <select
-                value={currentLineWidth}
-                onChange={e => onUpdate('line_width', e.target.value)}
-                className="px-2.5 py-1 bg-panel border border-line rounded-lg text-xs text-ink focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer h-7"
-                title="Linienstärke"
-              >
-                {LINE_WIDTH_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+            <div className="flex items-center gap-1 bg-panel p-1 rounded-lg border border-line">
+              {LINE_WIDTH_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => onUpdate('line_width', opt.value)}
+                  className={`px-2 py-0.5 text-xs rounded transition-all cursor-pointer ${
+                    currentLineWidth === opt.value
+                      ? 'bg-raised text-ink font-semibold shadow-2xs'
+                      : 'text-ghost hover:text-ink'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
 
-            <div className="h-4 w-px bg-line/60 hidden sm:block" />
-
             {/* Linienstil */}
-            <div className="flex items-center gap-1">
-              {LINE_STYLE_PRESETS.map(lsp => {
-                const isActive = currentLineStyle === lsp.value
-                return (
-                  <button
-                    key={lsp.id}
-                    type="button"
-                    onClick={() => onUpdate('line_style', lsp.value)}
-                    className={`h-7 px-2.5 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
-                      isActive
-                        ? 'border-primary ring-2 ring-primary/40 bg-primary/20 text-primary shadow-xs'
-                        : 'border-line/70 hover:border-rim bg-panel/70 text-muted hover:text-ink'
-                    }`}
-                    title={lsp.label}
-                  >
-                    <svg width="26" height="6" viewBox="0 0 26 6" className="overflow-visible">
-                      <line
-                        x1="1"
-                        y1="3"
-                        x2="25"
-                        y2="3"
-                        stroke="currentColor"
-                        strokeWidth={isActive ? '2.5' : '1.8'}
-                        strokeDasharray={lsp.dashArray}
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </button>
-                )
-              })}
+            <div className="flex items-center gap-1 bg-panel p-1 rounded-lg border border-line">
+              {LINE_STYLE_PRESETS.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => onUpdate('line_style', opt.value)}
+                  className={`px-2 py-0.5 text-xs rounded transition-all cursor-pointer ${
+                    currentLineStyle === opt.value
+                      ? 'bg-raised text-ink font-semibold shadow-2xs'
+                      : 'text-ghost hover:text-ink'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* 4. Optionen & Punkte-Darstellung */}
-          <div className="space-y-3 pt-1">
-            <div className="grid grid-cols-2 gap-4">
-              <Switch checked={csv.read_comma} onChange={(v: boolean) => onUpdate('read_comma', v)} label="Dezimal-Komma" description="Komma als Dezimaltrenner interpretieren" />
-              <Switch checked={csv.only_marks} onChange={(v: boolean) => onUpdate('only_marks', v)} label="Nur Punkte anzeigen" description="Keine Verbindungslinie zeichnen" />
+          {/* 4. Punkte/Marker & Optionen */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-ink">Nur Datenpunkte zeichnen (Scatter Plot / keine Linie)</span>
+              <Switch checked={csv.only_marks} onChange={(v: boolean) => onUpdate('only_marks', v)} />
             </div>
 
             {csv.only_marks && (
-              <div className="grid grid-cols-3 gap-3 bg-raised/20 p-3 rounded-xl border border-line/40">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-raised/20 rounded-xl border border-line/40">
                 <Field label="Marker-Symbol">
                   <select
                     value={csv.marker_symbol}
                     onChange={e => onUpdate('marker_symbol', e.target.value)}
-                    className="w-full h-8 px-2 bg-panel border border-line rounded-md text-xs text-ink"
+                    className="w-full h-8 px-2 bg-panel border border-line rounded-lg text-xs text-ink focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer"
                   >
-                    <option value="*">Stern / Punkt (*)</option>
+                    <option value="*">Stern (*)</option>
+                    <option value="o">Kreis (o)</option>
                     <option value="x">Kreuz (x)</option>
                     <option value="+">Plus (+)</option>
-                    <option value="o">Kreis (o)</option>
                     <option value="square">Quadrat</option>
                     <option value="triangle">Dreieck</option>
                   </select>
                 </Field>
-                <Field label="Marker-Größe">
+                <Field label="Marker-Größe (pt)">
                   <NumberInput
                     step="0.5"
                     min="0.5"

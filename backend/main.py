@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.responses import JSONResponse
-from api import compile, generators, presets, ai, settings
+from api import compile, generators, presets, ai, settings, datasets
 import config
 
 logger = logging.getLogger("generator_suite")
@@ -115,6 +115,7 @@ app.include_router(generators.router, prefix="/api")
 app.include_router(presets.router, prefix="/api")
 app.include_router(ai.router, prefix="/api")
 app.include_router(settings.router, prefix="/api")
+app.include_router(datasets.router, prefix="/api")
 
 @app.get("/api/system/info")
 async def get_system_info():

@@ -14,6 +14,8 @@ import argparse
 import io
 import json
 import os
+import re
+import shutil
 import pathlib
 import subprocess
 import sys
@@ -146,7 +148,16 @@ def compile_latex_for_thumbnail(latex: str, engine: str = "xelatex") -> bytes:
         fonts_path = config.FONTS_DIR.as_posix()
         custom_latex_path = config.CUSTOM_LATEX_DIR.as_posix()
         sep = ";" if os.name == "nt" else ":"
-        env["TEXINPUTS"] = f".{sep}{latex_files_path}{sep}{custom_latex_path}{sep}{fonts_path}{sep}{sep}"
+        datasets_path = config.DATASETS_DIR.as_posix()
+        env["TEXINPUTS"] = f".{sep}{latex_files_path}{sep}{custom_latex_path}{sep}{datasets_path}{sep}{fonts_path}{sep}{sep}"
+        if config.DATASETS_DIR.is_dir():
+            for csv_name in re.findall(r"\{([^{}\\\s]+\.csv)\}", latex, re.IGNORECASE):
+                src_csv = (config.DATASETS_DIR / csv_name).resolve()
+                if config.is_within_datasets_dir(src_csv) and src_csv.is_file():
+                    try:
+                        shutil.copy2(src_csv, os.path.join(tmpdir, csv_name))
+                    except Exception:
+                        pass
         env["TTFONTS"] = f".{sep}{fonts_path}{sep}{sep}"
         env["OPENTYPEFONTS"] = f".{sep}{fonts_path}{sep}{sep}"
         env["OSFONTDIR"] = f".{sep}{fonts_path}{sep}{sep}"
