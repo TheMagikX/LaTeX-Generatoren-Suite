@@ -106,6 +106,7 @@ const OptikPage = () => {
               <PresetManager
                 generator="optik"
                 currentConfig={config}
+                thumbnailSource={compileData?.png_base64}
                 onLoad={loaded => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>

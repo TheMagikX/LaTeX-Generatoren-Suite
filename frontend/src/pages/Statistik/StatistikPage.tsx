@@ -166,6 +166,7 @@ const StatistikPage = () => {
               <PresetManager
                 generator="statistik"
                 currentConfig={config}
+                thumbnailSource={compileData?.png_base64}
                 onLoad={loaded => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>

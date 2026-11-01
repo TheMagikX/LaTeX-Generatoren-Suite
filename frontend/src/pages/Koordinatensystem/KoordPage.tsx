@@ -130,6 +130,7 @@ const KoordPage = () => {
                 <PresetManager
                   generator="koord"
                   currentConfig={config}
+                  thumbnailSource={compileData?.png_base64}
                   onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
                 />
               </div>

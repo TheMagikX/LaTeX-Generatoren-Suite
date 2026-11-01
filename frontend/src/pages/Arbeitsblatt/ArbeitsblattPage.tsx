@@ -123,6 +123,7 @@ export default function ArbeitsblattPage() {
           pythonError={pythonError}
           pythonVars={pythonVars}
           onConfigChange={(newConfig) => setConfig({ ...DEFAULT_CONFIG, ...newConfig })}
+          thumbnailSource={compileTasks?.png_base64}
         />
 
         <ArbeitsblattPreview
