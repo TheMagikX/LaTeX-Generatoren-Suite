@@ -40,6 +40,7 @@ backend/latex_files/TikZ.local.tex
 .agents/
 .claude/
 .gemini/
+skills/
 .geminiignore
 .antigravity/
 AGENTS.md
