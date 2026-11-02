@@ -15,6 +15,7 @@ import {
   Copy,
   Check,
   Clock,
+  MousePointerClick,
 } from 'lucide-react'
 import { useUpdateCheck } from '../../../hooks/useUpdateCheck'
 
@@ -246,32 +247,81 @@ export function UpdateSection() {
             )}
 
             {/* Update Instructions */}
-            <div className="space-y-2.5 pt-1">
+            <div className="space-y-3 pt-1">
               <div className="text-xs font-semibold text-ink flex items-center gap-1.5">
-                <Terminal size={14} className="text-primary" />
-                <span>Anleitung zum Aktualisieren</span>
+                <MousePointerClick size={14} className="text-primary" />
+                <span>Empfohlen: 1-Klick-Aktualisierung (Doppelklick im Projektordner)</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* Git Method */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                {/* Windows 1-Click */}
                 <div className="bg-panel border border-line rounded-lg p-3 flex flex-col justify-between gap-2">
-                  <div className="text-xs font-medium text-ink">Lokale Installation (Git):</div>
+                  <div className="text-xs font-medium text-ink flex items-center justify-between">
+                    <span>Windows (Doppelklick):</span>
+                    <span className="text-[10px] text-muted font-mono">update.bat</span>
+                  </div>
                   <div className="flex items-center justify-between gap-2 bg-canvas/80 px-2.5 py-1.5 rounded font-mono text-[11px] text-muted border border-line">
-                    <code className="truncate">git pull && .\start.ps1</code>
+                    <code className="truncate">.\update.bat</code>
                     <button
                       type="button"
-                      onClick={() => handleCopy('git pull && .\\start.ps1', 'git')}
+                      onClick={() => handleCopy('.\\update.bat', 'win-bat')}
                       title="Befehl kopieren"
                       className="p-1 text-muted hover:text-ink transition-colors"
                     >
-                      {copiedKey === 'git' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                      {copiedKey === 'win-bat' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
                     </button>
                   </div>
                 </div>
 
+                {/* macOS 1-Click */}
+                <div className="bg-panel border border-line rounded-lg p-3 flex flex-col justify-between gap-2">
+                  <div className="text-xs font-medium text-ink flex items-center justify-between">
+                    <span>macOS (Doppelklick):</span>
+                    <span className="text-[10px] text-muted font-mono">update.command</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 bg-canvas/80 px-2.5 py-1.5 rounded font-mono text-[11px] text-muted border border-line">
+                    <code className="truncate">./update.command</code>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy('./update.command', 'mac-cmd')}
+                      title="Befehl kopieren"
+                      className="p-1 text-muted hover:text-ink transition-colors"
+                    >
+                      {copiedKey === 'mac-cmd' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Linux 1-Click */}
+                <div className="bg-panel border border-line rounded-lg p-3 flex flex-col justify-between gap-2">
+                  <div className="text-xs font-medium text-ink flex items-center justify-between">
+                    <span>Linux (Terminal / Shell):</span>
+                    <span className="text-[10px] text-muted font-mono">update.sh</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 bg-canvas/80 px-2.5 py-1.5 rounded font-mono text-[11px] text-muted border border-line">
+                    <code className="truncate">./update.sh</code>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy('./update.sh', 'linux-sh')}
+                      title="Befehl kopieren"
+                      className="p-1 text-muted hover:text-ink transition-colors"
+                    >
+                      {copiedKey === 'linux-sh' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Manual Terminal Commands */}
+              <div className="text-xs font-semibold text-ink flex items-center gap-1.5 pt-2">
+                <Terminal size={14} className="text-primary" />
+                <span>Alternativ: Manuelle Terminal-Befehle</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Docker Method */}
                 <div className="bg-panel border border-line rounded-lg p-3 flex flex-col justify-between gap-2">
-                  <div className="text-xs font-medium text-ink">Docker-Container:</div>
+                  <div className="text-xs font-medium text-ink">Docker-Container (Docker Hub Image):</div>
                   <div className="flex items-center justify-between gap-2 bg-canvas/80 px-2.5 py-1.5 rounded font-mono text-[11px] text-muted border border-line">
                     <code className="truncate">docker compose pull && docker compose up -d</code>
                     <button
@@ -281,6 +331,22 @@ export function UpdateSection() {
                       className="p-1 text-muted hover:text-ink transition-colors"
                     >
                       {copiedKey === 'docker' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Git Method */}
+                <div className="bg-panel border border-line rounded-lg p-3 flex flex-col justify-between gap-2">
+                  <div className="text-xs font-medium text-ink">Lokale Installation (Git & Start):</div>
+                  <div className="flex items-center justify-between gap-2 bg-canvas/80 px-2.5 py-1.5 rounded font-mono text-[11px] text-muted border border-line">
+                    <code className="truncate">git pull && .\start.ps1</code>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy('git pull && .\\start.ps1', 'git')}
+                      title="Befehl kopieren"
+                      className="p-1 text-muted hover:text-ink transition-colors"
+                    >
+                      {copiedKey === 'git' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
                     </button>
                   </div>
                 </div>

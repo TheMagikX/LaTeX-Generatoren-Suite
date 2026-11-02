@@ -194,11 +194,14 @@ Beim ersten Aufruf lädt Docker das schlanke Basis-Image herunter und baut Front
 #### Nützliche Docker-Befehle
 | Aktion | Befehl |
 | :--- | :--- |
+| **System-Update (Doppelklick)** | `update.bat` (Windows) / `update.command` (macOS) / `./update.sh` (Linux) |
+| **Aktualisieren (Docker Hub)** | `docker compose pull && docker compose up -d` |
 | **Logs in Echtzeit ansehen** | `docker compose logs -f` |
 | **Status der Container prüfen** | `docker compose ps` |
 | **Container stoppen** | `docker compose down` |
 | **Neu starten** | `docker compose restart` |
-| **Nach Updates neu bauen** | `docker compose up -d --build` |
+| **Nach Updates neu bauen (Quellcode)** | `docker compose up -d --build` |
+| **Alte Docker-Images bereinigen** | `docker image prune -f` |
 
 ---
 
