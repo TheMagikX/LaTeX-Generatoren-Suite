@@ -23,7 +23,7 @@ const calculateTriangleHeights = (cfg: Config): TriangleHeights => {
   let a = cfg.construction.a
   let b = cfg.construction.b
   const c = cfg.construction.c
-  let area = 0
+  let area: number
 
   if (mode === 'SSS') {
     if (a <= 0 || b <= 0 || c <= 0 || a + b <= c || a + c <= b || b + c <= a) return {}

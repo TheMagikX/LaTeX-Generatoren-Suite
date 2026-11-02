@@ -46,7 +46,7 @@ export const SchaltTabNodes: React.FC<SchaltTabNodesProps> = ({ config, setConfi
 
     for (let r = 0; r < grid.rows; r++) {
       for (let c = 0; c < grid.cols; c++) {
-        let name = ''
+        let name: string
         while (true) {
           const suffix = suffixIdx === 0 ? '' : (suffixIdx + 1).toString()
           name = alphabet[charIdx] + suffix
