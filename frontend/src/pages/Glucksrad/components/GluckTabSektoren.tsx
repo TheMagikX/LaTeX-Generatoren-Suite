@@ -2,15 +2,21 @@
 
 import { Plus, Trash2, Info } from 'lucide-react'
 import { Button, Input, Label, Card, Slider, NumberInput, ReorderList } from '../../../components/ui'
-import type { ColorSectorUpdater, GluckConfig, GluckSetter } from '../typesGluck'
+import type { ColorSectorConfig, ColorSectorUpdater, GluckConfig, GluckSetter } from '../typesGluck'
 import { PALETTES } from '../constantsGluck'
 import { SecHeadComponent } from '../utilsGluck'
 
+const createSectorId = () =>
+  typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `sector-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`
+
 const sectorKeyMap = new WeakMap<object, string>()
-const getSectorKey = (s: object) => {
+const getSectorKey = (s: ColorSectorConfig) => {
+  if (s.id) return s.id
   let key = sectorKeyMap.get(s)
   if (!key) {
-    key = Math.random().toString(36).slice(2)
+    key = createSectorId()
     sectorKeyMap.set(s, key)
   }
   return key
