@@ -260,8 +260,8 @@ export const computeRopeCanvasPath = (
     const dy = by - ay
     const d = Math.hypot(dx, dy)
 
-    let thetaA = 0
-    let thetaB = 0
+    let thetaA: number
+    let thetaB: number
 
     if (d < 1e-9) {
       thetaA = 0

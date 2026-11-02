@@ -64,7 +64,7 @@ export const KoordPlotCard = ({
     const eps = 0.001
     const m_expr = `(((${func.replace(/x/g, `(${x0}+${eps})`)}) - (${func.replace(/x/g, `(${x0}-${eps})`)}))/(2*${eps}))`
     const y0_expr = `(${func.replace(/x/g, `(${x0})`)})`
-    let finalFunc = ""
+    let finalFunc: string
     if (t.is_normal) {
       finalFunc = `(-1/((${m_expr}) + 0.0000001)) * (x - ${x0}) + ${y0_expr}`
     } else {
