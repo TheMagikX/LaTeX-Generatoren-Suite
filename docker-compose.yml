@@ -1,5 +1,6 @@
 services:
   generator-suite:
+    image: themagik/latex-generatoren-suite:latest
     build:
       context: .
       dockerfile: Dockerfile

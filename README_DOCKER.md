@@ -12,12 +12,15 @@ Diese Anleitung beschreibt das Erstellen und Ausführen der Generator-Suite als 
 
 ## 🚀 Schnellstart
 
-### 1. Container bauen und starten
+### 1. Container starten (via Docker Hub oder lokalem Build)
+
 Im Hauptverzeichnis des Projekts im Terminal ausführen:
 
 ```bash
-docker compose up -d --build
+# Lädt das vorkompilierte Multi-Arch-Image blitzschnell von Docker Hub herunter und startet:
+docker compose pull && docker compose up -d
 ```
+*(Alternativ: Wer den Code selbst anpassen möchte, kann das Image weiterhin mit `docker compose up -d --build` lokal bauen.)*
 
 ### 2. Im Browser aufrufen
 - **Lokal auf dem Rechner:** [http://localhost:8000](http://localhost:8000) (oder [http://127.0.0.1:8000](http://127.0.0.1:8000))
@@ -28,6 +31,18 @@ docker compose up -d --build
 ```bash
 docker compose down
 ```
+
+---
+
+## 🔄 Updates per Doppelklick
+
+Die Generator-Suite bringt plattformübergreifende Starter-Dateien mit, die das Ziehen von Updates, den Container-Neustart und die Bereinigung alter Images vollautomatisch per einfachem Doppelklick erledigen:
+
+* **Windows:** Doppelklick auf `update.bat`
+* **macOS:** Doppelklick auf `update.command` (öffnet automatisch das Mac-Terminal)
+* **Linux:** Ausführen von `./update.sh`
+
+Die Skripte führen im Hintergrund `git pull`, `docker compose pull`, `docker compose up -d` und ein automatisches `docker image prune -f` durch, damit kein ungenutzter Festplattenspeicher belegt bleibt.
 
 ---
 
@@ -71,6 +86,8 @@ Falls Port 8000 auf deinem Rechner bereits belegt ist, kannst du den Host-Port e
 | :--- | :--- |
 | **Status anzeigen** | `docker compose ps` |
 | **Logs ansehen (Echtzeit)** | `docker compose logs -f` |
+| **Aktualisieren (Docker Hub)** | `docker compose pull && docker compose up -d` |
 | **Container stoppen** | `docker compose down` |
 | **Neu starten** | `docker compose restart` |
-| **Neu bauen nach Code-Änderungen** | `docker compose up -d --build` |
+| **Neu bauen aus Quellcode** | `docker compose up -d --build` |
+| **Alte Images aufräumen** | `docker image prune -f` |
