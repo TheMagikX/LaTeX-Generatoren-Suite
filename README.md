@@ -2,7 +2,7 @@
 
 > **Die modulare Web-App zur Erstellung professioneller LaTeX-, TikZ- und Unterrichtsmaterialien für Mathematik, Physik und den Schulalltag.**
 
-![Version](https://img.shields.io/badge/Version-5.0.0-blue)
+![Version](https://img.shields.io/badge/Version-5.1.0-blue)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
@@ -33,7 +33,7 @@ Die **Generator-Suite** verbindet eine reaktive, intuitive React-Benutzeroberfl�
 >
 > Seit April 2025 ist -- natürlich auch dank künstlicher Intelligenz -- daraus ein sehr großes Projekt geworden. Die daraus entstandene WebApp benutze ich inzwischen so gut wie jeden Tag, ob damit die Zeit, die in der Entwicklung steckt, schon wieder reingeholt worden ist, sei mal dahingestellt, aber eine Erleichterung beim Erstellen von Darstellungen und vielem weiteren merke ich tagtäglich. Aus diesem Grund habe ich mich dafür entschieden, das Projekt Open Source zu machen. Ich hoffe sehr, dass sich andere finden, die vielleicht einen gewissen Nutzen aus dem Projekt ziehen können und/oder Ideen für eine Weiterentwicklung haben.
 >
-> Zur Transparenz: Ich kann in einem gewissen Umfang coden, code lesen, aber die Komplexität der Suite wäre ohne künstliche Intelligenz sicher nicht möglich gewesen. Manche Sachen sind bestimmt unnötig kompliziert, die Codebase ist aber auch über Monate hinweg gewachsen. Langer Rede, gar kein Sinn: Ich hoffe, ihr könnte damit was anfangen! Viel Spaß. Den Rest übernimmt die KI.
+> Zur Transparenz: Ich kann in einem gewissen Umfang coden, code lesen, aber die Komplexität der Suite wäre ohne künstliche Intelligenz sicher nicht möglich gewesen. Manche Sachen sind bestimmt unnötig kompliziert, die Codebase ist aber auch über Monate hinweg gewachsen. Langer Rede, gar kein Sinn: Ich hoffe, ihr könnt damit was anfangen! Viel Spaß. Den Rest übernimmt die KI.
 
 ---
 
