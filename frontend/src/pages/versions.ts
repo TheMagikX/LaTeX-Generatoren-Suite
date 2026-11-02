@@ -4,12 +4,12 @@ export const APP_VERSION = "5.0.0";
 export const GITHUB_REPO = "TheMagikX/LaTeX-Generatoren-Suite";
 export const REPO_URL = `https://github.com/${GITHUB_REPO}`;
 
-export const PRESET_MANAGER = "5.0.0";
+export const PRESET_MANAGER = "5.1.0";
 export const LATEX_RENDERER = "5.0.0";
 export const FILE_SAVER = "5.0.0";
 
 export const COMPONENT_VERSIONS = {
-    koordinatensystem: "5.0.1",
+    koordinatensystem: "5.1.1",
     koordinatensystem_3d: "5.0.0",
     baumdiagramm: "5.0.0",
     schaltplan: "5.0.0",
