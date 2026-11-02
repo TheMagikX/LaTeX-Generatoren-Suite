@@ -9,7 +9,7 @@ export const LATEX_RENDERER = "5.0.0";
 export const FILE_SAVER = "5.0.0";
 
 export const COMPONENT_VERSIONS = {
-    koordinatensystem: "5.0.0",
+    koordinatensystem: "5.0.1",
     koordinatensystem_3d: "5.0.0",
     baumdiagramm: "5.0.0",
     schaltplan: "5.0.0",
@@ -22,7 +22,7 @@ export const COMPONENT_VERSIONS = {
     zahlenstrahlgenerator: "5.0.0",
     optikgenerator: "5.0.0",
     bruchgenerator: "5.0.0",
-    glucksradgenerator: "5.0.0",
+    glucksradgenerator: "5.0.1",
     sitzplangenerator: "5.0.0",
     strahlenoptik: "5.0.0",
     stellwerttafel: "5.0.0",

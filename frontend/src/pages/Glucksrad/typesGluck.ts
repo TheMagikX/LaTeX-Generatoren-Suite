@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 export interface ColorSectorConfig {
+  id?: string;
   farbe: string;
   haeufigkeit: number;
   label: string;

@@ -22,6 +22,7 @@ export interface TangentConfig {
 }
 
 export interface Plot {
+    id?: string
     show: boolean; func: string
     color: string; line_width: string; line_style: string; custom_style?: string
     settings?: string

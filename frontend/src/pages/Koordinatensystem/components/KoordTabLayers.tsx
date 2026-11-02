@@ -10,11 +10,17 @@ import { KoordPointCard } from './items/KoordPointCard'
 import { KoordNodeCard } from './items/KoordNodeCard'
 import type { Config, Plot, CSVPlot, ParametricPlot, PointItem, NodeItem } from '../typesKoord'
 
+const createPlotId = () =>
+  typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `plot-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`
+
 const plotKeyMap = new WeakMap<object, string>()
-const getPlotKey = (plot: object) => {
+const getPlotKey = (plot: Plot): string => {
+  if (plot.id) return plot.id
   let key = plotKeyMap.get(plot)
   if (!key) {
-    key = 'plot-' + Math.random().toString(36).slice(2)
+    key = createPlotId()
     plotKeyMap.set(plot, key)
   }
   return key
@@ -53,28 +59,37 @@ export const KoordTabLayers = ({
 
   // --- Plot Handlers & Style Copy ---
   const addPlot = (customPlot?: Plot) => {
-    const newPlot = customPlot || {
-      show: true,
-      func: 'x^2',
-      color: copiedStyles.plots?.color || '#1e293b',
-      line_width: copiedStyles.plots?.line_width || 'thick',
-      line_style: copiedStyles.plots?.line_style || 'solid',
-      custom_style: copiedStyles.plots?.custom_style || '',
-      xmin: null,
-      xmax: null,
-      label_text: '',
-      label_pos: 0.6,
-      label_style: 'above, sloped, font=\\small, fill=white, inner sep=1pt',
-      shades: [],
-      betweens: [],
-      slopes: [],
-      tangents: [],
-    }
+    const newPlot: Plot = customPlot
+      ? { ...customPlot, id: customPlot.id || createPlotId() }
+      : {
+          id: createPlotId(),
+          show: true,
+          func: 'x^2',
+          color: copiedStyles.plots?.color || '#1e293b',
+          line_width: copiedStyles.plots?.line_width || 'thick',
+          line_style: copiedStyles.plots?.line_style || 'solid',
+          custom_style: copiedStyles.plots?.custom_style || '',
+          xmin: null,
+          xmax: null,
+          label_text: '',
+          label_pos: 0.6,
+          label_style: 'above, sloped, font=\\small, fill=white, inner sep=1pt',
+          shades: [],
+          betweens: [],
+          slopes: [],
+          tangents: [],
+        }
     updateConfig('plots', [...config.plots, newPlot])
   }
 
   const updatePlot = (i: number, key: keyof Plot, value: unknown) => {
-    const arr = [...config.plots]; arr[i] = { ...arr[i], [key]: value }; updateConfig('plots', arr)
+    const oldPlot = config.plots[i]
+    const id = oldPlot.id || plotKeyMap.get(oldPlot) || createPlotId()
+    const updatedPlot: Plot = { ...oldPlot, [key]: value, id }
+    plotKeyMap.set(updatedPlot, id)
+    const arr = [...config.plots]
+    arr[i] = updatedPlot
+    updateConfig('plots', arr)
   }
 
   const copyPlotStyle = (plot: Plot) => {
@@ -92,24 +107,35 @@ export const KoordTabLayers = ({
   const pastePlotStyle = (i: number) => {
     if (!copiedStyles.plots) return
     const arr = [...config.plots]
-    arr[i] = {
-      ...arr[i],
-      color: copiedStyles.plots.color ?? arr[i].color,
-      line_width: copiedStyles.plots.line_width ?? arr[i].line_width,
-      line_style: copiedStyles.plots.line_style ?? arr[i].line_style,
-      custom_style: copiedStyles.plots.custom_style ?? arr[i].custom_style,
+    const oldPlot = arr[i]
+    const id = oldPlot.id || plotKeyMap.get(oldPlot) || createPlotId()
+    const updatedPlot: Plot = {
+      ...oldPlot,
+      color: copiedStyles.plots.color ?? oldPlot.color,
+      line_width: copiedStyles.plots.line_width ?? oldPlot.line_width,
+      line_style: copiedStyles.plots.line_style ?? oldPlot.line_style,
+      custom_style: copiedStyles.plots.custom_style ?? oldPlot.custom_style,
+      id,
     }
+    plotKeyMap.set(updatedPlot, id)
+    arr[i] = updatedPlot
     updateConfig('plots', arr)
     showToast(`Stil auf Funktion ${i + 1} angewendet`)
   }
   const applyPlotStyleToAll = (sourcePlot: Plot) => {
-    updateConfig('plots', config.plots.map(p => ({
-      ...p,
-      color: sourcePlot.color,
-      line_width: sourcePlot.line_width,
-      line_style: sourcePlot.line_style,
-      custom_style: sourcePlot.custom_style,
-    })))
+    updateConfig('plots', config.plots.map(p => {
+      const id = p.id || plotKeyMap.get(p) || createPlotId()
+      const updated: Plot = {
+        ...p,
+        color: sourcePlot.color,
+        line_width: sourcePlot.line_width,
+        line_style: sourcePlot.line_style,
+        custom_style: sourcePlot.custom_style,
+        id,
+      }
+      plotKeyMap.set(updated, id)
+      return updated
+    }))
     showToast('Stil auf alle Funktionen übertragen')
   }
 
@@ -405,7 +431,13 @@ export const KoordTabLayers = ({
                     expanded={isExpanded(`plots-${i}`)}
                     onToggleExpand={() => toggleExpand(`plots-${i}`)}
                     onUpdate={(key, val) => updatePlot(i, key, val)}
-                    onDuplicate={() => updateConfig('plots', [...config.plots, JSON.parse(JSON.stringify(plot))])}
+                    onDuplicate={() => {
+                    const clone: Plot = {
+                      ...JSON.parse(JSON.stringify(plot)),
+                      id: createPlotId(),
+                    }
+                    updateConfig('plots', [...config.plots, clone])
+                  }}
                     onRemove={() => updateConfig('plots', config.plots.filter((_, idx) => idx !== i))}
                     onAddPlot={addPlot}
                     subTab={plotSubTabs[i] ?? 'label'}

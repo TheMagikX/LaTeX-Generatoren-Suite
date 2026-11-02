@@ -41,16 +41,23 @@ const GluckPage = () => {
 
   const updateConfig: GluckSetter = (key, value) => setConfig(prev => ({ ...prev, [key]: value }))
 
+  const createSectorId = () =>
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `sector-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`
+
   const updateSector: ColorSectorUpdater = (idx, key, value) => {
     const newSectors = [...config.sectors]
-    newSectors[idx] = { ...newSectors[idx], [key]: value }
+    const old = newSectors[idx]
+    const id = old.id || createSectorId()
+    newSectors[idx] = { ...old, [key]: value, id }
     setConfig(prev => ({ ...prev, sectors: newSectors }))
   }
 
   const addSector = () => {
     setConfig(prev => ({
       ...prev,
-      sectors: [...prev.sectors, { farbe: "#9B59B6", haeufigkeit: 1, label: "Neu" }]
+      sectors: [...prev.sectors, { id: createSectorId(), farbe: "#9B59B6", haeufigkeit: 1, label: "Neu" }]
     }))
   }
 
