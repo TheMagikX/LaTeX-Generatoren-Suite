@@ -244,7 +244,7 @@ Falls du die Suite direkt nativ auf deinem Host-System ausführen möchtest:
 3. **App starten:**
    - **Komfortabel:** Doppelklick auf die beiliegende Datei **`run_app.bat`** (startet Backend und Frontend synchron in einem Terminalfenster).
    - **Oder via PowerShell:** `.\start.ps1` ausführen.
-   - Die App öffnet sich automatisch im Browser unter **[http://localhost:6100](http://localhost:6100)** (Backend läuft auf Port 9000).
+   - Die App öffnet sich automatisch im Browser unter **[http://localhost:8000](http://localhost:8000)** (Backend läuft auf Port 9000).
 
 ---
 
@@ -279,9 +279,9 @@ Falls du die Suite direkt nativ auf deinem Host-System ausführen möchtest:
    - **Fenster 2 (Frontend):**
      ```bash
      cd frontend
-     npm run dev -- --port 6100
+     npm run dev
      ```
-   - Öffne anschließend **[http://localhost:6100](http://localhost:6100)** im Browser.
+   - Öffne anschließend **[http://localhost:8000](http://localhost:8000)** im Browser.
 
 ---
 
@@ -308,7 +308,7 @@ Falls du die Suite direkt nativ auf deinem Host-System ausführen möchtest:
    cd ..
    ```
 3. **Starten:**
-   Starte Backend (`python -m uvicorn main:app --host 127.0.0.1 --port 9000`) und Frontend (`npm run dev -- --port 6100`) in zwei Terminals und rufe `http://localhost:6100` auf.
+   Starte Backend (`python -m uvicorn main:app --host 127.0.0.1 --port 9000`) und Frontend (`npm run dev`) in zwei Terminals und rufe `http://localhost:8000` auf.
 
 ---
 
@@ -316,7 +316,7 @@ Falls du die Suite direkt nativ auf deinem Host-System ausführen möchtest:
 
 ```text
 ┌──────────────────────────────────────────────────────────────────┐
-│                   Browser / Frontend (Port 6100 / 8000)          │
+│                   Browser / Frontend (Port 8000)                │
 │   React 19 • TypeScript • Vite 8 • Tailwind CSS 4 • Pyodide WASM │
 └─────────────────────────────────┬────────────────────────────────┘
                                   │  REST API (JSON / HTTP)
@@ -370,7 +370,7 @@ Alle erstellten Generator-Presets sowie benutzerdefinierte TeX-Snippets werden i
 Bei Bedarf kann `.env.example` zu `.env` kopiert werden, um die Ports im Hauptverzeichnis anzupassen:
 ```env
 BACKEND_PORT=9000
-FRONTEND_PORT=6100
+FRONTEND_PORT=8000
 ```
 In `frontend/.env`:
 ```env

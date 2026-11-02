@@ -15,7 +15,7 @@ if (Test-Path $envFile) {
 }
 
 if ($env:BACKEND_PORT)  { $backendPort  = $env:BACKEND_PORT  } else { $backendPort  = "9000" }
-if ($env:FRONTEND_PORT) { $frontendPort = $env:FRONTEND_PORT } else { $frontendPort = "6100" }
+if ($env:FRONTEND_PORT) { $frontendPort = $env:FRONTEND_PORT } else { $frontendPort = "8000" }
 $frontendUrl = "http://localhost:$frontendPort"
 if ($env:SOURCE_CODE_URL) { $repoUrl = $env:SOURCE_CODE_URL } else { $repoUrl = "https://github.com/TheMagikX/LaTeX-Generatoren-Suite" }
 

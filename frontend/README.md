@@ -8,8 +8,8 @@ Dieses Verzeichnis enthält das Web-Frontend der **Generator-Suite** (React 19, 
 # Abhängigkeiten installieren
 npm install
 
-# Entwicklungsserver starten (Standard-Port 6100)
-npm run dev -- --port 6100
+# Entwicklungsserver starten (Standard-Port 8000)
+npm run dev
 
 # Linter ausführen
 npm run lint
