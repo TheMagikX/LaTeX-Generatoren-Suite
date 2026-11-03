@@ -21,12 +21,12 @@ if ($env:SOURCE_CODE_URL) { $repoUrl = $env:SOURCE_CODE_URL } else { $repoUrl = 
 
 # Fixierter Fenstertitel mit Copyright und Lizenz
 try {
-    $Host.UI.RawUI.WindowTitle = "LaTeX-Generatoren-Suite v5.1.0 | Copyright (C) 2026 C. Meyer | GNU AGPLv3 (AGPL-3.0-or-later)"
+    $Host.UI.RawUI.WindowTitle = "LaTeX-Generatoren-Suite v5.1.1 | Copyright (C) 2026 C. Meyer | GNU AGPLv3 (AGPL-3.0-or-later)"
 } catch {}
 
 Write-Host ""
 Write-Host "================================================================================" -ForegroundColor Cyan
-Write-Host "  LaTeX-Generatoren-Suite v5.1.0" -ForegroundColor Cyan
+Write-Host "  LaTeX-Generatoren-Suite v5.1.1" -ForegroundColor Cyan
 Write-Host "  Copyright (C) 2026 C. Meyer" -ForegroundColor White
 Write-Host "  License: GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)" -ForegroundColor White
 Write-Host ""
