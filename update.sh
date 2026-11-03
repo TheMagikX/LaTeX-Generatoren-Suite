@@ -19,25 +19,29 @@ echo -e "${CYAN}================================================================
 echo ""
 
 # 1. Git-Prüfung
-if ! command -v git >/dev/null 2>&1; then
-    echo -e "${RED}[FEHLER] Git wurde nicht auf diesem Computer gefunden.${NC}"
-    echo "Bitte stelle sicher, dass Git installiert ist (z. B. sudo apt install git)."
-    echo ""
-    read -n 1 -s -r -p "Drücke eine beliebige Taste zum Beenden..."
-    echo ""
-    exit 1
-fi
+if [ -d ".git" ]; then
+    if ! command -v git >/dev/null 2>&1; then
+        echo -e "${RED}[FEHLER] Git wurde nicht auf diesem Computer gefunden.${NC}"
+        echo "Bitte stelle sicher, dass Git installiert ist (z. B. sudo apt install git)."
+        echo ""
+        read -n 1 -s -r -p "Drücke eine beliebige Taste zum Beenden..."
+        echo ""
+        exit 1
+    fi
 
-echo -e "${YELLOW}[1/3] Prüfe auf Aktualisierungen im GitHub-Repository...${NC}"
-if ! git pull; then
-    echo ""
-    echo -e "${RED}[WARNUNG] 'git pull' konnte nicht fehlerfrei durchgeführt werden.${NC}"
-    echo "Möglicherweise hast du lokale Änderungen vorgenommen."
-    echo "Deine Presets und Vorlagen in 'user_data/' sind davon unberührt."
-    echo ""
-    read -n 1 -s -r -p "Drücke eine beliebige Taste zum Beenden..."
-    echo ""
-    exit 1
+    echo -e "${YELLOW}[1/3] Prüfe auf Aktualisierungen im GitHub-Repository...${NC}"
+    if ! git pull; then
+        echo ""
+        echo -e "${RED}[WARNUNG] 'git pull' konnte nicht fehlerfrei durchgeführt werden.${NC}"
+        echo "Möglicherweise hast du lokale Änderungen vorgenommen."
+        echo "Deine Presets und Vorlagen in 'user_data/' sind davon unberührt."
+        echo ""
+        read -n 1 -s -r -p "Drücke eine beliebige Taste zum Beenden..."
+        echo ""
+        exit 1
+    fi
+else
+    echo -e "${GREEN}[INFO] ZIP-Download erkannt (kein .git-Verzeichnis). Quellcode-Update übersprungen.${NC}"
 fi
 
 echo ""
