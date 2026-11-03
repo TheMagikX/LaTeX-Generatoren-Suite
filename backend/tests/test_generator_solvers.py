@@ -126,3 +126,27 @@ def test_sitzplan_solver_allocation():
     assert res.assignment["Mia"] in [2, 3]
     # Jonas should be in row 0, seats 0 or 1
     assert res.assignment["Jonas"] in [0, 1]
+
+
+def test_sitzplan_dislikes_symmetric():
+    # Felix dislikes Tom (one-way in config), but solver and report must treat it symmetrically
+    req = SitzplanRequest(
+        students=[
+            StudentConfig(name="Felix", dislikes_neighbors=["Tom"]),
+            StudentConfig(name="Tom", dislikes_neighbors=[]),
+            StudentConfig(name="Anna", dislikes_neighbors=[]),
+        ],
+        layout=LayoutConfig(rows=1, cols=3, front_rows=1),
+        dislike_distance=1,
+        hard_rules=HardRuleConfig()
+    )
+    res = solve_sitzplan(req)
+    assert res is not None
+    assert len(res.assignment) == 3
+    pos_felix = res.assignment["Felix"]
+    pos_tom = res.assignment["Tom"]
+    # In 1x3 row, distance must be > 1 (so distance >= 2)
+    assert abs(pos_felix - pos_tom) > 1
+    # Check report: neither violates dislike
+    assert res.per_student_report["Felix"]["violates_dislike"] is False
+    assert res.per_student_report["Tom"]["violates_dislike"] is False

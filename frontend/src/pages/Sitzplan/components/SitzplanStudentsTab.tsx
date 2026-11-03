@@ -97,35 +97,73 @@ const SitzplanStudentsTab: React.FC<SitzplanStudentsTabProps> = ({
 
   const addDislike = (idx: number, targetName: string) => {
     if (!targetName) return
-    const updated = [...students]
-    const currentDislikes = updated[idx].dislikes_neighbors || []
-    if (!currentDislikes.includes(targetName)) {
-      updated[idx] = {
-        ...updated[idx],
-        dislikes_neighbors: [...currentDislikes, targetName]
+    const currentName = students[idx].name
+    const updated = students.map((st, i) => {
+      if (i === idx) {
+        const currentDislikes = st.dislikes_neighbors || []
+        const newDislikes = currentDislikes.includes(targetName) ? currentDislikes : [...currentDislikes, targetName]
+        const newWants = (st.wants_neighbors || []).filter(n => n.toLowerCase() !== targetName.toLowerCase())
+        return {
+          ...st,
+          dislikes_neighbors: newDislikes,
+          wants_neighbors: newWants,
+        }
       }
-      setStudents(updated)
-    }
+      if (currentName && st.name.toLowerCase() === targetName.toLowerCase()) {
+        const currentDislikes = st.dislikes_neighbors || []
+        const newDislikes = currentDislikes.includes(currentName) ? currentDislikes : [...currentDislikes, currentName]
+        const newWants = (st.wants_neighbors || []).filter(n => n.toLowerCase() !== currentName.toLowerCase())
+        return {
+          ...st,
+          dislikes_neighbors: newDislikes,
+          wants_neighbors: newWants,
+        }
+      }
+      return st
+    })
+    setStudents(updated)
   }
 
   const removeDislike = (idx: number, targetName: string) => {
-    const updated = [...students]
-    updated[idx] = {
-      ...updated[idx],
-      dislikes_neighbors: (updated[idx].dislikes_neighbors || []).filter(n => n !== targetName)
-    }
+    const currentName = students[idx].name
+    const updated = students.map((st, i) => {
+      if (i === idx) {
+        return {
+          ...st,
+          dislikes_neighbors: (st.dislikes_neighbors || []).filter(
+            n => n.toLowerCase() !== targetName.toLowerCase()
+          ),
+        }
+      }
+      if (currentName && st.name.toLowerCase() === targetName.toLowerCase()) {
+        return {
+          ...st,
+          dislikes_neighbors: (st.dislikes_neighbors || []).filter(
+            n => n.toLowerCase() !== currentName.toLowerCase()
+          ),
+        }
+      }
+      return st
+    })
     setStudents(updated)
   }
 
   const availableWishCandidates = (student: Student) => {
     return students.filter(
-      other => other.name && other.name !== student.name && !student.wants_neighbors?.includes(other.name)
+      other =>
+        other.name &&
+        other.name !== student.name &&
+        !student.wants_neighbors?.includes(other.name) &&
+        !student.dislikes_neighbors?.includes(other.name)
     )
   }
 
   const availableDislikeCandidates = (student: Student) => {
     return students.filter(
-      other => other.name && other.name !== student.name && !student.dislikes_neighbors?.includes(other.name)
+      other =>
+        other.name &&
+        other.name !== student.name &&
+        !student.dislikes_neighbors?.includes(other.name)
     )
   }
 

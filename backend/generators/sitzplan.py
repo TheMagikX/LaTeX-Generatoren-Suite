@@ -465,9 +465,8 @@ def compute_reports(req: SitzplanRequest, assignment: Dict[str, int], solver_use
         violates_dislike = False
         if p is not None:
             rp, cp_coord = id_to_rc(p, cols)
-            for d_name in s.dislikes_neighbors:
-                if d_name in {st.name: i for i, st in enumerate(students)} and d_name in assignment:
-                    q = assignment[d_name]
+            for other_name, q in assignment.items():
+                if other_name != s.name and frozenset([s.name, other_name]) in forbid_set:
                     rq, cq_coord = id_to_rc(q, cols)
                     if abs(rp - rq) + abs(cp_coord - cq_coord) <= req.dislike_distance:
                         violates_dislike = True
