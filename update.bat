@@ -11,10 +11,16 @@ echo ===========================================================================
 echo.
 
 :: 1. Git-Prüfung
+if not exist ".git" (
+    echo [INFO] Kein Git-Repository gefunden [ZIP-Download erkannt].
+    echo        Ueberspringe Quellcode-Aktualisierung...
+    goto :check_env
+)
+
 where git >nul 2>nul
 if %ERRORLEVEL% neq 0 (
     echo [FEHLER] Git wurde nicht auf diesem Computer gefunden.
-    echo Bitte stelle sicher, dass Git installiert und im Systempfad (PATH) hinterlegt ist.
+    echo Bitte stelle sicher, dass Git installiert und im Systempfad PATH hinterlegt ist.
     echo.
     pause
     exit /b 1
@@ -32,8 +38,9 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
+:check_env
 echo.
-echo [2/3] Erkenne Ausfuehrungsumgebung (Docker vs. Nativ)...
+echo [2/3] Erkenne Ausfuehrungsumgebung [Docker vs. Nativ]...
 
 :: 2. Docker-Prüfung
 where docker >nul 2>nul
@@ -55,7 +62,7 @@ if %ERRORLEVEL% equ 0 (
             docker compose up -d --build
         )
         echo.
-        echo       Raeume alte Docker-Images auf (Speicherplatz freigeben)...
+        echo       Raeume alte Docker-Images auf [Speicherplatz freigeben]...
         docker image prune -f
         goto :success
     )
@@ -77,7 +84,7 @@ if exist "backend\.venv\Scripts\python.exe" (
     goto :success
 )
 
-echo [HINWEIS] Weder eine aktive Docker-Instanz noch ein natives Python-Venv ('backend\.venv') gefunden.
+echo [HINWEIS] Weder eine aktive Docker-Instanz noch ein natives Python-Venv ['backend\.venv'] gefunden.
 echo Der Code wurde via Git erfolgreich aktualisiert.
 
 :success
