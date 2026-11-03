@@ -1,3 +1,5 @@
+name: latex-generatoren-suite
+
 services:
   generator-suite:
     image: themagik/latex-generatoren-suite:latest

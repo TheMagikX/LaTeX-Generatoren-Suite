@@ -55,12 +55,22 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     if docker compose pull; then
         echo ""
         echo "      Starte Container mit neuem Image neu..."
-        docker compose up -d
+        if ! docker compose up -d; then
+            echo ""
+            echo -e "${YELLOW}[INFO] Behebe möglichen Namenskonflikt mit bestehendem Container...${NC}"
+            docker rm -f generator-suite >/dev/null 2>&1
+            docker compose up -d
+        fi
     else
         echo ""
         echo -e "${YELLOW}[HINWEIS] Vorkompiliertes Image auf Docker Hub noch nicht verfügbar.${NC}"
         echo "          Baue Container lokal aus Quellcode neu..."
-        docker compose up -d --build
+        if ! docker compose up -d --build; then
+            echo ""
+            echo -e "${YELLOW}[INFO] Behebe möglichen Namenskonflikt mit bestehendem Container...${NC}"
+            docker rm -f generator-suite >/dev/null 2>&1
+            docker compose up -d --build
+        fi
     fi
     echo ""
     echo "      Räume alte Docker-Images auf (Speicherplatz freigeben)..."

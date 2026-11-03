@@ -54,12 +54,30 @@ if %ERRORLEVEL% equ 0 (
         if %ERRORLEVEL% equ 0 (
             echo.
             echo       Starte Container mit neuem Image neu...
-            docker compose up -d
+            docker compose up -d || (
+                echo.
+                echo [INFO] Behebe moeglichen Namenskonflikt mit bestehendem Container...
+                docker rm -f generator-suite >nul 2>nul
+                docker compose up -d
+            )
         ) else (
             echo.
             echo [HINWEIS] Vorkompiliertes Image auf Docker Hub nicht verfuegbar.
             echo           Baue Container lokal aus Quellcode neu...
-            docker compose up -d --build
+            docker compose up -d --build || (
+                echo.
+                echo [INFO] Behebe moeglichen Namenskonflikt mit bestehendem Container...
+                docker rm -f generator-suite >nul 2>nul
+                docker compose up -d --build
+            )
+        )
+        if errorlevel 1 (
+            echo.
+            echo [FEHLER] Container konnte nicht gestartet werden.
+            echo Bitte stelle sicher, dass Docker Desktop fehlerfrei laeuft.
+            echo.
+            pause
+            exit /b 1
         )
         echo.
         echo       Raeume alte Docker-Images auf [Speicherplatz freigeben]...
