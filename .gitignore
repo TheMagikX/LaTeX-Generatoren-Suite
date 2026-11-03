@@ -58,6 +58,9 @@ dist-ssr/
 .eslintcache
 .vite/
 frontend/public/pyodide/
+test-results/
+playwright-report/
+blob-report/
 logs/
 *.log
 npm-debug.log*
