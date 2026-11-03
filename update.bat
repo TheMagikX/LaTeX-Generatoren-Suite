@@ -82,6 +82,9 @@ if %ERRORLEVEL% equ 0 (
         echo.
         echo       Raeume alte Docker-Images auf [Speicherplatz freigeben]...
         docker image prune -f
+        echo.
+        echo       Oeffne Web-App im Browser...
+        start http://localhost:8000
         goto :success
     )
 )

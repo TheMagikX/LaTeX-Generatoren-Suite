@@ -194,6 +194,8 @@ Beim ersten Aufruf lädt Docker das schlanke Basis-Image herunter und baut Front
 #### Nützliche Docker-Befehle
 | Aktion | Befehl |
 | :--- | :--- |
+| **Starten & Browser öffnen (Doppelklick)** | `start.bat` (Windows) / `start.command` (macOS) / `./start.sh` (Linux) |
+| **Beenden / Stoppen (Doppelklick)** | `stop.bat` (Windows) / `stop.command` (macOS) / `./stop.sh` (Linux) |
 | **System-Update (Doppelklick)** | `update.bat` (Windows) / `update.command` (macOS) / `./update.sh` (Linux) |
 | **Aktualisieren (Docker Hub)** | `docker compose pull && docker compose up -d` |
 | **Logs in Echtzeit ansehen** | `docker compose logs -f` |

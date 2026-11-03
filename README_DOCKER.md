@@ -12,7 +12,23 @@ Diese Anleitung beschreibt das Erstellen und Ausführen der Generator-Suite als 
 
 ## 🚀 Schnellstart
 
-### 1. Container starten (via Docker Hub oder lokalem Build)
+### Methode A: Doppelklick (Empfohlen für Kollegium & Desktop)
+
+Die Generator-Suite bringt plattformübergreifende Starter-Dateien mit, die das Starten, Stoppen und Aktualisieren vollautomatisch per einfachem Doppelklick erledigen:
+
+| Aktion | Windows | macOS | Linux |
+| :--- | :--- | :--- | :--- |
+| **Starten & Browser öffnen** | Doppelklick auf `start.bat` | Doppelklick auf `start.command` | Ausführen von `./start.sh` |
+| **Beenden / Stoppen** | Doppelklick auf `stop.bat` | Doppelklick auf `stop.command` | Ausführen von `./stop.sh` |
+| **System-Aktualisierung** | Doppelklick auf `update.bat` | Doppelklick auf `update.command` | Ausführen von `./update.sh` |
+
+*Beim Starten wird der Container im Hintergrund hochgefahren und die Web-App automatisch in deinem Standardbrowser unter [http://localhost:8000](http://localhost:8000) geöffnet.*
+
+---
+
+### Methode B: Terminal & Power-User
+
+#### 1. Container starten (via Docker Hub oder lokalem Build)
 
 Im Hauptverzeichnis des Projekts im Terminal ausführen:
 

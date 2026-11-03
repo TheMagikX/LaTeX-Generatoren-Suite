@@ -91,6 +91,9 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     echo ""
     echo "      Räume alte Docker-Images auf (Speicherplatz freigeben)..."
     docker image prune -f
+    if command -v xdg-open >/dev/null 2>&1; then
+        xdg-open "http://localhost:8000" >/dev/null 2>&1 &
+    fi
 elif [ -f "backend/.venv/bin/python" ]; then
     echo -e "${GREEN}[INFO] Natives Linux-Setup erkannt. Aktualisiere Python- und Node-Pakete...${NC}"
     echo ""
