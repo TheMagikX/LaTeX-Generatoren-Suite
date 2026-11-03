@@ -59,7 +59,15 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
             echo ""
             echo -e "${YELLOW}[INFO] Behebe möglichen Namenskonflikt mit bestehendem Container...${NC}"
             docker rm -f generator-suite >/dev/null 2>&1
-            docker compose up -d
+            if ! docker compose up -d; then
+                echo ""
+                echo -e "${RED}[FEHLER] Container konnte nicht gestartet werden.${NC}"
+                echo "Bitte stelle sicher, dass Docker fehlerfrei läuft."
+                echo ""
+                read -n 1 -s -r -p "Drücke eine beliebige Taste zum Beenden..."
+                echo ""
+                exit 1
+            fi
         fi
     else
         echo ""
@@ -69,7 +77,15 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
             echo ""
             echo -e "${YELLOW}[INFO] Behebe möglichen Namenskonflikt mit bestehendem Container...${NC}"
             docker rm -f generator-suite >/dev/null 2>&1
-            docker compose up -d --build
+            if ! docker compose up -d --build; then
+                echo ""
+                echo -e "${RED}[FEHLER] Container konnte nicht gebaut oder gestartet werden.${NC}"
+                echo "Bitte stelle sicher, dass Docker fehlerfrei läuft."
+                echo ""
+                read -n 1 -s -r -p "Drücke eine beliebige Taste zum Beenden..."
+                echo ""
+                exit 1
+            fi
         fi
     fi
     echo ""
