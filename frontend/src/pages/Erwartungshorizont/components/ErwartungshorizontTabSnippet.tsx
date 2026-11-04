@@ -15,16 +15,6 @@ interface Props {
   latexCode: string | null
 }
 
-const getNextSubtaskLetter = (code: string): string => {
-  const matches = Array.from(code.matchAll(/\\textbf\{([a-zA-Z])\)\}/g))
-  if (matches.length === 0) {
-    const subtaskCount = (code.match(/\\begin\{subtask\}/g) || []).length
-    return String.fromCharCode(97 + subtaskCount)
-  }
-  const lastChar = matches[matches.length - 1][1].toLowerCase()
-  return String.fromCharCode(lastChar.charCodeAt(0) + 1)
-}
-
 const ErwartungshorizontTabSnippet: React.FC<Props> = ({
   config,
   updateConfig,
@@ -38,30 +28,48 @@ const ErwartungshorizontTabSnippet: React.FC<Props> = ({
     [compileLog, latexCode],
   )
 
-  const insertSnippetAtCursor = (snippet: string, cursorOffsetInside?: number) => {
+  const insertSnippetAtCursor = (
+    snippet: string,
+    cursorOffsetInside?: number,
+    options?: { spacing?: 'single' | 'double' },
+  ) => {
+    const spacing = options?.spacing ?? 'single'
     const view = editorViewRef.current
     if (view) {
       const { from, to } = view.state.selection.main
       const currentDoc = view.state.doc.toString()
 
-      // Ensure neat spacing around block environments if inserting on a line with content
-      let textToInsert = snippet
+      let prefix = ''
+      let suffix = ''
       const beforeChar = from > 0 ? currentDoc[from - 1] : ''
       const afterChar = to < currentDoc.length ? currentDoc[to] : ''
 
-      if (beforeChar && beforeChar !== '\n') {
-        textToInsert = '\n\n' + textToInsert
-      } else if (beforeChar === '\n' && from > 1 && currentDoc[from - 2] !== '\n') {
-        textToInsert = '\n' + textToInsert
+      if (spacing === 'double') {
+        if (beforeChar && beforeChar !== '\n') {
+          prefix = '\n\n'
+        } else if (beforeChar === '\n' && from > 1 && currentDoc[from - 2] !== '\n') {
+          prefix = '\n'
+        }
+
+        if (afterChar && afterChar !== '\n') {
+          suffix = '\n\n'
+        }
+      } else {
+        // Single line spacing: start on a new line if not already at line start,
+        // without inserting any blank line before or after.
+        if (beforeChar && beforeChar !== '\n') {
+          prefix = '\n'
+        }
+        if (afterChar && afterChar !== '\n') {
+          suffix = '\n'
+        }
       }
 
-      if (afterChar && afterChar !== '\n') {
-        textToInsert = textToInsert + '\n\n'
-      }
-
-      const newCursorPos = cursorOffsetInside !== undefined
-        ? from + (textToInsert.length - snippet.length) + cursorOffsetInside
-        : from + textToInsert.length
+      const textToInsert = prefix + snippet + suffix
+      const newCursorPos =
+        cursorOffsetInside !== undefined
+          ? from + prefix.length + cursorOffsetInside
+          : from + textToInsert.length
 
       view.dispatch({
         changes: { from, to, insert: textToInsert },
@@ -71,26 +79,33 @@ const ErwartungshorizontTabSnippet: React.FC<Props> = ({
     } else {
       // Fallback if view not ready
       const current = config.code
-      const separator = current.endsWith('\n\n') ? '' : current.endsWith('\n') ? '\n' : '\n\n'
+      const separator =
+        spacing === 'double'
+          ? current.endsWith('\n\n')
+            ? ''
+            : current.endsWith('\n')
+              ? '\n'
+              : '\n\n'
+          : current.length === 0 || current.endsWith('\n')
+            ? ''
+            : '\n'
       updateConfig('code', current + separator + snippet)
     }
   }
 
   const handleAddSubtask = () => {
-    const nextLetter = getNextSubtaskLetter(config.code)
-    const snippet = `\\begin{subtask}\n\\textbf{${nextLetter})} \n\\end{subtask}`
-    insertSnippetAtCursor(snippet, 16 + nextLetter.length + 4)
+    const snippet = `\\begin{subtask}\n\n\\end{subtask}`
+    insertSnippetAtCursor(snippet, 16, { spacing: 'double' })
   }
 
   const handleAddAlign = () => {
     const snippet = `\\begin{align*}\n\n\\end{align*}`
-    insertSnippetAtCursor(snippet, 15)
+    insertSnippetAtCursor(snippet, 15, { spacing: 'single' })
   }
 
   const handleAddFormula = () => {
     const snippet = `\\begin{equation*}\n\n\\end{equation*}`
-    // place cursor on the empty line inside \[ ... \]
-    insertSnippetAtCursor(snippet, 18)
+    insertSnippetAtCursor(snippet, 18, { spacing: 'single' })
   }
 
   return (
@@ -109,7 +124,7 @@ const ErwartungshorizontTabSnippet: React.FC<Props> = ({
             variant="secondary"
             className="h-7 px-2 text-xs flex items-center gap-1 bg-raised hover:bg-overlay"
             onClick={handleAddSubtask}
-            title="Neue Teilaufgabe (mit automatischer Fortzählung der Buchstaben a, b, c...) an Cursor-Position einfügen"
+            title="Neue Teilaufgabe (\begin{subtask} ... \end{subtask}) an Cursor-Position einfügen"
           >
             <PlusCircle size={13} className="text-primary" /> + Teilaufgabe
           </Button>

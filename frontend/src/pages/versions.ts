@@ -15,7 +15,7 @@ export const COMPONENT_VERSIONS = {
     schaltplan: "5.0.0",
     geometrie: "5.0.0",
     latex: "5.0.0",
-    erwartungshorizont: "5.0.0",
+    erwartungshorizont: "5.0.1",
     tikz: "5.0.0",
     arbeitsblattgenerator: "5.0.0",
     flaschenzug: "5.0.0",
