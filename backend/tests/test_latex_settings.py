@@ -100,9 +100,10 @@ def test_upload_latex_file_exceeds_5mb_limit():
 
 def test_browse_latex_endpoint():
     """Test browse endpoint returns expected relative path schema."""
-    with patch("api.settings._open_native_dialog", return_value="C:/fakepath/commands.tex"):
+    with patch("api.settings._open_native_dialog", return_value="C:/fakepath/commands.tex") as mock_open:
         response = client.post("/api/settings/latex/browse", json={"title": "Test Title"})
         assert response.status_code == 200
+        mock_open.assert_called_once_with("Test Title")
         data = response.json()
         assert "available" in data
         assert "path" in data

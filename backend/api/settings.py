@@ -334,7 +334,7 @@ try:
     root.attributes('-topmost', True)
     root.focus_force()
     initial_dir = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else None
-    title = "LaTeX-Datei auswählen"
+    title = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] else "LaTeX-Datei auswählen"
     file_path = filedialog.askopenfilename(
         parent=root,
         title=title,
@@ -377,7 +377,7 @@ async def browse_latex_file(payload: Optional[BrowsePayload] = None):
 
     if _BROWSE_DIALOG_LOCK.locked():
         raise HTTPException(status_code=409, detail="Ein Dateiauswahldialog ist bereits geöffnet.")
-    title = "LaTeX-Datei auswählen"
+    title = payload.title if payload and payload.title else "LaTeX-Datei auswählen"
     loop = asyncio.get_running_loop()
     async with _BROWSE_DIALOG_LOCK:
         chosen_path = await loop.run_in_executor(None, _open_native_dialog, title)
