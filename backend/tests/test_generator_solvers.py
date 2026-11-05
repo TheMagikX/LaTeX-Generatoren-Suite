@@ -172,3 +172,14 @@ def test_sitzplan_dislikes_symmetric():
     # Check report: neither violates dislike
     assert res.per_student_report["Felix"]["violates_dislike"] is False
     assert res.per_student_report["Tom"]["violates_dislike"] is False
+
+
+def test_flaschenzug_tangent_clamping():
+    from generators.flaschenzug import tangent_point_external, tangent_line_two_circles
+    # If point is barely at boundary or float exceeds slightly
+    tx, ty, deg = tangent_point_external(0.0, 0.0, 1.0, 0.0, 1.0000000000000002)
+    assert isinstance(tx, float)
+
+    # Two circles touching or overlapping where dr/d or rs/d is approx 1
+    t1x, t1y, t2x, t2y, a1, a2 = tangent_line_two_circles(0.0, 0.0, 1.0, 2.0, 0.0, 1.0)
+    assert isinstance(t1x, float)

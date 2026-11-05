@@ -18,7 +18,7 @@ export const COMPONENT_VERSIONS = {
     erwartungshorizont: "5.0.1",
     tikz: "5.0.1",
     arbeitsblattgenerator: "5.0.0",
-    flaschenzug: "5.0.0",
+    flaschenzug: "5.0.1",
     zahlenstrahlgenerator: "5.0.0",
     optikgenerator: "5.0.0",
     bruchgenerator: "5.0.0",

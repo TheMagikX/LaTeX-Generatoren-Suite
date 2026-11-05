@@ -29,7 +29,7 @@ def tangent_point_external(px: float, py: float, cx: float, cy: float, r: float,
     if d < r:
         return cx, cy, 0.0
     alpha = math.atan2(dy, dx)
-    beta = math.asin(r / d)
+    beta = math.asin(max(-1.0, min(1.0, r / d)))
     if side == "cw":
         theta = alpha + beta
         tx = cx - r * math.sin(theta)
@@ -54,7 +54,7 @@ def tangent_line_two_circles(c1x: float, c1y: float, r1: float, c2x: float, c2y:
         if abs(d) < abs(dr):
             gamma = 0
         else:
-            gamma = math.acos(dr / d) if d > 0 else 0
+            gamma = math.acos(max(-1.0, min(1.0, dr / d))) if d > 0 else 0
         if side1 == "cw":
             ang1 = base_angle + gamma
             ang2 = base_angle + gamma
@@ -66,7 +66,7 @@ def tangent_line_two_circles(c1x: float, c1y: float, r1: float, c2x: float, c2y:
         if d < rs:
             gamma = 0
         else:
-            gamma = math.acos(rs / d) if d > 0 else 0
+            gamma = math.acos(max(-1.0, min(1.0, rs / d))) if d > 0 else 0
         if side1 == "cw":
             ang1 = base_angle + gamma
             ang2 = base_angle + gamma + math.pi
