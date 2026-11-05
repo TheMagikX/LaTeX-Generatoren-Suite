@@ -14,7 +14,7 @@ export const COMPONENT_VERSIONS = {
     baumdiagramm: "5.0.0",
     schaltplan: "5.0.0",
     geometrie: "5.0.1",
-    latex: "5.0.1",
+    latex: "5.0.2",
     erwartungshorizont: "5.0.1",
     tikz: "5.0.1",
     arbeitsblattgenerator: "5.0.0",

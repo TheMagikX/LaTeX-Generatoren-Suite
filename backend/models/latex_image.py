@@ -3,7 +3,7 @@
 from pydantic import BaseModel, Field
 
 class LatexImageConfig(BaseModel):
-    code: str = Field(default="\textbf{This is a LaTeX-Image-Generator};", description="The LaTeX/TikZ snippet to render")
+    code: str = Field(default=r"\textbf{This is a LaTeX-Image-Generator};", description="The LaTeX/TikZ snippet to render")
     spacing: str = Field(default="onehalfspacing", description="Spacing option (e.g. onehalfspacing)")
     latex_width: float = Field(default=14.0, ge=1.0, le=30.0, description="Width of the LaTeX document in cm")
     pakete_laden: bool = Field(default=True, description="Whether to load all packages")

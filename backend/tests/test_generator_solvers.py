@@ -183,3 +183,10 @@ def test_flaschenzug_tangent_clamping():
     # Two circles touching or overlapping where dr/d or rs/d is approx 1
     t1x, t1y, t2x, t2y, a1, a2 = tangent_line_two_circles(0.0, 0.0, 1.0, 2.0, 0.0, 1.0)
     assert isinstance(t1x, float)
+
+
+def test_latex_image_config_default_raw_string():
+    from models.latex_image import LatexImageConfig
+    cfg = LatexImageConfig()
+    assert cfg.code.startswith(r"\textbf")
+    assert not cfg.code.startswith("\t")
