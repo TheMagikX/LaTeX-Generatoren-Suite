@@ -70,7 +70,7 @@ def _is_explicit_absolute(raw_path: str) -> bool:
 
 def _resolve_against(raw_path: str, base_dir: pathlib.Path) -> pathlib.Path:
     """Resolves raw_path against base_dir if relative, handling both slash styles."""
-    cleaned = raw_path.strip()
+    cleaned = raw_path.strip().strip('"\'')
     if os.name != "nt" and "\\" in cleaned:
         cleaned = cleaned.replace("\\", "/")
     if _is_explicit_absolute(cleaned):

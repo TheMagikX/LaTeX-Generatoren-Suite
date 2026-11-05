@@ -45,6 +45,12 @@ def test_parse_fls_handles_windows_and_posix_paths(tmp_path):
     assert accesses[0].path == (spaced_dir / "file one.tex").resolve(strict=False)
     assert accesses[1].path == (spaced_dir / "file two.tex").resolve(strict=False)
 
+    # TeX on Windows can quote paths with spaces: "C:\path with spaces\file.tex"
+    quoted_fls = f'INPUT "{win_style}"\nOUTPUT \'{posix_style}\'\n'
+    q_accesses = parse_fls(quoted_fls, tmp_path)
+    assert q_accesses[0].path == (spaced_dir / "file one.tex").resolve(strict=False)
+    assert q_accesses[1].path == (spaced_dir / "file two.tex").resolve(strict=False)
+
 
 def test_guard_allows_latex_files_custom_latex_fonts_and_tex_roots(tmp_path, monkeypatch):
     fake_tex_root = tmp_path / "fake_texlive"
