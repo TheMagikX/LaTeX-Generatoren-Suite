@@ -283,7 +283,8 @@ def calculate_plane_plane_intersection(e1, e2):
     try:
         x0 = np.linalg.solve(A, b)
         return x0, r
-    except: return None
+    except (np.linalg.LinAlgError, ValueError):
+        return None
 
 def _label_style(axis: str, cfg: CoordinateSystem3DConfig) -> str:
     """Erzeugt den pgfplots-Style-String für eine Achsenbeschriftung."""

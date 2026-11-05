@@ -1,6 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import math
+from core.latex_document import (
+    HEXCOL_TIKZ_KEY,
+    LatexDocumentSpec,
+    font_input,
+    render_latex_document,
+    shared_commands_input,
+    shared_package_input,
+)
 from models.geometrie import GeometrieConfig, TriangleConstructionConfig, QuadrilateralConstructionConfig
 
 
@@ -164,14 +172,6 @@ def solve_quadrilateral(cfg: QuadrilateralConstructionConfig) -> tuple[dict | No
         return None, str(e)
 
     return None, "Modus nicht implementiert."
-from core.latex_document import (
-    HEXCOL_TIKZ_KEY,
-    LatexDocumentSpec,
-    font_input,
-    render_latex_document,
-    shared_commands_input,
-    shared_package_input,
-)
 
 
 def solve_triangle(cfg: TriangleConstructionConfig) -> tuple[dict | None, str | None]:
