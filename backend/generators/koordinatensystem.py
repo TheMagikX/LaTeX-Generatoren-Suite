@@ -4,7 +4,7 @@ import re
 import pathlib
 from models.koordinatensystem import CoordinateSystemConfig, PlotConfig, CSVPlotConfig, ParametricPlotConfig, PointConfig, NodeConfig
 
-def _format_plot_style(p: PlotConfig) -> str:
+def _format_stroke_style(p: PlotConfig | CSVPlotConfig | ParametricPlotConfig) -> str:
     parts = []
     c = p.color or "#1e293b"
     if c.startswith("#"):
@@ -24,63 +24,24 @@ def _format_plot_style(p: PlotConfig) -> str:
         parts.append(p.custom_style)
 
     if not parts:
-        if p.settings:
-            return p.settings
+        fallback = getattr(p, "settings", None) or getattr(p, "style", None)
+        if fallback:
+            return fallback
         return "black, thick"
 
     return ", ".join(parts)
+
+
+def _format_plot_style(p: PlotConfig) -> str:
+    return _format_stroke_style(p)
+
 
 def _format_csv_style(p: CSVPlotConfig) -> str:
-    parts = []
-    c = p.color or "#1e293b"
-    if c.startswith("#"):
-        parts.append(f"hexcol={c[1:].upper()}")
-    elif c.startswith("hexcol="):
-        parts.append(c)
-    elif c:
-        parts.append(c)
+    return _format_stroke_style(p)
 
-    if p.line_width:
-        parts.append(p.line_width)
-
-    if p.line_style and p.line_style != "solid":
-        parts.append(p.line_style)
-
-    if p.custom_style:
-        parts.append(p.custom_style)
-
-    if not parts:
-        if p.style:
-            return p.style
-        return "black, thick"
-
-    return ", ".join(parts)
 
 def _format_param_style(p: ParametricPlotConfig) -> str:
-    parts = []
-    c = p.color or "#1e293b"
-    if c.startswith("#"):
-        parts.append(f"hexcol={c[1:].upper()}")
-    elif c.startswith("hexcol="):
-        parts.append(c)
-    elif c:
-        parts.append(c)
-
-    if p.line_width:
-        parts.append(p.line_width)
-
-    if p.line_style and p.line_style != "solid":
-        parts.append(p.line_style)
-
-    if p.custom_style:
-        parts.append(p.custom_style)
-
-    if not parts:
-        if p.settings:
-            return p.settings
-        return "black, thick"
-
-    return ", ".join(parts)
+    return _format_stroke_style(p)
 
 def _clean_mark_style(style_str: str) -> str:
     if not style_str:
