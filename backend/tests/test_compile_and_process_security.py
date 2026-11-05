@@ -341,3 +341,23 @@ def test_all_default_latex_files_pass_source_security():
         assert err is None, f"{tex_file.name} failed security check: {err}"
 
 
+def test_fix_dvisvgm_svg_preserves_xml_prolog():
+    """Ensure __fix_dvisvgm_svg inserts metadata inside <svg> and not right after <?xml ...?>."""
+    import xml.etree.ElementTree as ET
+    from core import latex_render
+
+    raw_svg = (
+        b"<?xml version='1.0' encoding='UTF-8'?>\n"
+        b"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -10 100 50'>\n"
+        b"<g transform='matrix(1 0 0 -1 0 0)'><path d='M0 0 L10 10'/></g>\n"
+        b"</svg>"
+    )
+    fixed = latex_render.__fix_dvisvgm_svg(raw_svg)
+    text = fixed.decode("utf-8")
+    assert text.startswith("<?xml version='1.0' encoding='UTF-8'?>\n<svg ")
+    assert "viewBox='0 0 100 50'" in text
+    root = ET.fromstring(text)
+    assert root.tag.endswith("svg")
+
+
+

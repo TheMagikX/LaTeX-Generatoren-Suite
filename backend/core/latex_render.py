@@ -586,7 +586,8 @@ def __fix_dvisvgm_svg(svg_bytes: bytes) -> bytes:
 
     # SVG Metadaten nach dem öffnenden <svg ...> Tag einfügen
     if "<svg" in svg_text and "</svg>" in svg_text:
-        svg_tag_end = svg_text.find(">")
+        svg_start = svg_text.find("<svg")
+        svg_tag_end = svg_text.find(">", svg_start)
         if svg_tag_end != -1:
             svg_text = svg_text[:svg_tag_end + 1] + "\n" + SVG_METADATA_BLOCK + svg_text[svg_tag_end + 1:]
 
