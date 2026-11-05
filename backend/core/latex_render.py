@@ -610,6 +610,7 @@ def pdf_to_svg_bytes(pdf_bytes: bytes) -> bytes:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             check=True,
+            timeout=30,
         )
         raw_svg = pathlib.Path(svg_path).read_bytes()
         return __fix_dvisvgm_svg(raw_svg)
@@ -629,6 +630,7 @@ def pdf_to_all_svg_bytes(pdf_bytes: bytes) -> list[bytes]:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             check=True,
+            timeout=30,
         )
 
         svg_files = sorted(
@@ -667,6 +669,7 @@ def pdf_bytes_to_separated_pdfs(pdf_bytes: bytes) -> list[bytes]:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 check=True,
+                timeout=30,
             )
             pdf_files = sorted(
                 [f for f in os.listdir(tmpdir) if f.startswith("page-") and f.endswith(".pdf")],
