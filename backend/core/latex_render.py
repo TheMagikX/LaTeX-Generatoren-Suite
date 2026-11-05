@@ -384,12 +384,6 @@ def compile_latex_to_pdf_bytes(
 
         return LatexRenderResult(ok=True, log="", pdf_bytes=pdf_bytes, compile_time_s=compile_time)
 
-def format_bytes(num):
-    for unit in ["B", "KB", "MB", "GB"]:
-        if num < 1024:
-            return f"{num:.1f} {unit}"
-        num /= 1024
-    return f"{num:.1f} TB"
 
 def pdf_bytes_to_first_image(
     pdf_bytes: bytes,
