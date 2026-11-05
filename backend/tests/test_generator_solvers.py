@@ -35,6 +35,14 @@ def test_solve_triangle_sss_invalid_triangle_inequality():
     assert "Dreiecksungleichung" in err or "Fehler" in err or "nicht" in err.lower()
 
 
+def test_solve_triangle_sss_near_degenerate_clamping():
+    # Near-degenerate triangle that can trigger float rounding slightly outside [-1, 1]
+    cfg = TriangleConstructionConfig(mode="SSS", a=1e-8, b=1.0, c=1.0)
+    res, err = solve_triangle(cfg)
+    assert err is None
+    assert res is not None
+
+
 def test_solve_triangle_sws():
     # Equilateral triangle with side 4, angle 60°
     cfg = TriangleConstructionConfig(mode="SWS", c=4.0, b=4.0, alpha=60.0)

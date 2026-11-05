@@ -188,13 +188,14 @@ def solve_triangle(cfg: TriangleConstructionConfig) -> tuple[dict | None, str | 
             a, b, c = cfg.a, cfg.b, cfg.c
             if a + b <= c or a + c <= b or b + c <= a:
                 return None, "Dreiecksungleichung verletzt (Seiten zu kurz/lang)."
-            cos_alpha = (b**2 + c**2 - a**2) / (2 * b * c)
+            cos_alpha = max(-1.0, min(1.0, (b**2 + c**2 - a**2) / (2 * b * c)))
             alpha_rad = math.acos(cos_alpha)
             B = (c, 0.0)
             Cx = b * math.cos(alpha_rad)
             Cy = b * math.sin(alpha_rad)
             C = (Cx, Cy)
-            beta_rad = math.acos((a**2 + c**2 - b**2) / (2 * a * c))
+            cos_beta = max(-1.0, min(1.0, (a**2 + c**2 - b**2) / (2 * a * c)))
+            beta_rad = math.acos(cos_beta)
             gamma_rad = math.pi - alpha_rad - beta_rad
             area = _polygon_area([A, B, C])
             return {
