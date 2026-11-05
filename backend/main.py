@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 import re
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -141,6 +141,8 @@ if dist_path.exists() and (dist_path / "index.html").is_file():
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
+        if full_path == "api" or full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="API-Endpunkt nicht gefunden.")
         # Serve static file if exists and is safely contained within dist_path (prevents directory traversal)
         if full_path:
             try:
