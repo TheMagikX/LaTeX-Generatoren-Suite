@@ -176,7 +176,7 @@ export const AiProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     }
   }
 
-  // Initial check on mount + Window Focus & Polling
+  // 1. Einmaliger Initial-Check beim Mounten
   useEffect(() => {
     let isMounted = true
 
@@ -189,23 +189,38 @@ export const AiProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 
     void initAi()
 
-    // Automatisch prüfen, sobald der Nutzer aus dem Terminal/Desktop zurück in den Browser klickt
-    const handleFocus = () => {
-      void checkOllama(true)
+    return () => {
+      isMounted = false
     }
-    window.addEventListener('focus', handleFocus)
+  }, [checkOllama, refreshAiConfig])
 
-    // Sanftes Hintergrund-Polling alle 5 Sekunden, damit der Status synchronisiert bleibt
+  // 2. Fokus-Check & 5s-Polling NUR wenn KI aktiv, Provider 'ollama' und Tab sichtbar
+  useEffect(() => {
+    if (!aiEnabled || activeProvider !== 'ollama') {
+      return
+    }
+
+    const handleFocusOrVisibility = () => {
+      if (!document.hidden) {
+        void checkOllama(true)
+      }
+    }
+
+    window.addEventListener('focus', handleFocusOrVisibility)
+    document.addEventListener('visibilitychange', handleFocusOrVisibility)
+
     const interval = setInterval(() => {
-      void checkOllama(true)
+      if (!document.hidden) {
+        void checkOllama(true)
+      }
     }, 5000)
 
     return () => {
-      isMounted = false
-      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('focus', handleFocusOrVisibility)
+      document.removeEventListener('visibilitychange', handleFocusOrVisibility)
       clearInterval(interval)
     }
-  }, [checkOllama, refreshAiConfig])
+  }, [aiEnabled, activeProvider, checkOllama])
 
   const handleStopOllama = async (mode?: 'unload_models' | 'stop_server'): Promise<StopOllamaResponse> => {
     setIsStopping(true)
