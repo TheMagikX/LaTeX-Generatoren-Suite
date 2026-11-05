@@ -165,6 +165,7 @@ export const compileLatex = async (
     return data
   } catch (error: unknown) {
     const totalClientSeconds = (performance.now() - t0) / 1000
+    const detailedError = extractApiErrorMessage(error, 'Verbindungsfehler zur API')
     console.error('Compilation failed:', error)
     
     emitGlobalTelemetry({
@@ -175,13 +176,13 @@ export const compileLatex = async (
       latexChars: chars,
       latexLines: lines,
       dpi,
-      errorMessage: (error as Error)?.message || 'Verbindungsfehler zur API',
+      errorMessage: detailedError,
     })
 
     lastGeneratorTimeMs = 0
     lastGeneratorName = ''
 
-    return { ok: false, log: 'Verbindungsfehler zur API' }
+    return { ok: false, log: detailedError }
   }
 }
 

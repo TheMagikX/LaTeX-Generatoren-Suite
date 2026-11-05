@@ -365,12 +365,8 @@ def compile_latex_to_pdf_bytes(
                             compile_time_s=compile_time,
                         )
                 elif guard_mode == "enforce":
-                    err_line = first_latex_error_line(out)
-                    safe_err = (
-                        f"! {sanitize_latex_log(err_line, tmpdir=tmpdir)}"
-                        if err_line
-                        else "! LaTeX Error: Kompilierung fehlgeschlagen."
-                    )
+                    short = extract_latex_stdout_excerpt(out, max_lines=80, tmpdir=tmpdir)
+                    safe_err = short if short.strip() else "! LaTeX Error: Kompilierung fehlgeschlagen."
                     return LatexRenderResult(
                         ok=False,
                         log=safe_err,
