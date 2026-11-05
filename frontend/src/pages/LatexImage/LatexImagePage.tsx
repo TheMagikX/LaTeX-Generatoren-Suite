@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import { useState } from 'react'
+import { useState, useMemo, useRef } from 'react'
+import type { EditorView } from '@codemirror/view'
+import { parseLatexLog } from '../../utils/parseLatexLog'
 import useLocalStorage from '../../hooks/useLocalStorage'
 import { generateLatexImage, compileLatex } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
@@ -25,6 +27,25 @@ const LatexImagePage = () => {
     ok: boolean; png_base64?: string; pdf_base64?: string; svg_base64?: string; log?: string
   } | null>(null)
   const [isCompiling, setIsCompiling] = useState(false)
+  const editorViewRef = useRef<EditorView | null>(null)
+
+  const errorAnnotations = useMemo(
+    () => parseLatexLog(compileData?.log ?? '', latexCode ?? '', 0),
+    [compileData, latexCode],
+  )
+
+  const handleSelectLine = (line: number) => {
+    setActiveTab('snippet')
+    const view = editorViewRef.current
+    if (!view) return
+    const clampedLine = Math.max(1, Math.min(line, view.state.doc.lines))
+    const lineInfo = view.state.doc.line(clampedLine)
+    view.dispatch({
+      selection: { anchor: lineInfo.from },
+      scrollIntoView: true,
+    })
+    view.focus()
+  }
 
   const handleCompile = async () => {
     setIsCompiling(true)
@@ -67,6 +88,7 @@ const LatexImagePage = () => {
                 updateConfig={updateConfig}
                 compileLog={compileData?.log ?? null}
                 latexCode={latexCode}
+                onViewCreated={view => { editorViewRef.current = view }}
               />
             </TabContent>
 
@@ -92,6 +114,8 @@ const LatexImagePage = () => {
           isCompiling={isCompiling}
           previewDpi={previewDpi}
           setPreviewDpi={setPreviewDpi}
+          annotations={errorAnnotations}
+          onSelectLine={handleSelectLine}
         />
       </div>
     </div>

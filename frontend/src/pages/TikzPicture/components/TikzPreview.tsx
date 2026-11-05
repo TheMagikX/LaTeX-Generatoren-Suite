@@ -2,6 +2,7 @@
 
 import { Triangle } from 'lucide-react'
 import { PreviewCard, FloatingToolbar, CodeSection } from '../../../components/ui'
+import type { ErrorAnnotation } from '../../../utils/parseLatexLog'
 
 interface Props {
   latexCode: string | null
@@ -11,9 +12,11 @@ interface Props {
   isCompiling: boolean
   previewDpi: number
   setPreviewDpi: (dpi: number) => void
+  annotations?: ErrorAnnotation[]
+  onSelectLine?: (line: number) => void
 }
 
-export const TikzPreview = ({ latexCode, compileData, isCompiling, previewDpi, setPreviewDpi }: Props) => {
+export const TikzPreview = ({ latexCode, compileData, isCompiling, previewDpi, setPreviewDpi, annotations, onSelectLine }: Props) => {
   const downloadPng = () => {
     if (!compileData?.png_base64) return
     const link = document.createElement('a')
@@ -60,6 +63,8 @@ export const TikzPreview = ({ latexCode, compileData, isCompiling, previewDpi, s
         imgSrc={compileData?.ok ? `data:image/png;base64,${compileData.png_base64}` : null}
         errorLog={compileData?.log || null}
         emptyIcon={<Triangle size={48} />}
+        annotations={annotations}
+        onSelectLine={onSelectLine}
       />
 
       <FloatingToolbar

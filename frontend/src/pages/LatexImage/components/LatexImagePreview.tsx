@@ -3,6 +3,7 @@
 import React from 'react'
 import { PreviewCard, FloatingToolbar, CodeSection } from '../../../components/ui'
 import { Code } from 'lucide-react'
+import type { ErrorAnnotation } from '../../../utils/parseLatexLog'
 
 interface Props {
   latexCode: string | null
@@ -12,6 +13,8 @@ interface Props {
   isCompiling: boolean
   previewDpi: number
   setPreviewDpi: (dpi: number) => void
+  annotations?: ErrorAnnotation[]
+  onSelectLine?: (line: number) => void
 }
 
 const LatexImagePreview: React.FC<Props> = ({
@@ -19,7 +22,9 @@ const LatexImagePreview: React.FC<Props> = ({
   compileData,
   isCompiling,
   previewDpi,
-  setPreviewDpi
+  setPreviewDpi,
+  annotations,
+  onSelectLine,
 }) => {
   const downloadPng = () => {
     if (!compileData?.png_base64) return
@@ -67,6 +72,8 @@ const LatexImagePreview: React.FC<Props> = ({
         imgSrc={compileData?.ok ? `data:image/png;base64,${compileData.png_base64}` : null}
         errorLog={compileData?.log || null}
         emptyIcon={<Code size={48} />}
+        annotations={annotations}
+        onSelectLine={onSelectLine}
       />
 
       <FloatingToolbar

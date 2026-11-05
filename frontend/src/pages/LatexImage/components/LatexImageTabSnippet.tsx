@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import React, { useMemo } from 'react'
+import type { EditorView } from '@codemirror/view'
 import { Label } from '../../../components/ui'
 import { CodeEditor } from '../../../components/CodeEditor'
 import { parseLatexLog } from '../../../utils/parseLatexLog'
@@ -11,6 +12,7 @@ interface Props {
   updateConfig: (key: keyof LatexImageConfig, value: unknown) => void
   compileLog: string | null
   latexCode: string | null
+  onViewCreated?: (view: EditorView) => void
 }
 
 const LatexImageTabSnippet: React.FC<Props> = ({
@@ -18,6 +20,7 @@ const LatexImageTabSnippet: React.FC<Props> = ({
   updateConfig,
   compileLog,
   latexCode,
+  onViewCreated,
 }) => {
   const annotations = useMemo(
     () => parseLatexLog(compileLog ?? '', latexCode ?? '', 0),
@@ -33,6 +36,7 @@ const LatexImageTabSnippet: React.FC<Props> = ({
           onChange={v => updateConfig('code', v)}
           height="500px"
           annotations={annotations}
+          onViewCreated={onViewCreated}
         />
       </div>
     </div>

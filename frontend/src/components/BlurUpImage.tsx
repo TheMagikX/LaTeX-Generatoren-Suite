@@ -29,6 +29,7 @@ export type BlurUpImageProps = {
   onError?: () => void
   className?: string
   imgClassName?: string
+  dataTestId?: string
 }
 
 export const BlurUpImage = React.forwardRef<HTMLImageElement, BlurUpImageProps>(
@@ -47,6 +48,7 @@ export const BlurUpImage = React.forwardRef<HTMLImageElement, BlurUpImageProps>(
       onError,
       className = '',
       imgClassName = '',
+      dataTestId,
     },
     forwardedRef,
   ) => {
@@ -84,6 +86,7 @@ export const BlurUpImage = React.forwardRef<HTMLImageElement, BlurUpImageProps>(
 
         <motion.img
           ref={ref}
+          data-testid={dataTestId}
           src={src}
           alt={alt}
           width={width}

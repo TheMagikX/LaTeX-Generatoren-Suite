@@ -453,7 +453,7 @@ export const LatexErrorPanel = ({
   }
 
   return (
-    <div className="flex flex-col w-full max-w-lg bg-error/8 border border-error/25 rounded-2xl p-5 text-error shadow-xl gap-3">
+    <div data-testid="error-panel" className="flex flex-col w-full max-w-lg bg-error/8 border border-error/25 rounded-2xl p-5 text-error shadow-xl gap-3">
       <div className="flex items-center gap-2">
         <XCircle size={16} className="text-error shrink-0" />
         <span className="text-sm font-semibold text-error font-display">LaTeX Kompilierfehler</span>
@@ -534,6 +534,7 @@ export const PreviewCard = ({ isLoading, isCompiling, imgSrc, errorLog, emptyIco
             <div className="relative max-w-full max-h-full flex items-center justify-center">
               <BlurUpImage
                 ref={imgRef}
+                dataTestId="preview-container"
                 src={imgSrc}
                 alt="LaTeX Vorschau"
                 isCompiling={activeCompiling}

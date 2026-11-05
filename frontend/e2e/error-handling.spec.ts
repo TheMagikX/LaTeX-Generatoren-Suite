@@ -29,11 +29,7 @@ test.describe('Error Handling - Fehleranzeige & Navigation', () => {
     expect(errorText.length).toBeGreaterThan(0)
   })
 
-  test.fixme('Klick auf Fehler springt im Editor zur betreffenden Zeile', async ({ page }) => {
-    // Hinweis nach QA-Vorgabe:
-    // Der Produktivcode in LatexErrorPanel besitzt aktuell keinen Click-Handler, der den
-    // Cursor im CodeMirror-Editor in die gemeldete Zeile bewegt oder fokussiert.
-    // Gemäß Vorgabe wird der Produktivcode nicht modifiziert und dieser Test als test.fixme() markiert.
+  test('Klick auf Fehler springt im Editor zur betreffenden Zeile', async ({ page }) => {
     await page.goto('/tikzpicture')
 
     const editor = page.locator('.cm-content')
