@@ -345,6 +345,7 @@ export const GeneratorHeader = ({
           message={confirmConfig.message}
           confirmLabel={confirmConfig.confirmLabel}
           confirmClass={confirmConfig.confirmClass}
+          confirmAriaLabel="Konfiguration unwiderruflich zurücksetzen"
           onConfirm={() => {
             onReset?.()
             setShowResetConfirm(false)

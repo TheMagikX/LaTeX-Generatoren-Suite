@@ -110,7 +110,7 @@ describe('GeneratorHeader (Aktionsleiste & Compile-Trigger)', () => {
     const dialogContainer = dialogHeading.closest('div.bg-panel') as HTMLElement
     expect(dialogContainer).toBeInTheDocument()
 
-    const confirmBtn = within(dialogContainer).getByRole('button', { name: 'Zurücksetzen' })
+    const confirmBtn = within(dialogContainer).getByRole('button', { name: /Zurücksetzen/i })
     await user.click(confirmBtn)
 
     expect(handleReset).toHaveBeenCalledTimes(1)

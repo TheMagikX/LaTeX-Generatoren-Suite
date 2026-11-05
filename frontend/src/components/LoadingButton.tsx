@@ -178,10 +178,11 @@ export function LoadingButton({
       onClick={handleClick}
       className={`relative inline-flex select-none items-center justify-center rounded-xl font-display transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed ${BUTTON_VARIANTS[variant]} ${sizeClasses} ${className}`}
     >
-      <span aria-hidden className="relative grid place-items-center">
+      <span className="relative grid place-items-center">
         {faces.map((face) => (
           <motion.span
             key={face.key}
+            aria-hidden={face.key !== currentStatus || undefined}
             initial={false}
             animate={
               face.key === currentStatus

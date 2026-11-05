@@ -50,21 +50,26 @@ describe('LatexErrorPanel (Log- & Fehleranzeige)', () => {
     expect(screen.queryByText(/Additional debug info line 1/)).not.toBeInTheDocument()
   })
 
-  it.skip('Verhalten bei leerem Log: Zeigt einen sauberen Leerzustand ("Keine Fehler gefunden") an', () => {
-    // BUG/LÜCKE IM PRODUKTIVCODE:
-    // LatexErrorPanel prüft nicht auf einen leeren Log-String, sondern fällt auf "Unbekannter Fehler"
-    // zurück und rendert die rote Fehlerbox. Ein "Keine Fehler gefunden" Leerzustand existiert nicht.
+  it('Verhalten bei leerem Log: Zeigt einen sauberen Leerzustand ("Keine Fehler gefunden") an', () => {
     render(<LatexErrorPanel log="" />)
     expect(screen.getByText(/Keine Fehler gefunden/i)).toBeInTheDocument()
     expect(screen.queryByText('LaTeX Kompilierfehler')).not.toBeInTheDocument()
   })
 
-  it.skip('Interaktion mit geparster Fehlerliste: Klick auf einen Fehler löst onSelectLine mit Zeilennummer aus', async () => {
-    // BUG/LÜCKE IM PRODUKTIVCODE:
-    // LatexErrorPanel akzeptiert derzeit nur einen monolithischen `log: string` und bietet
-    // weder eine strukturierte Fehlerliste noch einen `onSelectLine`-Callback für Zeilensprünge im Editor.
+  it('Interaktion mit geparster Fehlerliste: Klick auf einen Fehler löst onSelectLine mit Zeilennummer aus', async () => {
+    const user = userEvent.setup()
     const onSelectLine = vi.fn()
-    // Hypothetische Schnittstelle: <LatexErrorPanel log="l.42 Error" onSelectLine={onSelectLine} />
-    expect(onSelectLine).toBeDefined()
+    const log = '! Undefined control sequence.\nl.42 \\unknownMacro'
+
+    render(<LatexErrorPanel log={log} onSelectLine={onSelectLine} />)
+
+    const lineBtn = screen.getByRole('button', { name: /Zeile 42/i })
+    await user.click(lineBtn)
+    expect(onSelectLine).toHaveBeenCalledWith(42)
+
+    const codeElement = screen.getByText('! Undefined control sequence.')
+    await user.click(codeElement)
+    expect(onSelectLine).toHaveBeenCalledTimes(2)
+    expect(onSelectLine).toHaveBeenLastCalledWith(42)
   })
 })

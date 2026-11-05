@@ -7,6 +7,7 @@ import {
   Plus, Minus, Maximize2, AlertTriangle,
 } from 'lucide-react'
 import { extractTikzCode } from '../utils/extractTikzCode'
+import { parseLatexLog, type ErrorAnnotation } from '../utils/parseLatexLog'
 import { Textload, CodeSkeleton } from './Textload'
 
 export { Textload, CodeSkeleton }
@@ -418,9 +419,29 @@ export const SliderNumberInput = ({
 
 /* ─── LatexErrorPanel ────────────────────────────────────────────────────────── */
 
-export const LatexErrorPanel = ({ log }: { log: string }) => {
+export const LatexErrorPanel = ({
+  log,
+  annotations,
+  onSelectLine,
+}: {
+  log: string
+  annotations?: ErrorAnnotation[]
+  onSelectLine?: (line: number) => void
+}) => {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
+  if (!log || log.trim().length === 0) {
+    return (
+      <div className="flex items-center gap-2 text-muted text-sm">
+        <CheckCircle2 size={16} className="text-success shrink-0" />
+        <span>Keine Fehler gefunden</span>
+      </div>
+    )
+  }
+
+  const parsedAnnotations = annotations && annotations.length > 0 ? annotations : parseLatexLog(log)
+  const primaryLine = parsedAnnotations[0]?.line
+
   const lines = log.split('\n')
   const firstLine = lines[0]?.trim() || 'Unbekannter Fehler'
   const rest = lines.slice(1).join('\n').trim()
@@ -438,7 +459,23 @@ export const LatexErrorPanel = ({ log }: { log: string }) => {
         <span className="text-sm font-semibold text-error font-display">LaTeX Kompilierfehler</span>
       </div>
       <div className="flex items-center gap-2 bg-canvas/60 border border-error/20 rounded-xl px-3 py-2">
-        <code className="text-xs text-red-200 flex-1 break-all font-mono">{firstLine}</code>
+        <code
+          onClick={onSelectLine && primaryLine ? () => onSelectLine(primaryLine) : undefined}
+          title={onSelectLine && primaryLine ? `Zu Zeile ${primaryLine} springen` : undefined}
+          className={`text-xs text-red-200 flex-1 break-all font-mono ${onSelectLine && primaryLine ? 'cursor-pointer hover:underline' : ''}`}
+        >
+          {firstLine}
+        </code>
+        {onSelectLine && primaryLine && (
+          <button
+            type="button"
+            onClick={() => onSelectLine(primaryLine)}
+            className="shrink-0 text-[11px] font-mono px-2 py-0.5 rounded bg-error/20 hover:bg-error/30 text-error transition-colors cursor-pointer"
+            title={`Zu Zeile ${primaryLine} im Editor springen`}
+          >
+            Zeile {primaryLine}
+          </button>
+        )}
         <button onClick={handleCopy} className="shrink-0 p-1 rounded hover:bg-error/20 transition-colors" title="Fehlermeldung kopieren">
           {copied ? <Check size={13} className="text-success" /> : <Copy size={13} className="text-error/70" />}
         </button>
@@ -465,8 +502,8 @@ export const LatexErrorPanel = ({ log }: { log: string }) => {
 
 /* ─── PreviewCard ────────────────────────────────────────────────────────────── */
 
-export const PreviewCard = ({ isLoading, isCompiling, imgSrc, errorLog, emptyIcon }: {
-  isLoading: boolean; isCompiling: boolean; imgSrc: string | null; errorLog: string | null; emptyIcon: React.ReactNode
+export const PreviewCard = ({ isLoading, isCompiling, imgSrc, errorLog, emptyIcon, annotations, onSelectLine }: {
+  isLoading: boolean; isCompiling: boolean; imgSrc: string | null; errorLog: string | null; emptyIcon: React.ReactNode; annotations?: ErrorAnnotation[]; onSelectLine?: (line: number) => void
 }) => {
   const [fullscreen, setFullscreen] = useState(false)
   const imgRef = useRef<HTMLImageElement>(null)
@@ -492,7 +529,7 @@ export const PreviewCard = ({ isLoading, isCompiling, imgSrc, errorLog, emptyIco
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden flex items-center justify-center p-8 relative z-10 w-full h-full">
           {errorLog ? (
-            <LatexErrorPanel log={errorLog} />
+            <LatexErrorPanel log={errorLog} annotations={annotations} onSelectLine={onSelectLine} />
           ) : imgSrc ? (
             <div className="relative max-w-full max-h-full flex items-center justify-center">
               <BlurUpImage
@@ -658,13 +695,14 @@ export const FloatingToolbar = ({ dpi, setDpi, isReady, onDownloadPng, onDownloa
 export const ConfirmDialog = ({
   title, message, confirmLabel = 'Bestätigen',
   confirmClass = 'bg-primary hover:bg-amber-400 text-canvas',
+  confirmAriaLabel,
   onConfirm, onCancel,
 }: {
   title: string; message: string; confirmLabel?: string;
-  confirmClass?: string; onConfirm: () => void; onCancel: () => void
+  confirmClass?: string; confirmAriaLabel?: string; onConfirm: () => void; onCancel: () => void
 }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-canvas/70 backdrop-blur-sm">
-    <div className="bg-panel border border-rim rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4 flex flex-col gap-4">
+    <div role="dialog" aria-modal="true" aria-label={title} className="bg-panel border border-rim rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4 flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <AlertTriangle size={18} className="text-warning shrink-0" />
         <h3 className="font-semibold text-ink text-base font-display">{title}</h3>
@@ -679,6 +717,7 @@ export const ConfirmDialog = ({
         </button>
         <button
           onClick={onConfirm}
+          aria-label={confirmAriaLabel}
           className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${confirmClass}`}
         >
           {confirmLabel}
