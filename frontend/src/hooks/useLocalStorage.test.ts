@@ -75,12 +75,8 @@ describe('useLocalStorage', () => {
     })
   })
 
-  describe('Primitive Datentypen & Arrays (Edge Cases / bekannte Bugs)', () => {
-    // BUG im Produktivcode (src/hooks/useLocalStorage.ts:11):
-    // return { ...defaultValue, ...(JSON.parse(stored) as T) }
-    // Bei primitiven Werten wie Booleans führt der Object-Spread ({ ...true, ...false })
-    // dazu, dass ein leeres Objekt `{}` erzeugt wird anstatt des booleschen Werts.
-    it.skip('erhält boolesche Werte (true/false) nach Re-Initialisierung ohne Umwandlung in {}', () => {
+  describe('Primitive Datentypen & Arrays', () => {
+    it('erhält boolesche Werte (true/false) nach Re-Initialisierung ohne Umwandlung in {}', () => {
       localStorage.setItem('bool_key', JSON.stringify(false))
 
       const { result } = renderHook(() => useLocalStorage<boolean>('bool_key', true))
@@ -89,17 +85,34 @@ describe('useLocalStorage', () => {
       expect(result.current[0]).toBe(false)
     })
 
-    // BUG im Produktivcode (src/hooks/useLocalStorage.ts:11):
-    // return { ...defaultValue, ...(JSON.parse(stored) as T) }
-    // Bei Arrays wie ['a', 'b'] führt der Object-Spread ({ ...[], ...['a', 'b'] })
-    // dazu, dass ein indiziertes Objekt { "0": "a", "1": "b" } anstelle eines Arrays entsteht.
-    it.skip('erhält Arrays (z. B. ["a", "b"]) ohne Transformation in indexierte Objekte { "0": "a", "1": "b" }', () => {
+    it('erhält Arrays (z. B. ["a", "b"]) ohne Transformation in indexierte Objekte { "0": "a", "1": "b" }', () => {
       localStorage.setItem('arr_key', JSON.stringify(['a', 'b']))
 
       const { result } = renderHook(() => useLocalStorage<string[]>('arr_key', []))
 
       expect(Array.isArray(result.current[0])).toBe(true)
       expect(result.current[0]).toEqual(['a', 'b'])
+    })
+
+    it('erhält Zahlen und Strings zuverlässig', () => {
+      localStorage.setItem('num_key', JSON.stringify(42))
+      localStorage.setItem('str_key', JSON.stringify('nord'))
+
+      const { result: numRes } = renderHook(() => useLocalStorage<number>('num_key', 0))
+      const { result: strRes } = renderHook(() => useLocalStorage<string>('str_key', 'dark'))
+
+      expect(numRes.current[0]).toBe(42)
+      expect(strRes.current[0]).toBe('nord')
+    })
+
+    it('fällt auf defaultValue zurück, wenn ein inkonsistenter Datentyp im localStorage liegt', () => {
+      localStorage.setItem('obj_key', JSON.stringify('unexpected-string'))
+
+      const { result } = renderHook(() =>
+        useLocalStorage<{ a: number }>('obj_key', { a: 1 })
+      )
+
+      expect(result.current[0]).toEqual({ a: 1 })
     })
   })
 })

@@ -22,10 +22,7 @@ describe('parseLatexLog', () => {
       expect(findBeginDocumentLine(latex)).toBe(0)
     })
 
-    // BUG im Produktivcode: findBeginDocumentLine nutzt lines[i].includes('\\begin{document}')
-    // ohne auskommentierte Zeilen (%) zu filtern. Dadurch wird eine Kommentarzeile fälschlich
-    // als Dokumentbeginn erkannt.
-    it.skip('ignoriert auskommentierte Zeilen wie % \\begin{document} beim Auffinden relevanter Dokumentzeilen', () => {
+    it('ignoriert auskommentierte Zeilen wie % \\begin{document} beim Auffinden relevanter Dokumentzeilen', () => {
       const latex = [
         '\\documentclass{article}',
         '% Beispiel: \\begin{document}',
@@ -36,6 +33,18 @@ describe('parseLatexLog', () => {
       ].join('\n')
 
       expect(findBeginDocumentLine(latex)).toBe(4)
+    })
+
+    it('ignoriert Inline-Kommentare mit % \\begin{document} und erkennt Kommentare nach \\begin{document}', () => {
+      const latex = [
+        '\\documentclass{article}',
+        '\\usepackage{tikz} % hier noch kein \\begin{document}',
+        '\\begin{document} % Dokument startet hier',
+        'Inhalt',
+        '\\end{document}',
+      ].join('\n')
+
+      expect(findBeginDocumentLine(latex)).toBe(3)
     })
   })
 

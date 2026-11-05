@@ -8,7 +8,20 @@ function useLocalStorage<T>(key: string, defaultValue: T): [T, Dispatch<SetState
       const stored = localStorage.getItem(key)
       if (stored === null) return defaultValue
       // Shallow-merge so new fields added to DEFAULT get their default values
-      return { ...defaultValue, ...(JSON.parse(stored) as T) }
+      const parsed: unknown = JSON.parse(stored)
+      if (typeof defaultValue === 'object' && defaultValue !== null && !Array.isArray(defaultValue)) {
+        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+          return { ...defaultValue, ...parsed } as T
+        }
+        return defaultValue
+      }
+      if (Array.isArray(defaultValue)) {
+        return (Array.isArray(parsed) ? parsed : defaultValue) as T
+      }
+      if (defaultValue !== null && defaultValue !== undefined && typeof parsed !== typeof defaultValue) {
+        return defaultValue
+      }
+      return parsed as T
     } catch {
       return defaultValue
     }

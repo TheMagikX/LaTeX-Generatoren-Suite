@@ -12,7 +12,9 @@ export interface ErrorAnnotation {
 export function findBeginDocumentLine(latexCode: string): number {
   const lines = latexCode.split('\n')
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes('\\begin{document}')) return i + 1
+    // Strip TeX comments (everything from the first unescaped '%' to end of line)
+    const uncommented = lines[i].replace(/(^|[^\\])%.*$/, '$1')
+    if (uncommented.includes('\\begin{document}')) return i + 1
   }
   return 0
 }
