@@ -130,8 +130,11 @@ async def generate_koordinatensystem3d(cfg: CoordinateSystem3DConfig):
 
 @router.post("/baumdiagramm")
 async def generate_baumdiagramm(cfg: BaumdiagrammConfig):
-    latex = generate_baumdiagramm_latex(cfg)
-    return {"latex": latex}
+    try:
+        latex = generate_baumdiagramm_latex(cfg)
+        return {"latex": latex}
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
 @router.post("/glucksrad")
 async def generate_glucksrad(cfg: GlucksradConfig):

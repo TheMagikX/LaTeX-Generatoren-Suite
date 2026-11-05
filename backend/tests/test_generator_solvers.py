@@ -190,3 +190,13 @@ def test_latex_image_config_default_raw_string():
     cfg = LatexImageConfig()
     assert cfg.code.startswith(r"\textbf")
     assert not cfg.code.startswith("\t")
+
+
+def test_baumdiagramm_node_limit_guard():
+    from models.baumdiagramm import BaumdiagrammConfig
+    from generators.baumdiagramm import generate_baumdiagramm_latex
+    import pytest
+
+    cfg = BaumdiagrammConfig(max_depth=8, branches_global=4)
+    with pytest.raises(ValueError, match="512"):
+        generate_baumdiagramm_latex(cfg)

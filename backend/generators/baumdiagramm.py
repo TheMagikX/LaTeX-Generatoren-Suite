@@ -191,7 +191,49 @@ def tikz_tree_recurse(cfg: BaumdiagrammConfig, parent_id: str, current_level: in
         
     return code
 
+MAX_TREE_NODES = 512
+
+
+def _count_tree_nodes(cfg: BaumdiagrammConfig, limit: int = MAX_TREE_NODES) -> int:
+    """Zählt die Gesamtknoten des Baums mit Early-Exit, sobald `limit` überschritten wird."""
+    if cfg.max_depth <= 0:
+        return 1
+    if cfg.mode == TreeMode.symmetric:
+        b = max(0, cfg.branches_global)
+        if b == 0:
+            return 1
+        if b == 1:
+            return min(limit + 1, cfg.max_depth + 1)
+        total = 1
+        level_nodes = 1
+        for _ in range(cfg.max_depth):
+            level_nodes *= b
+            total += level_nodes
+            if total > limit:
+                return total
+        return total
+
+    # TreeMode.flexible: Breitensuche mit sofortigem Abbruch ab limit + 1
+    total = 1
+    queue: list[tuple[str, int]] = [("root", 0)]
+    while queue:
+        node_id, level = queue.pop(0)
+        num_kids = max(0, get_num_children(cfg, node_id, level))
+        total += num_kids
+        if total > limit:
+            return total
+        if level + 1 < cfg.max_depth:
+            for k in range(num_kids):
+                child_id = f"{k}" if node_id == "root" else f"{node_id}_{k}"
+                queue.append((child_id, level + 1))
+    return total
+
+
 def generate_baumdiagramm_latex(cfg: BaumdiagrammConfig) -> str:
+    if _count_tree_nodes(cfg, MAX_TREE_NODES) > MAX_TREE_NODES:
+        raise ValueError(
+            f"Das Baumdiagramm überschreitet das Sicherheitslimit von {MAX_TREE_NODES} Knoten."
+        )
     root_txt = get_node_label(cfg.root_node, "Start")
     root_style = (cfg.root_node.node_style or "").strip()
     root_opts = f"[name=nroot, {root_style}]" if root_style else "[name=nroot]"

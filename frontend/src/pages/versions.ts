@@ -11,7 +11,7 @@ export const FILE_SAVER = "5.0.0";
 export const COMPONENT_VERSIONS = {
     koordinatensystem: "5.1.1",
     koordinatensystem_3d: "5.0.0",
-    baumdiagramm: "5.0.0",
+    baumdiagramm: "5.0.1",
     schaltplan: "5.0.0",
     geometrie: "5.0.1",
     latex: "5.0.2",
