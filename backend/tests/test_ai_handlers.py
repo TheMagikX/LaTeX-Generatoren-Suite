@@ -38,6 +38,15 @@ def test_sanitizer_latex_math_and_control_chars():
     assert r"\\beta" in sanitized
     assert r"\\vec" in sanitized
 
+    # LaTeX commands with \u (e.g. \underline, \uparrow) vs genuine JSON unicode escapes
+    u_json = r'{"u_cmd": "\underline{x}", "arrow": "\uparrow", "unicode": "\u00df"}'
+    u_sanitized = sanitize_llm_json_string(u_json)
+    import json
+    parsed = json.loads(u_sanitized)
+    assert parsed["u_cmd"] == r"\underline{x}"
+    assert parsed["arrow"] == r"\uparrow"
+    assert parsed["unicode"] == "ß"
+
     # 2. Markdown extraction
     markdown_wrapped = "Hier ist die Konfiguration:\n```json\n{\"test\": 123}\n```\nViele Grüße!"
     extracted = extract_json_from_llm_response(markdown_wrapped)

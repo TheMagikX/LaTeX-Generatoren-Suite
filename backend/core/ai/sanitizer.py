@@ -39,7 +39,10 @@ def sanitize_llm_json_string(text: str) -> str:
         text
     )
     # Alle weiteren einfachen Backslashes, die keine gültigen JSON-Escapes darstellen:
-    text = re.sub(r'(?<!\\)\\(?!["\\/bfnrtu])', r'\\\\', text)
+    # Backslash vor 'u', der KEIN 4-stelliger Hex-Unicode-Escape ist (z. B. \underline, \uparrow):
+    text = re.sub(r'(?<!\\)\\u(?![0-9a-fA-F]{4})', r'\\\\u', text)
+    # Alle weiteren einfachen Backslashes, die keine gültigen JSON-Escapes darstellen:
+    text = re.sub(r'(?<!\\)\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})', r'\\\\', text)
     return text
 
 def recursively_fix_latex_strings(obj: Any) -> Any:
