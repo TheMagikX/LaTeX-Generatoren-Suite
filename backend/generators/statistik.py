@@ -214,8 +214,8 @@ def generate_boxplot_tikz(config: StatistikConfig) -> str:
     pad = (d_max - d_min) * 0.15 or 1.0
 
     if is_horizontal:
-        xmin_val = config.x_axis.min if config.x_axis.min is not None else 0
-        xmax_val = config.x_axis.max if config.x_axis.max is not None else 10
+        xmin_val = config.x_axis.min if config.x_axis.min is not None else math.floor(d_min - pad)
+        xmax_val = config.x_axis.max if config.x_axis.max is not None else math.ceil(d_max + pad)
         range_opts = f"xmin={xmin_val}, xmax={xmax_val}"
     else:
         ymin_val = config.y_axis.min if config.y_axis.min is not None else math.floor(d_min - pad)
@@ -234,8 +234,22 @@ def generate_boxplot_tikz(config: StatistikConfig) -> str:
         "scale only axis",
     ]
 
-    _apply_axis_ticks(axis_opts, config.x_axis, "x", is_categorical=not is_horizontal, default_min=config.x_axis.min or 0, default_max=config.x_axis.max or 10)
-    _apply_axis_ticks(axis_opts, config.y_axis, "y", is_categorical=is_horizontal, default_min=config.y_axis.min or 0, default_max=config.y_axis.max or 10)
+    _apply_axis_ticks(
+        axis_opts,
+        config.x_axis,
+        "x",
+        is_categorical=not is_horizontal,
+        default_min=xmin_val if is_horizontal else (config.x_axis.min or 0),
+        default_max=xmax_val if is_horizontal else (config.x_axis.max or 10),
+    )
+    _apply_axis_ticks(
+        axis_opts,
+        config.y_axis,
+        "y",
+        is_categorical=is_horizontal,
+        default_min=ymin_val if not is_horizontal else (config.y_axis.min or 0),
+        default_max=ymax_val if not is_horizontal else (config.y_axis.max or 10),
+    )
     _apply_grid(axis_opts, config)
     _apply_title(axis_opts, config)
 

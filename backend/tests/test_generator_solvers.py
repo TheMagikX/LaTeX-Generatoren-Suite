@@ -104,6 +104,20 @@ def test_statistik_calculate_params():
     assert math.isclose(params.mean, 5.0, abs_tol=1e-2)
 
 
+def test_statistik_horizontal_boxplot_auto_range():
+    from models.statistik import StatistikConfig, StatistikType, BoxplotOptions, Orientation, AxisConfig
+    from generators.statistik import generate_boxplot_tikz
+
+    cfg = StatistikConfig(
+        type=StatistikType.BOXPLOT,
+        datasets=[DatasetConfig(name="Test", data_mode=DataMode.RAW, raw_data=[10.0, 20.0, 30.0, 40.0, 50.0])],
+        x_axis=AxisConfig(min=None, max=None),
+        boxplot_opts=BoxplotOptions(orientation=Orientation.HORIZONTAL),
+    )
+    tikz = generate_boxplot_tikz(cfg)
+    assert "xmin=4, xmax=56" in tikz
+
+
 def test_sitzplan_solver_allocation():
     # In classroom layout, front rows are indexed at the bottom: range(rows - front_rows, rows)
     # For rows=2, cols=2, front_rows=1:
