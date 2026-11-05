@@ -6,8 +6,15 @@ let pyodidePromise: Promise<PyodideInterface> | null = null
 
 function getPyodide(): Promise<PyodideInterface> {
   if (!pyodidePromise) {
-    pyodidePromise = loadPyodide({
-      indexURL: '/pyodide/',
+    pyodidePromise = (async () => {
+      const pyodide = await loadPyodide({
+        indexURL: '/pyodide/',
+      })
+      await pyodide.runPythonAsync(PYTHON_RUNNER_SCRIPT)
+      return pyodide
+    })().catch((err) => {
+      pyodidePromise = null
+      throw err
     })
   }
   return pyodidePromise
@@ -60,7 +67,6 @@ self.onmessage = async (event: MessageEvent<WorkerExecuteRequest>) => {
   const { id, python_code, random_seed } = event.data
   try {
     const pyodide = await getPyodide()
-    await pyodide.runPythonAsync(PYTHON_RUNNER_SCRIPT)
     const runFn = pyodide.globals.get('_run_worksheet_code')
     const rawJson: string = runFn(python_code ?? '', random_seed ?? null)
     runFn.destroy?.()
