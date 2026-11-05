@@ -131,6 +131,8 @@ async def list_presets_detailed(generator: str):
 
     presets = {}
     for p in sorted(base_dir.rglob("*.json"), key=lambda p: str(p).lower()):
+        if p.suffix == ".broken":
+            continue
         try:
             rel = p.relative_to(base_dir)
             name = " / ".join(rel.with_suffix("").parts)

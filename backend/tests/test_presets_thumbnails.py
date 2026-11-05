@@ -55,6 +55,15 @@ def test_thumbnail_roundtrip_and_detailed_listing(tmp_path):
     assert legacy == {"USER / Mathe / Parabel": {"a": 1}}
 
 
+def test_broken_presets_excluded_from_detailed(tmp_path):
+    _save("USER / Mathe / Gut")
+    broken = tmp_path / "arbeitsblatt" / "USER" / "Mathe" / "Defekt.broken"
+    broken.write_text('{"bad": true}', encoding="utf-8")
+    detailed = client.get("/api/presets/arbeitsblatt/detailed").json()
+    assert "USER / Mathe / Gut" in detailed
+    assert "USER / Mathe / Defekt" not in detailed
+
+
 def test_preset_without_thumbnail(tmp_path):
     _save()
     detailed = client.get("/api/presets/arbeitsblatt/detailed").json()
