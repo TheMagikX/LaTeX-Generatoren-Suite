@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger("generator_suite.config")
 
 APP_NAME = "LaTeX-Generatoren-Suite"
-APP_VERSION = "5.1.1"
+APP_VERSION = "5.1.2"
 APP_AUTHOR = "C. Meyer"
 EXPORT_CREATOR = "Generatoren-Suite"
 APP_LICENSE = "GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)"
