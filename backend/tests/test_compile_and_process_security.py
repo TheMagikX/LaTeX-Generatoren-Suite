@@ -27,12 +27,12 @@ def test_compile_rejects_oversized_latex_payload():
     assert res.status_code == 422
 
 
-def test_browse_dialog_ignores_arbitrary_title_and_enforces_lock():
-    """Ensure /api/settings/latex/browse uses a fixed title and blocks concurrent requests via asyncio.Lock."""
+def test_browse_dialog_uses_payload_title_and_enforces_lock():
+    """Ensure /api/settings/latex/browse passes payload.title and blocks concurrent requests via asyncio.Lock."""
     with patch("api.settings._open_native_dialog", return_value="C:/fakepath/commands.tex") as mock_dlg:
         res = client.post("/api/settings/latex/browse", json={"title": "SPOOFED SYSTEM ALERT"})
         assert res.status_code == 200
-        mock_dlg.assert_called_once_with("LaTeX-Datei auswählen")
+        mock_dlg.assert_called_once_with("SPOOFED SYSTEM ALERT")
 
     async def _hold_lock_and_test():
         async with settings_api._BROWSE_DIALOG_LOCK:
