@@ -95,10 +95,11 @@ export function AiPromptDialog<T extends object>({
     }
   }, [activeProvider, selectedModel])
 
-  const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
-  if (isOpen !== prevIsOpen) {
-    setPrevIsOpen(isOpen)
-    if (isOpen) {
+  const wasOpenRef = useRef(false)
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (isOpen && !wasOpenRef.current) {
       if (currentConfig) {
         setInitialConfig(JSON.parse(JSON.stringify(currentConfig)))
       }
@@ -106,7 +107,9 @@ export function AiPromptDialog<T extends object>({
       setIsCheckingStatus(true)
       setErrorMsg(null)
     }
-  }
+    wasOpenRef.current = isOpen
+  }, [isOpen, currentConfig])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Focus and fetch status on opening
   useEffect(() => {
