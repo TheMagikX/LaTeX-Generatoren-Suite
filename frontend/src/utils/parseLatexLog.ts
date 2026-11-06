@@ -47,7 +47,7 @@ export function parseLatexLog(
     const raw = logLines[i]
 
     // LaTeX prints "l.<N> <offending token>" for every error location.
-    const m = raw.match(/^l\.(\d+)[\s\\]/)
+    const m = raw.match(/^l\.(\d+)(?:[\s\\]|$)/)
     if (!m) continue
 
     const docLine = parseInt(m[1], 10)
