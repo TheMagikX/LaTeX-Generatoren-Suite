@@ -8,22 +8,23 @@ import type { Config, BaumNodeConfig } from './typesBaum'
 
 export const parseLatexProb = (tex: string): number | null => {
   if (!tex) return null
-  // \frac{a}{b}, \dfrac{a}{b}, \tfrac{a}{b}
-  let m = tex.match(/\\[dt]?frac\{(\d+)\}\{(\d+)\}/)
+  const cleaned = tex.replace(/,/g, '.').trim()
+  // \frac{a}{b}, \dfrac{a}{b}, \tfrac{a}{b} with optional whitespace
+  let m = cleaned.match(/\\[dt]?frac\s*\{\s*(\d+)\s*\}\s*\{\s*(\d+)\s*\}/)
   if (m) {
-    const num = parseInt(m[1])
-    const den = parseInt(m[2])
+    const num = parseInt(m[1], 10)
+    const den = parseInt(m[2], 10)
     return den !== 0 ? num / den : null
   }
   // plain a/b (not preceded by a backslash)
-  m = tex.match(/(?<!\\)\b(\d+)\s*\/\s*(\d+)\b/)
+  m = cleaned.match(/(?<!\\)\b(\d+)\s*\/\s*(\d+)\b/)
   if (m) {
-    const num = parseInt(m[1])
-    const den = parseInt(m[2])
+    const num = parseInt(m[1], 10)
+    const den = parseInt(m[2], 10)
     return den !== 0 ? num / den : null
   }
   // plain decimal or integer in [0, 1]
-  m = tex.match(/\b(0(?:\.\d+)?|1(?:\.0+)?|\.\d+)\b/)
+  m = cleaned.match(/\b(0(?:\.\d+)?|1(?:\.0+)?|\.\d+)\b/)
   if (m) return parseFloat(m[0])
   return null
 }
