@@ -17,7 +17,10 @@ export function BruchTabBasis({ config, updateConfig }: BruchTabBasisProps) {
             value={config.zaehler}
             min={0}
             max={200}
-            onChange={(e) => updateConfig({ zaehler: parseInt(e.target.value) })}
+            onChange={(e) => {
+              const val = parseInt(e.target.value, 10);
+              updateConfig({ zaehler: Number.isNaN(val) ? 0 : Math.max(0, val) });
+            }}
           />
         </Field>
         <Field label="Nenner (gesamt)">
@@ -25,7 +28,10 @@ export function BruchTabBasis({ config, updateConfig }: BruchTabBasisProps) {
             value={config.nenner}
             min={1}
             max={200}
-            onChange={(e) => updateConfig({ nenner: parseInt(e.target.value) })}
+            onChange={(e) => {
+              const val = Math.max(1, parseInt(e.target.value, 10) || 1);
+              updateConfig({ nenner: val });
+            }}
           />
         </Field>
       </div>
@@ -33,7 +39,10 @@ export function BruchTabBasis({ config, updateConfig }: BruchTabBasisProps) {
         <NumberInput
           value={config.seed}
           min={0}
-          onChange={(e) => updateConfig({ seed: parseInt(e.target.value) })}
+          onChange={(e) => {
+            const val = parseInt(e.target.value, 10);
+            updateConfig({ seed: Number.isNaN(val) ? 0 : Math.max(0, val) });
+          }}
         />
       </Field>
       <Switch

@@ -21,7 +21,7 @@ export const COMPONENT_VERSIONS = {
     flaschenzug: "5.0.1",
     zahlenstrahlgenerator: "5.0.1",
     optikgenerator: "5.0.0",
-    bruchgenerator: "5.0.2",
+    bruchgenerator: "5.0.3",
     glucksradgenerator: "5.0.2",
     sitzplangenerator: "5.0.2",
     strahlenoptik: "5.0.0",
