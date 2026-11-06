@@ -97,6 +97,12 @@ def _extract_draw_color(style: str) -> str:
         return m.group(1).strip()
     return "red!70!black"
 
+def _safe_node_index(node_id: str, default: int = 0) -> int:
+    try:
+        return int(node_id.rsplit("_", 1)[-1])
+    except (ValueError, IndexError, AttributeError):
+        return default
+
 def get_node_label(node_cfg: BaumNodeConfig, standard_label: str) -> str:
     if getattr(node_cfg, "labelHidden", False):
         return ""
@@ -318,7 +324,7 @@ def generate_baumdiagramm_latex(cfg: BaumdiagrammConfig) -> str:
                 edge_txt = get_edge_label(cfg, c_cfg, get_num_children(cfg, parent_id, i))
                 
                 # auto / swap Positionierung nachbilden
-                k = int(child_id.split("_")[-1])
+                k = _safe_node_index(child_id)
                 num_kids = get_num_children(cfg, parent_id, i)
                 
                 pos_opts = ""
@@ -374,7 +380,7 @@ def generate_baumdiagramm_latex(cfg: BaumdiagrammConfig) -> str:
             node_cfg = cfg.nodes.get(node_id, BaumNodeConfig())
             node_ref = "(n" + node_id.replace("_", "-") + ")"
             
-            idx_in_parent = int(node_id.split("_")[-1])
+            idx_in_parent = _safe_node_index(node_id)
             # Wir gehen hier als Fallback von einem Standard-Baum (2 Äste) aus:
             default_node_text = ["K", "Z"][idx_in_parent % 2]
             node_text = get_node_label(node_cfg, default_node_text)
