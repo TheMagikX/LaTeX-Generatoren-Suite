@@ -127,10 +127,12 @@ def build_rechteck(
 
     if show_label:
         total_w = cols * cell_w
-        label_text = label_override if label_override else rf"\dfrac{{{zaehler}}}{{{nenner}}}"
-        lines.append(
-            rf"  \node[below=4pt, font=\large] at ({total_w/2:.4f},0) {{${label_text}$}};"
-        )
+        clean_override = (label_override or "").strip().strip("$").strip()
+        label_text = clean_override if clean_override else rf"\dfrac{{{zaehler}}}{{{nenner}}}"
+        if label_text:
+            lines.append(
+                rf"  \node[below=4pt, font=\large] at ({total_w/2:.4f},0) {{${label_text}$}};"
+            )
 
     lines.append(r"\end{tikzpicture}")
     return "\n".join(lines)
@@ -205,10 +207,12 @@ def build_kreis(
         lines.append(rf"  \draw[BorderCol, line width={border_width:.2f}pt] (0,0) circle ({radius}cm);")
 
     if show_label:
-        label_text = label_override if label_override else rf"\dfrac{{{zaehler}}}{{{nenner}}}"
-        lines.append(
-            rf"  \node[below=6pt, font=\large] at (0,-{radius:.2f}) {{${label_text}$}};"
-        )
+        clean_override = (label_override or "").strip().strip("$").strip()
+        label_text = clean_override if clean_override else rf"\dfrac{{{zaehler}}}{{{nenner}}}"
+        if label_text:
+            lines.append(
+                rf"  \node[below=6pt, font=\large] at (0,-{radius:.2f}) {{${label_text}$}};"
+            )
 
     lines.append(r"\end{tikzpicture}")
     return "\n".join(lines)
@@ -255,13 +259,15 @@ def build_mixed_rechteck(
 
     if show_label:
         total_w = num_shapes * shape_w + (num_shapes - 1) * gap
-        if label_override:
-            label_text = label_override
+        clean_override = (label_override or "").strip().strip("$").strip()
+        if clean_override:
+            label_text = clean_override
         elif remainder == 0:
             label_text = str(whole)
         else:
             label_text = rf"{whole}\dfrac{{{remainder}}}{{{nenner}}}"
-        lines.append(rf"  \node[below=4pt, font=\large] at ({total_w / 2:.4f},0) {{${label_text}$}};")
+        if label_text:
+            lines.append(rf"  \node[below=4pt, font=\large] at ({total_w / 2:.4f},0) {{${label_text}$}};")
 
     lines.append(r"\end{tikzpicture}")
     return "\n".join(lines)
@@ -307,13 +313,15 @@ def build_mixed_kreis(
 
     if show_label:
         center_x = (num_shapes - 1) * spacing / 2
-        if label_override:
-            label_text = label_override
+        clean_override = (label_override or "").strip().strip("$").strip()
+        if clean_override:
+            label_text = clean_override
         elif remainder == 0:
             label_text = str(whole)
         else:
             label_text = rf"{whole}\dfrac{{{remainder}}}{{{nenner}}}"
-        lines.append(rf"  \node[below=6pt, font=\large] at ({center_x:.4f},-{radius:.2f}) {{${label_text}$}};")
+        if label_text:
+            lines.append(rf"  \node[below=6pt, font=\large] at ({center_x:.4f},-{radius:.2f}) {{${label_text}$}};")
 
     lines.append(r"\end{tikzpicture}")
     return "\n".join(lines)
@@ -381,11 +389,17 @@ def build_side_by_side_latex(
         actual_rows, _ = _get_rect_dim(nenner_a, rows)
         mid_y = (actual_rows * 1.0) / 2.0
 
+    clean_arrow = (arrow_label or "").strip().strip("$").strip()
+    arrow_label_line = (
+        rf"  \node[font=\normalsize] at ({arrow_x:.2f},{mid_y + 0.9:.2f}) {{${clean_arrow}$}};" + "\n"
+        if clean_arrow
+        else ""
+    )
     body = (
         r"\begin{tikzpicture}" + "\n"
         + r"  \begin{scope}" + "\n" + inner_a + "\n" + r"  \end{scope}" + "\n"
         + rf"  \node[font=\LARGE] at ({arrow_x:.2f},{mid_y:.2f}) {{$\Longrightarrow$}};" + "\n"
-        + rf"  \node[font=\normalsize] at ({arrow_x:.2f},{mid_y + 0.9:.2f}) {{${arrow_label}$}};" + "\n"
+        + arrow_label_line
         + rf"  \begin{{scope}}[shift={{({shift_bx:.2f},0)}}]" + "\n" + inner_b + "\n" + r"  \end{scope}" + "\n"
         + r"\end{tikzpicture}"
     )

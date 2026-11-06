@@ -386,8 +386,10 @@ def generate_koordinatensystem_latex(cfg: CoordinateSystemConfig) -> str:
         style_parts.append(f"mark size={pt.size}pt")
         
         point_cmds.append(rf"\addplot[{', '.join(style_parts)}] coordinates {{({pt.x},{pt.y})}};")
-        node_style = _format_point_label_style(pt, pt_col)
-        point_cmds.append(rf"\node[{node_style}] at (axis cs:{pt.x},{pt.y}) {{$ {pt.label} $}};")
+        clean_lbl = (pt.label or "").strip().strip("$").strip()
+        if clean_lbl:
+            node_style = _format_point_label_style(pt, pt_col)
+            point_cmds.append(rf"\node[{node_style}] at (axis cs:{pt.x},{pt.y}) {{$ {clean_lbl} $}};")
 
     param_cmds = []
     for i, pp in enumerate(cfg.parametric_plots):

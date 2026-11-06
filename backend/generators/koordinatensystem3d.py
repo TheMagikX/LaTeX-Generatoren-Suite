@@ -421,7 +421,9 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
         c = pt.color or "black"
         pt_col = f"hexcol={c[1:].upper()}" if c.startswith("#") else c
         points_code.append(rf"\addplot3[only marks, mark={pt.mark}, {pt_col}, mark size={pt.size}pt] coordinates {{({pt.x},{pt.y},{pt.z})}};")
-        points_code.append(rf"\node[{pt_col}, anchor={pt.anchor}, draw=none] at (axis cs:{pt.x},{pt.y},{pt.z}){{$ {pt.label} $}};")
+        clean_lbl = (pt.label or "").strip().strip("$").strip()
+        if clean_lbl:
+            points_code.append(rf"\node[{pt_col}, anchor={pt.anchor}, draw=none] at (axis cs:{pt.x},{pt.y},{pt.z}){{$ {clean_lbl} $}};")
 
         # Projektionen auf Grundebenen (2.1)
         p_c = pt.proj_color or "gray!50"
@@ -619,8 +621,9 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
                 pt = calculate_line_line_intersection(g1, g2)
                 if pt is not None:
                     intersections_code.append(rf"\addplot3[only marks, mark={inter.mark}, {inter.color}, mark size={inter.size}pt] coordinates {{({pt[0]},{pt[1]},{pt[2]})}};")
-                    if inter.label:
-                        intersections_code.append(rf"\node[{inter.color}, anchor=south, draw=none] at (axis cs:{pt[0]},{pt[1]},{pt[2]}){{$ {inter.label} $}};")
+                    clean_inter_lbl = (inter.label or "").strip().strip("$").strip()
+                    if clean_inter_lbl:
+                        intersections_code.append(rf"\node[{inter.color}, anchor=south, draw=none] at (axis cs:{pt[0]},{pt[1]},{pt[2]}){{$ {clean_inter_lbl} $}};")
 
         elif inter.type == "Gerade-Ebene":
             if inter.item1_index < len(cfg.lines) and inter.item2_index < len(cfg.planes):
@@ -629,8 +632,9 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
                 pt = calculate_line_plane_intersection(g, e)
                 if pt is not None:
                     intersections_code.append(rf"\addplot3[only marks, mark={inter.mark}, {inter.color}, mark size={inter.size}pt] coordinates {{({pt[0]},{pt[1]},{pt[2]})}};")
-                    if inter.label:
-                        intersections_code.append(rf"\node[{inter.color}, anchor=south, draw=none] at (axis cs:{pt[0]},{pt[1]},{pt[2]}){{$ {inter.label} $}};")
+                    clean_inter_lbl = (inter.label or "").strip().strip("$").strip()
+                    if clean_inter_lbl:
+                        intersections_code.append(rf"\node[{inter.color}, anchor=south, draw=none] at (axis cs:{pt[0]},{pt[1]},{pt[2]}){{$ {clean_inter_lbl} $}};")
 
         elif inter.type == "Ebene-Ebene":
             if inter.item1_index < len(cfg.planes) and inter.item2_index < len(cfg.planes):
