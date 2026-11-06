@@ -68,8 +68,12 @@ self.onmessage = async (event: MessageEvent<WorkerExecuteRequest>) => {
   try {
     const pyodide = await getPyodide()
     const runFn = pyodide.globals.get('_run_worksheet_code')
-    const rawJson: string = runFn(python_code ?? '', random_seed ?? null)
-    runFn.destroy?.()
+    let rawJson: string
+    try {
+      rawJson = runFn(python_code ?? '', random_seed ?? null)
+    } finally {
+      runFn?.destroy?.()
+    }
     const parsed = JSON.parse(rawJson) as {
       vars: Record<string, unknown>
       error: string | null
