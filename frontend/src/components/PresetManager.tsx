@@ -209,6 +209,7 @@ export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad, thum
   const [downloadYear, setDownloadYear] = useState('')
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null)
+  const [downloadError, setDownloadError] = useState<string | null>(null)
 
   // Dialogs
   const [pendingLoadName, setPendingLoadName] = useState<string | null>(null)
@@ -344,13 +345,15 @@ export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad, thum
   const handleDownloadClick = async () => {
     if (!downloadUser || isDownloading) return
     try {
+      setDownloadError(null)
       setIsDownloading(true)
       await downloadPresetFolder(generator, targetDownloadFolder)
       setDownloadSuccess(`Ordner "${targetDownloadLabel}" heruntergeladen`)
       setTimeout(() => setDownloadSuccess(null), 3000)
     } catch (err) {
       console.error('Download preset folder error:', err)
-      alert('Fehler beim Herunterladen des Preset-Ordners.')
+      setDownloadError('Fehler beim Herunterladen des Preset-Ordners.')
+      setTimeout(() => setDownloadError(null), 5000)
     } finally {
       setIsDownloading(false)
     }
@@ -1030,6 +1033,11 @@ export const PresetManager = <TConfig,>({ generator, currentConfig, onLoad, thum
                   </>
                 )}
               </button>
+              {downloadError && (
+                <p role="alert" className="text-xs text-red-500 px-1 mt-1">
+                  {downloadError}
+                </p>
+              )}
             </div>
           )}
         </div>
