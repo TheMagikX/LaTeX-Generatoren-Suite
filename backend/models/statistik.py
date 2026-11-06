@@ -21,7 +21,7 @@ class Orientation(str, Enum):
     VERTICAL = "vertical"
 
 class DatasetParams(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="ignore")
     min: float
     q1: float
     median: float
@@ -32,7 +32,7 @@ class DatasetParams(BaseModel):
     variance: Optional[float] = None
 
 class DatasetConfig(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="ignore")
     name: str = "Datensatz"
     data_mode: DataMode = DataMode.RAW
     raw_data: List[float] = Field(default_factory=list)
@@ -49,7 +49,7 @@ class BarWidthMode(str, Enum):
     BOXES = "boxes"
 
 class AxisConfig(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="ignore")
     min: Optional[float] = None
     max: Optional[float] = None
     step: float = 1
@@ -62,18 +62,18 @@ class AxisConfig(BaseModel):
     ticks_show: bool = True
 
 class BoxplotOptions(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="ignore")
     orientation: Orientation = Orientation.HORIZONTAL
     box_width: float = 1.0
     draw_mean: bool = False
 
 class HistogramOptions(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="ignore")
     bin_width: float = 1.0
     density: bool = False
 
 class BarChartOptions(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="ignore")
     orientation: Orientation = Orientation.VERTICAL
     width_mode: BarWidthMode = BarWidthMode.BOXES
     bar_width: float = 0.6
@@ -87,19 +87,19 @@ class BarChartOptions(BaseModel):
     show_values: bool = False
 
 class SummenkurveOptions(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="ignore")
     smooth: bool = False
     as_percent: bool = True
 
 class ViolinOptions(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="ignore")
     orientation: Orientation = Orientation.HORIZONTAL
     violin_width: float = 0.8
     bandwidth: float = 0.4
     show_inner_box: bool = True
 
 class TitleConfig(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="ignore")
     show: bool = False
     text: str = ""
     color: str = "#1e293b"
@@ -109,7 +109,7 @@ class TitleConfig(BaseModel):
     custom_style: Optional[str] = ""
 
 class StatistikConfig(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="ignore")
     type: StatistikType = StatistikType.BOXPLOT
     datasets: List[DatasetConfig] = Field(default_factory=lambda: [DatasetConfig()])
     x_axis: AxisConfig = Field(default_factory=AxisConfig)
