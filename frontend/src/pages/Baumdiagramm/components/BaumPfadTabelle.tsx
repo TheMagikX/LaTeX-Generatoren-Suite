@@ -11,6 +11,14 @@ interface BaumPfadTabelleProps {
 
 const stripMath = (s: string) => s.replace(/^\$+|\$+$/g, '').trim()
 
+function escapeLatexText(s: string): string {
+  return s.replace(/(?<!\\)([&%#_])/g, '\\$1')
+}
+
+function sanitizeLatexMathCell(s: string): string {
+  return s.replace(/(?<!\\)([&%#])/g, '\\$1')
+}
+
 const probToLatex = (p: number): string => {
   const f = formatProb(p)
   if (f.includes('/')) {
@@ -61,12 +69,13 @@ export const BaumPfadTabelle = ({ config }: BaumPfadTabelleProps) => {
 
   const generateLatex = (): string => {
     const rows = allPaths.map((path, i) => {
-      const pathStr = path.map(getNodeLabel).join(' \\rightarrow ')
-      const edgeStr = path.slice(1).map(getEdgeLabelLatex).join(' \\cdot ')
+      const pathStr = path.map(id => sanitizeLatexMathCell(stripMath(getNodeLabel(id)))).join(' \\rightarrow ')
+      const edgeStr = path.slice(1).map(id => sanitizeLatexMathCell(getEdgeLabelLatex(id))).join(' \\cdot ')
       const pVal = calcPathProb(config, path)
       const pStr = pVal !== null ? probToLatex(pVal) : '?'
       const leafId = path[path.length - 1]
-      const result = stripMath(config.results[leafId] || '') || '{---}'
+      const resRaw = stripMath(config.results[leafId] || '')
+      const result = resRaw ? escapeLatexText(resRaw) : '{---}'
       return `  ${i + 1} & $${pathStr}$ & $${edgeStr}$ & $${pStr}$ & ${result} \\\\`
     }).join('\n')
 
