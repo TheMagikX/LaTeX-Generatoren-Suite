@@ -95,7 +95,7 @@ def validate_latex_source_security(latex: str) -> Optional[str]:
     """Prüft LaTeX-Quellcode auf unsichere Dateizugriffe (Schutz insbesondere für natives Windows/MiKTeX)."""
     if not latex:
         return None
-    active_lines = [re.sub(r"(?<!\\)%.*$", "", line) for line in latex.splitlines()]
+    active_lines = [re.sub(r"(?<!\\)((?:\\\\)*)%.*$", r"\1", line) for line in latex.splitlines()]
     cleaned = "\n".join(active_lines)
 
     if _FORBIDDEN_TEX_PRIMITIVES_RE.search(cleaned):
