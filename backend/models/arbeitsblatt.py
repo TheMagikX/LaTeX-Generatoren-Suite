@@ -5,7 +5,7 @@ from typing import Optional, Any, Dict, Union
 
 class ArbeitsblattConfig(BaseModel):
     template_text: str = Field(..., description="The Jinja2 LaTeX template")
-    python_code: str = Field(..., description="The Python code to generate variables")
+    python_code: str = Field(default="", description="The Python code to generate variables")
     variables: Optional[Dict[str, Any]] = Field(None, description="Pre-executed variables to use for rendering")
     random_seed: Optional[Union[int, str]] = Field(None, description="Optional seed for reproducible worksheet variables")
     
