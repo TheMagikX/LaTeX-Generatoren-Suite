@@ -34,6 +34,16 @@ def _angle_at_vertex(prev_pt, vertex, next_pt) -> float:
     return math.degrees(math.acos(max(-1.0, min(1.0, dot / mag))))
 
 
+def _format_angle_label(orig: str | None, value: float, show_orig: bool, show_val: bool) -> str:
+    clean_orig = (orig or "").strip().strip("$").strip()
+    if not show_val:
+        return f"${clean_orig}$" if show_orig and clean_orig else ""
+    val_str = rf"{value:.1f}^\circ"
+    if not show_orig or not clean_orig:
+        return f"${val_str}$"
+    return f"${clean_orig} = {val_str}$"
+
+
 def solve_quadrilateral(cfg: QuadrilateralConstructionConfig) -> tuple[dict | None, str | None]:
     """
     Berechnet die Koordinaten A, B, C, D basierend auf dem Modus.
@@ -314,15 +324,7 @@ def _generate_tikz_body(cfg: GeometrieConfig, result: dict) -> str:
             ang = el.angles
             ma = el.measurements.show_angles
             
-            def format_angle_label(orig, value, show_orig, show_val):
-                if not show_val:
-                    return orig if show_orig else ""
-                val_str = rf"{value:.1f}^\circ"
-                if not show_orig:
-                    return f"${val_str}$"
-                if orig.startswith("$") and orig.endswith("$"):
-                    return f"${orig[1:-1]} = {val_str}$"
-                return f"{orig} ${val_str}$"
+            format_angle_label = _format_angle_label
 
             lab_a = format_angle_label(ang.labels.alpha, angles['alpha'], ang.show_labels, ma.alpha)
             lab_b = format_angle_label(ang.labels.beta, angles['beta'], ang.show_labels, ma.beta)
@@ -544,15 +546,7 @@ def _generate_tikz_quad(cfg: GeometrieConfig, result: dict) -> str:
         ang = el.angles
         ma = el.measurements.show_angles
 
-        def format_angle_label(orig, value, show_orig, show_val):
-            if not show_val:
-                return orig if show_orig else ""
-            val_str = rf"{value:.1f}^\circ"
-            if not show_orig:
-                return f"${val_str}$"
-            if orig.startswith("$") and orig.endswith("$"):
-                return f"${orig[1:-1]} = {val_str}$"
-            return f"{orig} ${val_str}$"
+        format_angle_label = _format_angle_label
 
         lab_a = format_angle_label(ang.labels.alpha, angles.get('alpha', 0), ang.show_labels, ma.alpha)
         lab_b = format_angle_label(ang.labels.beta, angles.get('beta', 0), ang.show_labels, ma.beta)
