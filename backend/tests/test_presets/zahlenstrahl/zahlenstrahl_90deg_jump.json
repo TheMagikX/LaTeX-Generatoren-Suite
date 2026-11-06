@@ -1,0 +1,28 @@
+{
+  "min_val": 0.0,
+  "max_val": 5.0,
+  "step_main": 1.0,
+  "step_mid": 0.5,
+  "step_sub": 0.1,
+  "width_cm": 12.0,
+  "padding": 0.5,
+  "arrow_type": "->",
+  "font_family": "Fira",
+  "jump_out_angle": 90,
+  "jumps": [
+    {
+      "start": 1.0,
+      "end": 3.0,
+      "label": "+2",
+      "style": "arc",
+      "visible": true
+    },
+    {
+      "start": 4.0,
+      "end": 2.0,
+      "label": "-2",
+      "style": "arc",
+      "visible": true
+    }
+  ]
+}
