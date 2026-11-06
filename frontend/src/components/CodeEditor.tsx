@@ -130,13 +130,15 @@ export const CodeEditor = ({
   value,
   onChange,
   language = 'latex',
+  theme: propTheme,
   height = '400px',
   placeholder = '% Gib hier deinen Code ein...',
   annotations = [],
   onViewCreated,
 }: CodeEditorProps) => {
-  const { theme } = useTheme()
-  const isDark = !['light', 'himmel', 'sepia', 'rose'].includes(theme)
+  const { theme: hookTheme } = useTheme()
+  const currentTheme = propTheme ?? hookTheme
+  const isDark = !['light', 'himmel', 'sepia', 'rose'].includes(currentTheme)
 
   const lang = useMemo(() => {
     if (language === 'python') return python()
