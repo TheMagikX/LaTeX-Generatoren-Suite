@@ -594,14 +594,21 @@ def pdf_to_svg_bytes(pdf_bytes: bytes) -> bytes:
         svg_path = os.path.join(tmpdir, "input.svg")
         pathlib.Path(pdf_path).write_bytes(pdf_bytes)
 
-        subprocess.run(
-            ["dvisvgm", "--pdf", "--no-fonts", pdf_path, "-o", svg_path],
-            cwd=tmpdir,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=True,
-            timeout=30,
-        )
+        try:
+            subprocess.run(
+                ["dvisvgm", "--pdf", "--no-fonts", pdf_path, "-o", svg_path],
+                cwd=tmpdir,
+                capture_output=True,
+                check=True,
+                timeout=30,
+            )
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as exc:
+            output = getattr(exc, "output", b"") or getattr(exc, "stderr", b"") or b""
+            detail = output.decode("utf-8", errors="replace") if isinstance(output, bytes) else str(output)
+            raise RuntimeError(f"SVG-Konvertierung (dvisvgm) fehlgeschlagen: {detail}") from exc
+
+        if not os.path.exists(svg_path):
+            raise RuntimeError("SVG-Konvertierung (dvisvgm) fehlgeschlagen: Ausgabedatei wurde nicht erzeugt.")
         raw_svg = pathlib.Path(svg_path).read_bytes()
         return __fix_dvisvgm_svg(raw_svg)
 
@@ -614,14 +621,18 @@ def pdf_to_all_svg_bytes(pdf_bytes: bytes) -> list[bytes]:
         pdf_path = os.path.join(tmpdir, "input.pdf")
         pathlib.Path(pdf_path).write_bytes(pdf_bytes)
 
-        subprocess.run(
-            ["dvisvgm", "--pdf", "--no-fonts", "-p", "1-", "-o", os.path.join(tmpdir, "page-%p.svg"), pdf_path],
-            cwd=tmpdir,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=True,
-            timeout=30,
-        )
+        try:
+            subprocess.run(
+                ["dvisvgm", "--pdf", "--no-fonts", "-p", "1-", "-o", os.path.join(tmpdir, "page-%p.svg"), pdf_path],
+                cwd=tmpdir,
+                capture_output=True,
+                check=True,
+                timeout=30,
+            )
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as exc:
+            output = getattr(exc, "output", b"") or getattr(exc, "stderr", b"") or b""
+            detail = output.decode("utf-8", errors="replace") if isinstance(output, bytes) else str(output)
+            raise RuntimeError(f"SVG-Konvertierung (dvisvgm) fehlgeschlagen: {detail}") from exc
 
         svg_files = sorted(
             [f for f in os.listdir(tmpdir) if f.startswith("page-") and f.endswith(".svg")],
