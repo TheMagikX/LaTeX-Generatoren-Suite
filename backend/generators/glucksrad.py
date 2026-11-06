@@ -209,20 +209,35 @@ def generate_glucksrad_latex(cfg: GlucksradConfig) -> str:
         lines.append(rf"  \fill[white, draw=black, line width=0.4pt] (0,0) circle ({cfg.radius * 0.025:.3f}cm);")
 
     # --- Pfeilindikator am Rand ---
-    _pointer_angle = {PointerPos.OBEN: 90.0, PointerPos.RECHTS: 0.0, PointerPos.UNTEN: 270.0, PointerPos.LINKS: 180.0}.get(cfg.pointer_pos, 90.0)
-    ptr_ax = math.radians(_pointer_angle)
-    ptr_tip_r = rim_r + 0.05
-    ptr_base_r = rim_r - 0.18
-    ptr_w = 0.12
-    tip_x = ptr_tip_r * math.cos(ptr_ax)
-    tip_y = ptr_tip_r * math.sin(ptr_ax)
-    base_x = ptr_base_r * math.cos(ptr_ax)
-    base_y = ptr_base_r * math.sin(ptr_ax)
-    perp_ax = ptr_ax + math.pi / 2
-    bl_x = base_x + ptr_w * math.cos(perp_ax)
-    bl_y = base_y + ptr_w * math.sin(perp_ax)
-    br_x = base_x - ptr_w * math.cos(perp_ax)
-    br_y = base_y - ptr_w * math.sin(perp_ax)
+    _pointer_angles = {
+        PointerPos.OBEN: 90.0,
+        PointerPos.RECHTS: 0.0,
+        PointerPos.UNTEN: 270.0,
+        PointerPos.LINKS: 180.0,
+    }
+    if cfg.pointer_pos in _pointer_angles:
+        _pointer_angle = _pointer_angles[cfg.pointer_pos]
+        ptr_ax = math.radians(_pointer_angle)
+        ptr_tip_r = cfg.radius - 0.12
+        ptr_base_r = rim_r + 0.08
+        ptr_w = 0.12
+        tip_x = ptr_tip_r * math.cos(ptr_ax)
+        tip_y = ptr_tip_r * math.sin(ptr_ax)
+        base_x = ptr_base_r * math.cos(ptr_ax)
+        base_y = ptr_base_r * math.sin(ptr_ax)
+        perp_ax = ptr_ax + math.pi / 2
+        bl_x = base_x + ptr_w * math.cos(perp_ax)
+        bl_y = base_y + ptr_w * math.sin(perp_ax)
+        br_x = base_x - ptr_w * math.cos(perp_ax)
+        br_y = base_y - ptr_w * math.sin(perp_ax)
+
+        def _fmt(val: float) -> str:
+            return f"{0.0 if abs(val) < 1e-9 else val:.4f}"
+
+        lines.append(
+            rf"  \filldraw[fill=red!80!black, draw=black, line width=0.6pt] "
+            rf"({_fmt(tip_x)},{_fmt(tip_y)}) -- ({_fmt(bl_x)},{_fmt(bl_y)}) -- ({_fmt(br_x)},{_fmt(br_y)}) -- cycle;"
+        )
 
     # --- Glücksrad-Pfeil (Spinner) ---
     if cfg.arrow_style != ArrowStyle.NONE:
