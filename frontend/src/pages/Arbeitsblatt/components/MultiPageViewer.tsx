@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Eye, Maximize } from 'lucide-react'
 
 interface Props {
@@ -13,6 +13,13 @@ interface Props {
 
 export default function MultiPageViewer({ pages, isLoading, errorLog, onFullscreen, scrollable = false }: Props) {
   const [currentPage, setCurrentPage] = useState(0)
+
+  useEffect(() => {
+    if (pages.length > 0 && currentPage >= pages.length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCurrentPage(0)
+    }
+  }, [pages.length, currentPage])
 
   if (isLoading) {
     return (
