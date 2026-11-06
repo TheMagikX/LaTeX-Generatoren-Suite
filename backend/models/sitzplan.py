@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Tuple, Dict, Optional
 
 class StudentConfig(BaseModel):
@@ -16,10 +16,20 @@ class LayoutConfig(BaseModel):
     blocked_seats: List[Tuple[int, int]] = []
     front_rows: int = 1
 
+class MinDistanceRule(BaseModel):
+    names: List[str]
+    k: int = 2
+
+    def get(self, key: str, default=None):
+        return getattr(self, key, default)
+
+    def __getitem__(self, key: str):
+        return getattr(self, key)
+
 class HardRuleConfig(BaseModel):
     not_same_row: List[Tuple[str, str]] = []
     not_same_col: List[Tuple[str, str]] = []
-    min_distance: List[Dict] = []  # List of {"names": [str, str], "k": int}
+    min_distance: List[MinDistanceRule] = Field(default_factory=list)
     no_alone: bool = False
     no_alone_vertical: bool = False
     no_alone_diagonal: bool = False

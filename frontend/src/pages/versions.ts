@@ -23,7 +23,7 @@ export const COMPONENT_VERSIONS = {
     optikgenerator: "5.0.0",
     bruchgenerator: "5.0.2",
     glucksradgenerator: "5.0.2",
-    sitzplangenerator: "5.0.1",
+    sitzplangenerator: "5.0.2",
     strahlenoptik: "5.0.0",
     stellwerttafel: "5.0.1",
     statistik: "5.0.1",
