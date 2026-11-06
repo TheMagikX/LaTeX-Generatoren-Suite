@@ -56,7 +56,8 @@ export const BaumTabStil = ({
                   <NumberInput step="0.5"
                     value={config.style.manual_sibling_distances[level] ?? fallback}
                     onChange={e => {
-                      const dists = { ...config.style.manual_sibling_distances, [level]: parseFloat(e.target.value) }
+                      const parsed = parseFloat(e.target.value)
+                      const dists = { ...config.style.manual_sibling_distances, [level]: Number.isNaN(parsed) ? 0 : parsed }
                       updateStyle('manual_sibling_distances', dists)
                     }}
                   />

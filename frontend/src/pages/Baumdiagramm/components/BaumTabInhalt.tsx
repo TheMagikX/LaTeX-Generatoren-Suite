@@ -151,7 +151,10 @@ export const BaumTabInhalt = ({
                             {config.use_numeric_probs ? (
                               <NumberInput step="0.01" min="0" max="1"
                                 value={nodeCfg.prob_value ?? (1 / numKids).toFixed(4)}
-                                onChange={e => updateNode(childId, 'prob_value', parseFloat(e.target.value))}
+                                onChange={e => {
+                                  const parsed = parseFloat(e.target.value)
+                                  updateNode(childId, 'prob_value', Number.isNaN(parsed) ? 0 : parsed)
+                                }}
                                 className="bg-panel/50 border-line/50 h-9 text-sm"
                               />
                             ) : (
@@ -195,7 +198,10 @@ export const BaumTabInhalt = ({
                           <div className="w-20">
                             <NumberInput min={0} max={10}
                               value={nodeCfg.num_children}
-                              onChange={e => updateNode(childId, 'num_children', parseInt(e.target.value))}
+                              onChange={e => {
+                                const parsed = parseInt(e.target.value, 10)
+                                updateNode(childId, 'num_children', Number.isNaN(parsed) ? 0 : parsed)
+                              }}
                               className="bg-panel/50 border-line/50 h-7 text-xs"
                             />
                           </div>
@@ -329,7 +335,16 @@ export const BaumTabInhalt = ({
                 {config.mode === 'Flexibel (Individuell)' && (
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase text-muted">Äste ab Wurzel</Label>
-                    <NumberInput min={1} max={10} value={config.root_node.num_children} onChange={e => updateConfig('root_node', { ...config.root_node, num_children: parseInt(e.target.value) })} className="h-9" />
+                    <NumberInput
+                      min={1}
+                      max={10}
+                      value={config.root_node.num_children}
+                      onChange={e => {
+                        const parsed = parseInt(e.target.value, 10)
+                        updateConfig('root_node', { ...config.root_node, num_children: Number.isNaN(parsed) ? 1 : parsed })
+                      }}
+                      className="h-9"
+                    />
                   </div>
                 )}
               </div>
@@ -354,7 +369,15 @@ export const BaumTabInhalt = ({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase text-muted">Abstand (cm)</Label>
-                    <NumberInput step="0.5" value={config.level_labels.offset} onChange={e => updateConfig('level_labels', { ...config.level_labels, offset: parseFloat(e.target.value) })} className="h-9" />
+                    <NumberInput
+                      step="0.5"
+                      value={config.level_labels.offset}
+                      onChange={e => {
+                        const parsed = parseFloat(e.target.value)
+                        updateConfig('level_labels', { ...config.level_labels, offset: Number.isNaN(parsed) ? 0 : parsed })
+                      }}
+                      className="h-9"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase text-muted">TikZ Stil</Label>
@@ -389,7 +412,15 @@ export const BaumTabInhalt = ({
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[10px] uppercase text-muted">Abstand (cm)</Label>
-                  <NumberInput step="0.1" value={config.style_result_dist} onChange={e => updateConfig('style_result_dist', parseFloat(e.target.value))} className="h-9" />
+                  <NumberInput
+                    step="0.1"
+                    value={config.style_result_dist}
+                    onChange={e => {
+                      const parsed = parseFloat(e.target.value)
+                      updateConfig('style_result_dist', Number.isNaN(parsed) ? 0 : parsed)
+                    }}
+                    className="h-9"
+                  />
                 </div>
               </div>
               <div className="flex flex-wrap gap-4 pt-2">
