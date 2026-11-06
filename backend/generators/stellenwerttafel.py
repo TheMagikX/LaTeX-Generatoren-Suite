@@ -146,7 +146,7 @@ def generate_stellenwerttafel_latex(cfg: StellenwertConfig, include_colors: bool
 
                 if cfg.mode in [StellenwertMode.PLAETTCHEN, StellenwertMode.BEIDES]:
                     val = raw_val if raw_val is not None else 0
-                    max_per_row = cfg.layout.max_tokens_per_row
+                    max_per_row = max(1, cfg.layout.max_tokens_per_row)
                     token_r = cfg.layout.token_size
                     
                     for t in range(val):
@@ -220,8 +220,8 @@ def generate_stellenwerttafel_full_latex(cfg: StellenwertConfig) -> str:
             body=body,
             class_options=("border=5pt",),
             preamble_parts=(
-                shared_package_input(bool(cfg.font_family), default_pakete),
-                shared_commands_input(True),
+                shared_package_input(getattr(cfg, "pakete_laden", True), default_pakete),
+                shared_commands_input(getattr(cfg, "command_laden", True)),
                 font_input(cfg.font_family),
                 HEXCOL_TIKZ_KEY,
                 *color_defs,
