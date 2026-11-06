@@ -273,10 +273,12 @@ export const GeneratorHeader = ({
 
   const handleTexExport = () => {
     if (!latexCode || !texFilename) return
+    const url = URL.createObjectURL(new Blob([latexCode], { type: 'text/plain' }))
     const link = document.createElement('a')
-    link.href = URL.createObjectURL(new Blob([latexCode], { type: 'text/plain' }))
+    link.href = url
     link.download = texFilename
     link.click()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   useEffect(() => {
