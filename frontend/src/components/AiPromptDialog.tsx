@@ -238,6 +238,8 @@ export function AiPromptDialog<T extends object>({
     onClose()
   }
 
+  const isAiReady = Boolean(status?.available || (activeProvider === 'gemini' && hasGeminiKey))
+
   if (!isOpen) return null
 
   return (
@@ -382,7 +384,7 @@ export function AiPromptDialog<T extends object>({
                         key={i}
                         type="button"
                         onClick={() => handleSendMessage(ex.text)}
-                        disabled={isGenerating || (!status?.available && !(activeProvider === 'gemini' && hasGeminiKey))}
+                        disabled={isGenerating || !isAiReady}
                         className="p-3 rounded-2xl bg-raised/70 hover:bg-raised border border-line hover:border-amber-500/30 text-left transition-all group flex items-start justify-between gap-2"
                       >
                         <div>
@@ -496,13 +498,13 @@ export function AiPromptDialog<T extends object>({
                   : 'Schreibe eine Verfeinerung oder Änderung... (Enter zum Senden)'
               }
               rows={2}
-              disabled={isGenerating || (!status?.available && !(activeProvider === 'gemini' && hasGeminiKey))}
+              disabled={isGenerating || !isAiReady}
               className="flex-1 bg-transparent border-0 resize-none text-xs text-ink placeholder:text-ghost focus:outline-none p-1.5 max-h-28"
             />
 
             <Button
               onClick={() => handleSendMessage()}
-              disabled={!status?.available || !inputPrompt.trim() || isGenerating}
+              disabled={!isAiReady || !inputPrompt.trim() || isGenerating}
               className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold p-2.5 rounded-xl h-auto shrink-0 shadow-sm disabled:opacity-50"
               title="Nachricht senden (Enter)"
             >
