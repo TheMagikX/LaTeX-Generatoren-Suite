@@ -54,9 +54,10 @@ export function useReorderList<T>({
 
   const grab = useCallback(
     (id: string) => {
+      const at = indexOf(id)
+      if (at < 0 || at >= live.current.length) return
       snapshot.current = live.current
       setGrabbed(id)
-      const at = indexOf(id)
       const item = live.current[at]
       setSpoken(
         `${getLabel(item)} ausgewählt, Position ${at + 1} von ${live.current.length}.`,
@@ -70,8 +71,10 @@ export function useReorderList<T>({
       snapshot.current = null
       setGrabbed(null)
       const at = indexOf(id)
-      const item = live.current[at]
-      setSpoken(`${getLabel(item)} abgelegt an Position ${at + 1}.`)
+      if (at >= 0 && at < live.current.length) {
+        const item = live.current[at]
+        setSpoken(`${getLabel(item)} abgelegt an Position ${at + 1}.`)
+      }
       settle.current?.([...live.current])
     },
     [getLabel, indexOf],
@@ -136,8 +139,10 @@ export function useReorderList<T>({
       snapshot.current = null
       setDragging(null)
       const at = indexOf(id)
-      const item = live.current[at]
-      setSpoken(`${getLabel(item)} abgelegt an Position ${at + 1}.`)
+      if (at >= 0 && at < live.current.length) {
+        const item = live.current[at]
+        setSpoken(`${getLabel(item)} abgelegt an Position ${at + 1}.`)
+      }
       settle.current?.([...live.current])
     },
     [getLabel, indexOf],
