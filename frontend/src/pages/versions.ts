@@ -6,7 +6,7 @@ export const REPO_URL = `https://github.com/${GITHUB_REPO}`;
 
 export const PRESET_MANAGER = "5.1.0";
 export const LATEX_RENDERER = "5.0.7";
-export const FILE_SAVER = "5.0.0";
+export const FILE_SAVER = "5.0.1";
 
 export const COMPONENT_VERSIONS = {
     koordinatensystem: "5.1.4",
@@ -18,7 +18,7 @@ export const COMPONENT_VERSIONS = {
     erwartungshorizont: "5.0.2",
     tikz: "5.0.1",
     arbeitsblattgenerator: "5.0.6",
-    flaschenzug: "5.0.2",
+    flaschenzug: "5.0.3",
     zahlenstrahlgenerator: "5.0.3",
     optikgenerator: "5.0.1",
     bruchgenerator: "5.0.3",

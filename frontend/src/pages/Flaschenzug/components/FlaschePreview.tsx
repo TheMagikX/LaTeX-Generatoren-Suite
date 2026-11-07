@@ -3,6 +3,7 @@
 import React from 'react'
 import { Wrench } from 'lucide-react'
 import { PreviewCard, FloatingToolbar, CodeSection } from '../../../components/ui'
+import { triggerFileDownload } from '../../../api/client'
 
 interface Props {
   latexCode: string | null
@@ -46,22 +47,14 @@ export const FlaschePreview: React.FC<Props> = ({
         setDpi={setDpi}
         isReady={!!(compileResult?.ok && compileResult.png_base64)}
         onDownloadPng={() => {
-          const link = document.createElement('a');
-          link.href = `data:image/png;base64,${compileResult?.png_base64}`;
-          link.download = 'flaschenzug.png';
-          link.click();
+          if (!compileResult?.png_base64) return
+          triggerFileDownload(`data:image/png;base64,${compileResult.png_base64}`, 'flaschenzug.png')
         }}
         onDownloadPdf={compileResult?.pdf_base64 ? () => {
-          const link = document.createElement('a');
-          link.href = `data:application/pdf;base64,${compileResult?.pdf_base64}`;
-          link.download = 'flaschenzug.pdf';
-          link.click();
+          triggerFileDownload(`data:application/pdf;base64,${compileResult.pdf_base64}`, 'flaschenzug.pdf')
         } : undefined}
         onDownloadSvg={compileResult?.svg_base64 ? () => {
-          const link = document.createElement('a');
-          link.href = `data:image/svg+xml;base64,${compileResult?.svg_base64}`;
-          link.download = 'flaschenzug.svg';
-          link.click();
+          triggerFileDownload(`data:image/svg+xml;base64,${compileResult.svg_base64}`, 'flaschenzug.svg')
         } : undefined}
         onCopyPng={async () => {
           if (compileResult?.png_base64) {
