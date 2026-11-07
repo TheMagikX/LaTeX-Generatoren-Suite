@@ -388,7 +388,7 @@ def compile_latex_to_pdf_bytes(
 def pdf_bytes_to_first_image(
     pdf_bytes: bytes,
     *,
-    dpi: int = 1000,
+    dpi: int = 200,
     use_pdftocairo: bool = True,
 ):
     """
@@ -404,7 +404,7 @@ def pdf_bytes_to_first_image(
 def pdf_bytes_to_all_images(
     pdf_bytes: bytes,
     *,
-    dpi: int = 1000,
+    dpi: int = 200,
     use_pdftocairo: bool = True,
 ) -> tuple[list, float]:
     """
