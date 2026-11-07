@@ -295,6 +295,7 @@ def compile_latex_to_pdf_bytes(
         if "-recorder" not in args_list:
             args_list.append("-recorder")
         cmd = [engine, *args_list, tex_filename]
+        compile_timeout = getattr(config, "LATEX_COMPILE_TIMEOUT", 45)
         t0 = time.perf_counter()
         try:
             proc = subprocess.run(
@@ -303,16 +304,16 @@ def compile_latex_to_pdf_bytes(
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 env=env,
-                timeout=45,
+                timeout=compile_timeout,
             )
             compile_time = time.perf_counter() - t0
             out = proc.stdout.decode(errors="replace")
         except subprocess.TimeoutExpired:
             return LatexRenderResult(
                 ok=False,
-                log="LaTeX-Kompilierung hat das Zeitlimit von 45 Sekunden überschritten (Timeout).",
+                log=f"LaTeX-Kompilierung hat das Zeitlimit von {compile_timeout} Sekunden überschritten (Timeout).",
                 pdf_bytes=None,
-                compile_time_s=45.0,
+                compile_time_s=float(compile_timeout),
             )
 
         job = pathlib.Path(tex_filename).stem
