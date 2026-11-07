@@ -46,6 +46,39 @@ def sanitize_worksheet_variables(python_vars: dict | None) -> dict:
     return clean_vars
 
 
+def _escape_latex_error_text(text: str) -> str:
+    """Maskiert LaTeX-Sonderzeichen in Fehlermeldungen für sicheres Rendering."""
+    replacements = {
+        "\\": r"\textbackslash{}",
+        "{": r"\{",
+        "}": r"\}",
+        "$": r"\$",
+        "&": r"\&",
+        "#": r"\#",
+        "^": r"\textasciicircum{}",
+        "_": r"\_",
+        "~": r"\textasciitilde{}",
+        "%": r"\%",
+    }
+    return "".join(replacements.get(ch, ch) for ch in str(text))
+
+
+def _render_jinja_error_document(comment_prefix: str, heading: str, error: Exception) -> str:
+    """Erzeugt ein vollständig kompilierbares LaTeX-Dokument zur Anzeige von Jinja2-Fehlern."""
+    raw_msg = str(error).replace("\r", " ").replace("\n", " ")
+    safe_msg = _escape_latex_error_text(raw_msg)
+    return (
+        f"%% {comment_prefix}: {raw_msg}\n"
+        "\\documentclass[11pt,a4paper]{article}\n"
+        "\\usepackage[a4paper,margin=20mm]{geometry}\n"
+        "\\setlength{\\parindent}{0pt}\n"
+        "\\begin{document}\n"
+        f"\\textbf{{{heading}}}\\\\[0.5em]\n"
+        f"\\texttt{{{safe_msg}}}\n"
+        "\\end{document}\n"
+    )
+
+
 def generate_arbeitsblatt_latex(cfg: ArbeitsblattConfig, show_solution: bool, python_vars: dict) -> str:
     """
     Renders the Jinja2 template inside an ImmutableSandboxedEnvironment and wraps it in a full LaTeX document.
@@ -59,9 +92,9 @@ def generate_arbeitsblatt_latex(cfg: ArbeitsblattConfig, show_solution: bool, py
         # Remove excessive empty lines
         rendered_body = re.sub(r'\n{3,}', '\n\n', rendered_body)
     except SecurityError as se:
-        return f"%% Jinja-Security Error: {se}\n\\begin{{document}}Sicherheitsfehler im Template: {se}\\end{{document}}"
+        return _render_jinja_error_document("Jinja-Security Error", "Sicherheitsfehler im Template:", se)
     except Exception as e:
-        return f"%% Jinja-Template Error: {e}\n\\begin{{document}}Error: {e}\\end{{document}}"
+        return _render_jinja_error_document("Jinja-Template Error", "Error:", e)
 
     ki_disclaimer = r"\tiny \textit{Dieses Dokument wurde computergestützt erstellt. Trotz sorgfältiger Prüfung erfolgt die Bereitstellung ohne Gewähr auf Richtigkeit.}"
     generated_seed = cfg.random_seed
