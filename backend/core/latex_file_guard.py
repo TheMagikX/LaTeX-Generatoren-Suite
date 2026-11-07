@@ -319,6 +319,20 @@ def find_violations(
         if acc.kind == "OUTPUT":
             if not acc_norm.is_relative_to(tmpdir_norm):
                 violations.append(acc)
+                if get_guard_mode() == "enforce":
+                    try:
+                        if acc.path.is_file() and not acc.path.is_symlink():
+                            acc.path.unlink(missing_ok=True)
+                            logger.warning(
+                                "Removed unauthorized LaTeX OUTPUT file outside tmpdir: %s",
+                                config.to_display_path(acc.path),
+                            )
+                    except OSError as exc:
+                        logger.warning(
+                            "Failed to remove unauthorized LaTeX OUTPUT file %s: %s",
+                            config.to_display_path(acc.path),
+                            exc,
+                        )
         else:
             if not any(acc_norm.is_relative_to(root) for root in allowed_input_norms):
                 violations.append(acc)
