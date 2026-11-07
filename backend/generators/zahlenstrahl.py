@@ -102,16 +102,28 @@ def _fmt_label(val: float, cfg: ZahlenstrahlConfig) -> str:
         decimal_separator=cfg.decimal_separator
     )
 
-def _frange(start: float, stop: float, step: float) -> List[float]:
+_MAX_TICKS = 1000
+
+def _frange(start: float, stop: float, step: float, max_ticks: int = _MAX_TICKS) -> List[float]:
     """Generate a list of floats from start to stop (inclusive)."""
-    if step <= 0:
+    if step <= 0 or stop < start:
         return []
+    expected_steps = (stop - start) / step
+    if expected_steps > max_ticks:
+        raise ValueError(
+            f"Zu viele Teilstriche ({int(expected_steps) + 1} > {max_ticks}). "
+            f"Bitte Schrittweite ({step}) vergrößern oder Bereich [{start}, {stop}] verkleinern."
+        )
     vals = []
     n = 0
     while True:
         v = round(start + n * step, 10)
         if v > stop + 1e-9:
             break
+        if n > max_ticks:
+            raise ValueError(
+                f"Maximale Anzahl an Teilstrichen ({max_ticks}) überschritten."
+            )
         vals.append(v)
         n += 1
     return vals
