@@ -10,7 +10,7 @@ logger = logging.getLogger("generator_suite.ai")
 
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant"] = Field(..., description="Rolle des Senders")
-    content: str = Field(..., description="Textinhalt der Nachricht")
+    content: str = Field(..., max_length=10_000, description="Textinhalt der Nachricht")
 
 CHAT_MODE_INSTRUCTION = (
     "\n\n================================================================================\n"

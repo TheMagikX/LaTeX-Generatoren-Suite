@@ -601,15 +601,26 @@ def _generate_tikz_quad(cfg: GeometrieConfig, result: dict) -> str:
     return "\n".join(code)
 
 
-def generate_geometrie_latex(cfg: GeometrieConfig) -> str:
+def generate_geometrie_latex(
+    cfg: GeometrieConfig,
+    precomputed_result: tuple[dict | None, str | None] | None = None,
+) -> str:
     if cfg.shape == "Triangle":
-        result, error = solve_triangle(cfg.construction)
+        result, error = (
+            precomputed_result
+            if precomputed_result is not None
+            else solve_triangle(cfg.construction)
+        )
         if error or result is None:
             tikz_body = f"% Fehler: {error}"
         else:
             tikz_body = _generate_tikz_body(cfg, result)
     else:
-        result, error = solve_quadrilateral(cfg.quad_construction)
+        result, error = (
+            precomputed_result
+            if precomputed_result is not None
+            else solve_quadrilateral(cfg.quad_construction)
+        )
         if error or result is None:
             tikz_body = f"% Fehler: {error}"
         else:

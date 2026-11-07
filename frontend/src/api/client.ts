@@ -319,6 +319,23 @@ export const getPresetThumbnailUrl = (generator: string, presetName: string, ver
   return `${API_BASE_URL}presets/${generator}/thumbnail?${params.toString()}`
 }
 
+export const triggerFileDownload = (source: Blob | string, filename: string): void => {
+  const isBlob = source instanceof Blob
+  const url = isBlob ? window.URL.createObjectURL(source) : source
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.style.display = 'none'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  if (isBlob) {
+    window.setTimeout(() => {
+      window.URL.revokeObjectURL(url)
+    }, 1000)
+  }
+}
+
 export const downloadPresetFolder = async (generator: string, folder: string = ''): Promise<void> => {
   const response = await apiClient.get(`presets/${generator}/download-folder`, {
     params: { folder },
@@ -338,14 +355,7 @@ export const downloadPresetFolder = async (generator: string, folder: string = '
     filename = `presets_${generator}_${cleanFolder}.zip`
   }
 
-  const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/zip' }))
-  const link = document.createElement('a')
-  link.href = url
-  link.setAttribute('download', filename)
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.URL.revokeObjectURL(url)
+  triggerFileDownload(new Blob([response.data], { type: 'application/zip' }), filename)
 }
 
 // --- AI Service Integration (Ollama Local & Cloud Google Gemini) ---

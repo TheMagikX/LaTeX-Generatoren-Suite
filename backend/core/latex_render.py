@@ -236,10 +236,13 @@ def extract_latex_stdout_excerpt(
 
     return sanitize_latex_log(excerpt, tmpdir=tmpdir)
 
-def first_latex_error_line(text: str) -> str | None:
+def first_latex_error_line(text: str, *, tmpdir: Optional[str] = None) -> str | None:
+    if not text:
+        return None
     for ln in text.splitlines():
         if ln.startswith("! "):
-            return ln[2:].strip()
+            raw_err = ln[2:].strip()
+            return sanitize_latex_log(raw_err, tmpdir=tmpdir)
     return None
 
 def compile_latex_to_pdf_bytes(
@@ -258,7 +261,7 @@ def compile_latex_to_pdf_bytes(
             compile_time_s=0.0,
         )
 
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="gensuite_", ignore_cleanup_errors=True) as tmpdir:
         tex_path = os.path.join(tmpdir, tex_filename)
         with open(tex_path, "w", encoding="utf-8") as f:
             f.write(latex)
@@ -295,6 +298,7 @@ def compile_latex_to_pdf_bytes(
         if "-recorder" not in args_list:
             args_list.append("-recorder")
         cmd = [engine, *args_list, tex_filename]
+        compile_timeout = getattr(config, "LATEX_COMPILE_TIMEOUT", 45)
         t0 = time.perf_counter()
         try:
             proc = subprocess.run(
@@ -303,16 +307,16 @@ def compile_latex_to_pdf_bytes(
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 env=env,
-                timeout=45,
+                timeout=compile_timeout,
             )
             compile_time = time.perf_counter() - t0
             out = proc.stdout.decode(errors="replace")
         except subprocess.TimeoutExpired:
             return LatexRenderResult(
                 ok=False,
-                log="LaTeX-Kompilierung hat das Zeitlimit von 45 Sekunden überschritten (Timeout).",
+                log=f"LaTeX-Kompilierung hat das Zeitlimit von {compile_timeout} Sekunden überschritten (Timeout).",
                 pdf_bytes=None,
-                compile_time_s=45.0,
+                compile_time_s=float(compile_timeout),
             )
 
         job = pathlib.Path(tex_filename).stem
@@ -388,7 +392,7 @@ def compile_latex_to_pdf_bytes(
 def pdf_bytes_to_first_image(
     pdf_bytes: bytes,
     *,
-    dpi: int = 1000,
+    dpi: int = 200,
     use_pdftocairo: bool = True,
 ):
     """
@@ -404,7 +408,7 @@ def pdf_bytes_to_first_image(
 def pdf_bytes_to_all_images(
     pdf_bytes: bytes,
     *,
-    dpi: int = 1000,
+    dpi: int = 200,
     use_pdftocairo: bool = True,
 ) -> tuple[list, float]:
     """
@@ -589,7 +593,7 @@ def pdf_to_svg_bytes(pdf_bytes: bytes) -> bytes:
     --no-fonts wandelt Schriften in Pfade → SVG sieht überall gleich aus.
     Korrigiert außerdem den ViewBox-Fehler für breite Kompatibilität.
     """
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="gensuite_", ignore_cleanup_errors=True) as tmpdir:
         pdf_path = os.path.join(tmpdir, "input.pdf")
         svg_path = os.path.join(tmpdir, "input.svg")
         pathlib.Path(pdf_path).write_bytes(pdf_bytes)
@@ -600,7 +604,7 @@ def pdf_to_svg_bytes(pdf_bytes: bytes) -> bytes:
                 cwd=tmpdir,
                 capture_output=True,
                 check=True,
-                timeout=30,
+                timeout=config.LATEX_CONVERTER_TIMEOUT,
             )
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as exc:
             output = getattr(exc, "output", b"") or getattr(exc, "stderr", b"") or b""
@@ -617,7 +621,7 @@ def pdf_to_all_svg_bytes(pdf_bytes: bytes) -> list[bytes]:
     """
     Konvertiert alle Seiten eines mehrseitigen PDFs in einzelne SVG-Bytes via dvisvgm (-p 1-).
     """
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="gensuite_", ignore_cleanup_errors=True) as tmpdir:
         pdf_path = os.path.join(tmpdir, "input.pdf")
         pathlib.Path(pdf_path).write_bytes(pdf_bytes)
 
@@ -627,7 +631,7 @@ def pdf_to_all_svg_bytes(pdf_bytes: bytes) -> list[bytes]:
                 cwd=tmpdir,
                 capture_output=True,
                 check=True,
-                timeout=30,
+                timeout=config.LATEX_CONVERTER_TIMEOUT,
             )
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as exc:
             output = getattr(exc, "output", b"") or getattr(exc, "stderr", b"") or b""
@@ -659,7 +663,7 @@ def pdf_bytes_to_separated_pdfs(pdf_bytes: bytes) -> list[bytes]:
     if not is_pdf_separator_available():
         return [pdf_bytes]
 
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="gensuite_", ignore_cleanup_errors=True) as tmpdir:
         pdf_path = os.path.join(tmpdir, "input.pdf")
         pathlib.Path(pdf_path).write_bytes(pdf_bytes)
 
@@ -670,7 +674,7 @@ def pdf_bytes_to_separated_pdfs(pdf_bytes: bytes) -> list[bytes]:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 check=True,
-                timeout=30,
+                timeout=config.LATEX_CONVERTER_TIMEOUT,
             )
             pdf_files = sorted(
                 [f for f in os.listdir(tmpdir) if f.startswith("page-") and f.endswith(".pdf")],

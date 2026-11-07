@@ -77,6 +77,17 @@ export interface ZipExportData {
   latexCode?: string | null
 }
 
+export const indexToSubtaskLetter = (index: number): string => {
+  const safeIndex = Math.max(0, Math.floor(index))
+  let n = safeIndex
+  let result = ''
+  while (n >= 0) {
+    result = String.fromCharCode(97 + (n % 26)) + result
+    n = Math.floor(n / 26) - 1
+  }
+  return result
+}
+
 export const downloadZipArchive = async (data: ZipExportData, baseFilename: string = 'erwartungshorizont'): Promise<void> => {
   const zip = new JSZip()
   const pngPages = data.pages_png_base64 ?? []
@@ -85,19 +96,19 @@ export const downloadZipArchive = async (data: ZipExportData, baseFilename: stri
 
   // Add individual PNGs
   pngPages.forEach((b64, index) => {
-    const letter = String.fromCharCode(97 + index) // a, b, c, ...
+    const letter = indexToSubtaskLetter(index)
     zip.file(`Teilaufgabe_${letter}.png`, b64ToUint8Array(b64))
   })
 
   // Add individual SVGs if available
   svgPages.forEach((b64, index) => {
-    const letter = String.fromCharCode(97 + index)
+    const letter = indexToSubtaskLetter(index)
     zip.file(`Teilaufgabe_${letter}.svg`, b64ToUint8Array(b64))
   })
 
   // Add individual single-page PDFs if available
   pdfPages.forEach((b64, index) => {
-    const letter = String.fromCharCode(97 + index)
+    const letter = indexToSubtaskLetter(index)
     zip.file(`Teilaufgabe_${letter}.pdf`, b64ToUint8Array(b64))
   })
 

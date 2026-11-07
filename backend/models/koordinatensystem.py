@@ -166,6 +166,14 @@ class CoordinateSystemConfig(BaseModel):
     xmax: float = 7.25
     ymin: float = 0.0
     ymax: float = 4.25
+
+    @model_validator(mode="after")
+    def validate_axis_bounds(self) -> "CoordinateSystemConfig":
+        if self.xmin >= self.xmax:
+            raise ValueError(f"xmin ({self.xmin}) muss kleiner als xmax ({self.xmax}) sein.")
+        if self.ymin >= self.ymax:
+            raise ValueError(f"ymin ({self.ymin}) muss kleiner als ymax ({self.ymax}) sein.")
+        return self
     
     label_show: bool = True
     xlabel: str = r"\large $x$"

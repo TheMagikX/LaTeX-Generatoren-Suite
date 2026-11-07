@@ -33,7 +33,7 @@ class BaumNodeConfig(BaseModel):
     prob_value: Optional[float] = None
     node_style: Optional[str] = None
     edge_style: Optional[str] = None
-    num_children: int = 2
+    num_children: int = Field(default=2, ge=0, le=8)
 
 class LevelLabelConfig(BaseModel):
     enabled: bool = False
@@ -60,8 +60,8 @@ class TreeStyleConfig(BaseModel):
 
 class BaumdiagrammConfig(BaseModel):
     mode: TreeMode = TreeMode.symmetric
-    max_depth: int = 2
-    branches_global: int = 2
+    max_depth: int = Field(default=2, ge=1, le=6)
+    branches_global: int = Field(default=2, ge=1, le=8)
     use_numeric_probs: bool = False
     
     root_node: BaumNodeConfig = BaumNodeConfig(label="Start", num_children=2)

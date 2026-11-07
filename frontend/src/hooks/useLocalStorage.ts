@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import { useState, useEffect, type Dispatch, type SetStateAction } from 'react'
+import { useState, useEffect, useRef, type Dispatch, type SetStateAction } from 'react'
+
+const LOCAL_STORAGE_WRITE_DELAY_MS = 150
 
 function useLocalStorage<T>(key: string, defaultValue: T): [T, Dispatch<SetStateAction<T>>] {
   const [state, setState] = useState<T>(() => {
@@ -27,13 +29,42 @@ function useLocalStorage<T>(key: string, defaultValue: T): [T, Dispatch<SetState
     }
   })
 
+  const pendingWriteRef = useRef<{ key: string; value: T } | null>(null)
+
   useEffect(() => {
-    try {
-      localStorage.setItem(key, JSON.stringify(state))
-    } catch {
-      // ignore storage quota errors
+    pendingWriteRef.current = { key, value: state }
+    const timerId = window.setTimeout(() => {
+      try {
+        localStorage.setItem(key, JSON.stringify(state))
+      } catch {
+        // ignore storage quota errors
+      } finally {
+        if (pendingWriteRef.current?.key === key && pendingWriteRef.current?.value === state) {
+          pendingWriteRef.current = null
+        }
+      }
+    }, LOCAL_STORAGE_WRITE_DELAY_MS)
+
+    return () => {
+      window.clearTimeout(timerId)
     }
   }, [key, state])
+
+  useEffect(() => {
+    return () => {
+      if (pendingWriteRef.current !== null) {
+        try {
+          localStorage.setItem(
+            pendingWriteRef.current.key,
+            JSON.stringify(pendingWriteRef.current.value)
+          )
+        } catch {
+          // ignore storage quota errors
+        }
+        pendingWriteRef.current = null
+      }
+    }
+  }, [])
 
   return [state, setState]
 }

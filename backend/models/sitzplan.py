@@ -10,11 +10,11 @@ class StudentConfig(BaseModel):
     wants_front: bool = False
 
 class LayoutConfig(BaseModel):
-    rows: int
-    cols: int
+    rows: int = Field(..., ge=1, le=25)
+    cols: int = Field(..., ge=1, le=25)
     matrix: Optional[List[List[int]]] = None
     blocked_seats: List[Tuple[int, int]] = []
-    front_rows: int = 1
+    front_rows: int = Field(default=1, ge=1, le=25)
 
 class MinDistanceRule(BaseModel):
     names: List[str]

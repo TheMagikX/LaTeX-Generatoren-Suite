@@ -67,7 +67,7 @@ class RefractionArea(BaseModel):
     # Path support
     nodes: List[PathNode] = Field(default_factory=list)
 
-    refractive_index: float = 1.5   # n >= 1.0
+    refractive_index: float = Field(default=1.5, ge=1.0)   # n >= 1.0
     fill_color: str = "cyan"
     fill_opacity: float = 0.15
     border_color: str = "cyan!60!black"
@@ -105,7 +105,7 @@ class StrahlenoptikConfig(BaseModel):
     refraction_annotations: RefractionAnnotations = Field(
         default_factory=RefractionAnnotations
     )
-    max_reflections: int = 5
+    max_reflections: int = Field(default=5, ge=0, le=50)
     show_shadow_zones: bool = True
     shadow_color: str = "black"
     shadow_opacity: float = 0.35

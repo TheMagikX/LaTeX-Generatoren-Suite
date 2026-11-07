@@ -30,7 +30,7 @@ class GeminiKeyPayload(BaseModel):
 
 class PromptToConfigRequest(BaseModel):
     generator: str = Field(..., description="ID des Generators, z.B. 'baumdiagramm', 'bruch', 'glucksrad'")
-    prompt: str = Field(..., description="Benutzer-Prompt in natürlicher Sprache")
+    prompt: str = Field(..., max_length=10_000, description="Benutzer-Prompt in natürlicher Sprache")
     current_config: Optional[Dict[str, Any]] = Field(None, description="Aktuelle Konfiguration aus dem Frontend")
     model: Optional[str] = Field(None, description="Gewünschtes Modell (Ollama oder Gemini)")
     provider: Optional[Literal["gemini", "ollama"]] = Field(None, description="Expliziter Provider (Standard: aktiver Provider)")
@@ -38,7 +38,7 @@ class PromptToConfigRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     generator: str = Field(..., description="ID des Generators, z.B. 'baumdiagramm', 'bruch', 'glucksrad'")
-    messages: List[ChatMessage] = Field(..., description="Chronologischer Verlauf der Chat-Nachrichten")
+    messages: List[ChatMessage] = Field(..., max_length=50, description="Chronologischer Verlauf der Chat-Nachrichten")
     current_config: Optional[Dict[str, Any]] = Field(None, description="Aktuelle Konfiguration aus dem Frontend")
     model: Optional[str] = Field(None, description="Gewünschtes Modell (Ollama oder Gemini)")
     provider: Optional[Literal["gemini", "ollama"]] = Field(None, description="Expliziter Provider (Standard: aktiver Provider)")

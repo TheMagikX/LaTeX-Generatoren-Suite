@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 class PulleyConfig(BaseModel):
@@ -8,7 +8,7 @@ class PulleyConfig(BaseModel):
     name: str = ""
     x: float = 0.0
     y: float = 0.0
-    radius: float = 0.3
+    radius: float = Field(default=0.3, gt=0.05)
     label: str = ""
     label_pos: str = "above right"
     mount: str = "Keine"

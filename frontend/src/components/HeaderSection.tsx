@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { Check, Copy, FileText, Palette, Play, RotateCcw } from 'lucide-react'
 import { Button, ConfirmDialog } from './ui'
 import { LoadingButton } from './LoadingButton'
+import { triggerFileDownload } from '../api/client'
 
 type PaletteColor = {
   name: string
@@ -273,12 +274,7 @@ export const GeneratorHeader = ({
 
   const handleTexExport = () => {
     if (!latexCode || !texFilename) return
-    const url = URL.createObjectURL(new Blob([latexCode], { type: 'text/plain' }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = texFilename
-    link.click()
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    triggerFileDownload(new Blob([latexCode], { type: 'text/plain;charset=utf-8' }), texFilename)
   }
 
   useEffect(() => {

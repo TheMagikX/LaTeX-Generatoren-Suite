@@ -90,14 +90,15 @@ def compile_latex(req: CompileRequest):
                 try:
                     svg_list = pdf_to_all_svg_bytes(res.pdf_bytes)
                     pages_svg_b64 = [base64.b64encode(s).decode("utf-8") for s in svg_list]
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning("Mehrseitige SVG-Konvertierung fehlgeschlagen: %s", exc)
             svg_b64 = pages_svg_b64[0] if pages_svg_b64 else ""
 
             try:
                 separated_pdfs = pdf_bytes_to_separated_pdfs(res.pdf_bytes)
                 pages_pdf_b64 = [base64.b64encode(p).decode("utf-8") for p in separated_pdfs]
-            except Exception:
+            except Exception as exc:
+                logger.warning("PDF-Seitentrennung fehlgeschlagen: %s", exc)
                 pages_pdf_b64 = [pdf_b64] if pdf_b64 else []
         else:
             img, convert_time = pdf_bytes_to_first_image(res.pdf_bytes, dpi=req.dpi)
@@ -109,8 +110,8 @@ def compile_latex(req: CompileRequest):
                 try:
                     svg_bytes = pdf_to_svg_bytes(res.pdf_bytes)
                     svg_b64 = base64.b64encode(svg_bytes).decode("utf-8")
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning("SVG-Konvertierung fehlgeschlagen: %s", exc)
 
         total_time = time.perf_counter() - t_start
 

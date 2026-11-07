@@ -4,7 +4,10 @@
 from contextlib import asynccontextmanager
 import logging
 import os
+import pathlib
 import re
+import shutil
+import tempfile
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -17,7 +20,7 @@ import config
 
 logger = logging.getLogger("generator_suite")
 
-_LOOPBACK_ORIGIN_RE = re.compile(r"^http://(localhost|127\.0\.0\.1)(:\d+)?$")
+_LOOPBACK_ORIGIN_RE = re.compile(r"^http://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$")
 _SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 _ALLOWED_SEC_FETCH_SITE = {"", "same-origin", "none"}
 
@@ -53,6 +56,37 @@ class OriginGuardMiddleware(BaseHTTPMiddleware):
                 )
         return await call_next(request)
 
+
+def _cleanup_stale_temp_dirs(prefix: str = "gensuite_") -> int:
+    """Entfernt verwaiste temporäre Arbeitsverzeichnisse früherer Läufe fehlertolerant."""
+    removed = 0
+    try:
+        tmp_root = pathlib.Path(tempfile.gettempdir())
+        for entry in tmp_root.iterdir():
+            if entry.is_dir() and entry.name.startswith(prefix):
+                shutil.rmtree(entry, ignore_errors=True)
+                if not entry.exists():
+                    removed += 1
+    except Exception as exc:
+        logger.debug("Temp-Verzeichnis-Bereinigung übersprungen: %s", exc)
+    return removed
+
+
+def _check_external_toolchain() -> None:
+    """Prüft beim Serverstart die Verfügbarkeit externer LaTeX- und Konvertierungstools."""
+    required_tools = ("xelatex", "pdftoppm")
+    optional_tools = ("pdflatex", "dvisvgm", "pdfseparate")
+    for tool in required_tools:
+        if shutil.which(tool) is None:
+            logger.warning(
+                "Kritische Abhängigkeit '%s' wurde nicht im PATH gefunden! LaTeX-Kompilierung/Vorschau wird fehlschlagen.",
+                tool,
+            )
+    for tool in optional_tools:
+        if shutil.which(tool) is None:
+            logger.info("Optionales Tool '%s' nicht im PATH gefunden ( zugehörige Features sind deaktiviert).", tool)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # GNU AGPL Startup Banner (Standard GNU Notice)
@@ -77,7 +111,10 @@ async def lifespan(app: FastAPI):
 ================================================================================
 """
     print(banner)
+    _cleanup_stale_temp_dirs()
+    _check_external_toolchain()
     yield
+    _cleanup_stale_temp_dirs()
 
 _enable_docs = os.getenv("ENABLE_API_DOCS", "false").strip().lower() in ("1", "true", "yes")
 
@@ -96,7 +133,7 @@ app.add_middleware(OriginGuardMiddleware)
 # Restrict accepted Host headers to loopback by default (mitigates DNS rebinding attacks)
 _allowed_hosts = [
     h.strip()
-    for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,[::1],::1").split(",")
     if h.strip()
 ]
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=_allowed_hosts)
@@ -104,7 +141,7 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=_allowed_hosts)
 # Configure CORS (restricted to local loopback origins)
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origin_regex=_LOOPBACK_ORIGIN_RE.pattern,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
