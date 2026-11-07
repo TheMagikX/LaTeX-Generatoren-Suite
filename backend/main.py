@@ -17,7 +17,7 @@ import config
 
 logger = logging.getLogger("generator_suite")
 
-_LOOPBACK_ORIGIN_RE = re.compile(r"^http://(localhost|127\.0\.0\.1)(:\d+)?$")
+_LOOPBACK_ORIGIN_RE = re.compile(r"^http://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$")
 _SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 _ALLOWED_SEC_FETCH_SITE = {"", "same-origin", "none"}
 
@@ -96,7 +96,7 @@ app.add_middleware(OriginGuardMiddleware)
 # Restrict accepted Host headers to loopback by default (mitigates DNS rebinding attacks)
 _allowed_hosts = [
     h.strip()
-    for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,[::1],::1").split(",")
     if h.strip()
 ]
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=_allowed_hosts)
@@ -104,7 +104,7 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=_allowed_hosts)
 # Configure CORS (restricted to local loopback origins)
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origin_regex=_LOOPBACK_ORIGIN_RE.pattern,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
