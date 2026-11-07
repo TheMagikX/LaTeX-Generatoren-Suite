@@ -18,6 +18,12 @@ GITHUB_REPO = os.getenv("GITHUB_REPO", "TheMagikX/LaTeX-Generatoren-Suite")
 GITHUB_API_RELEASES_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 UPDATE_CACHE_TTL_SECONDS = int(os.getenv("UPDATE_CACHE_TTL_SECONDS", str(12 * 3600)))
 
+# LaTeX Compiler & Rendering Configuration
+LATEX_COMPILE_TIMEOUT = int(os.getenv("LATEX_COMPILE_TIMEOUT", "45"))
+LATEX_CONVERTER_TIMEOUT = int(os.getenv("LATEX_CONVERTER_TIMEOUT", "30"))
+LATEX_PREVIEW_DPI = int(os.getenv("LATEX_PREVIEW_DPI", "200"))
+LATEX_EXPORT_DPI = int(os.getenv("LATEX_EXPORT_DPI", "1000"))
+
 BACKEND_ROOT = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = BACKEND_ROOT.parent
 LATEX_FILES_DIR = BACKEND_ROOT / "latex_files"

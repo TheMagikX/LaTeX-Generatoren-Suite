@@ -601,7 +601,7 @@ def pdf_to_svg_bytes(pdf_bytes: bytes) -> bytes:
                 cwd=tmpdir,
                 capture_output=True,
                 check=True,
-                timeout=30,
+                timeout=config.LATEX_CONVERTER_TIMEOUT,
             )
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as exc:
             output = getattr(exc, "output", b"") or getattr(exc, "stderr", b"") or b""
@@ -628,7 +628,7 @@ def pdf_to_all_svg_bytes(pdf_bytes: bytes) -> list[bytes]:
                 cwd=tmpdir,
                 capture_output=True,
                 check=True,
-                timeout=30,
+                timeout=config.LATEX_CONVERTER_TIMEOUT,
             )
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as exc:
             output = getattr(exc, "output", b"") or getattr(exc, "stderr", b"") or b""
@@ -671,7 +671,7 @@ def pdf_bytes_to_separated_pdfs(pdf_bytes: bytes) -> list[bytes]:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 check=True,
-                timeout=30,
+                timeout=config.LATEX_CONVERTER_TIMEOUT,
             )
             pdf_files = sorted(
                 [f for f in os.listdir(tmpdir) if f.startswith("page-") and f.endswith(".pdf")],
