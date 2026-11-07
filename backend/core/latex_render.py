@@ -236,10 +236,13 @@ def extract_latex_stdout_excerpt(
 
     return sanitize_latex_log(excerpt, tmpdir=tmpdir)
 
-def first_latex_error_line(text: str) -> str | None:
+def first_latex_error_line(text: str, *, tmpdir: Optional[str] = None) -> str | None:
+    if not text:
+        return None
     for ln in text.splitlines():
         if ln.startswith("! "):
-            return ln[2:].strip()
+            raw_err = ln[2:].strip()
+            return sanitize_latex_log(raw_err, tmpdir=tmpdir)
     return None
 
 def compile_latex_to_pdf_bytes(
