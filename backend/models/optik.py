@@ -1,14 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List
 
 
 class LensConfig(BaseModel):
     """Konfiguration einer einzelnen dünnen Linse im Linsensystem."""
     x: float = 0.0       # Position auf der optischen Achse (cm)
-    f: float = 3.0       # Brennweite (cm); negativ = Zerstreuungslinse
-    h: float = 4.0       # Gesamthöhe der Linse (cm)
+    f: float = Field(default=3.0)       # Brennweite (cm); negativ = Zerstreuungslinse
+    h: float = Field(default=4.0, gt=0.0)       # Gesamthöhe der Linse (cm)
+
+    @field_validator("f")
+    @classmethod
+    def validate_focal_length_nonzero(cls, v: float) -> float:
+        if abs(v) < 1e-6:
+            raise ValueError("Die Brennweite f darf nicht 0 sein (|f| >= 1e-6).")
+        return v
 
 
 class RayConfig(BaseModel):
