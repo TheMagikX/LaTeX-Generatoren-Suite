@@ -42,7 +42,7 @@ class ZahlenstrahlConfig(BaseModel):
     # Range & Scaling
     min_val: float = -5.0
     max_val: float = 5.0
-    width_cm: float = 12.0
+    width_cm: float = Field(default=12.0, gt=0.0)
     x_scale: Optional[float] = None
     padding: float = 0.5
 
@@ -57,12 +57,24 @@ class ZahlenstrahlConfig(BaseModel):
                 if span == 0:
                     span = 1.0
                 values["width_cm"] = round(span * float(values["x_scale"]), 2)
+            if values.get("step_mid") == 0:
+                values["step_mid"] = None
+            if values.get("step_sub") == 0:
+                values["step_sub"] = None
         return values
 
+    @model_validator(mode="after")
+    def validate_axis_and_zoom_bounds(self) -> "ZahlenstrahlConfig":
+        if self.min_val >= self.max_val:
+            raise ValueError(f"min_val ({self.min_val}) muss kleiner als max_val ({self.max_val}) sein.")
+        if self.zoom_active and self.zoom_min >= self.zoom_max:
+            raise ValueError(f"zoom_min ({self.zoom_min}) muss kleiner als zoom_max ({self.zoom_max}) sein.")
+        return self
+
     # Ticks (Dreistufige Hierarchie)
-    step_main: float = 1.0
-    step_mid: Optional[float] = None
-    step_sub: Optional[float] = 0.5
+    step_main: float = Field(default=1.0, gt=0.0)
+    step_mid: Optional[float] = Field(default=None, gt=0.0)
+    step_sub: Optional[float] = Field(default=0.5, gt=0.0)
     tick_main_h: float = 0.12
     tick_mid_h: float = 0.08
     tick_sub_h: float = 0.05
