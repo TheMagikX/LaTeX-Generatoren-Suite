@@ -147,7 +147,7 @@ async def generate_geometrie(cfg: GeometrieConfig):
         result, error = solve_triangle(cfg.construction)
     else:
         result, error = solve_quadrilateral(cfg.quad_construction)
-    latex = generate_geometrie_latex(cfg)
+    latex = generate_geometrie_latex(cfg, precomputed_result=(result, error))
     solved = None
     if result:
         solved = {
