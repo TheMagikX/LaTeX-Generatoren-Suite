@@ -2,7 +2,7 @@
 # Startet Backend (FastAPI) und Frontend (Vite) in einem einzigen Fenster
 
 $ErrorActionPreference = "Stop"
-$rootDir = $PSScriptRoot
+$rootDir = Split-Path -Parent $PSScriptRoot
 
 # --- .env laden ---
 $envFile = Join-Path $rootDir ".env"
@@ -79,5 +79,5 @@ Start-Job -ScriptBlock {
 & $localConcurrently `
     --names "BACKEND,FRONTEND" `
     --prefix-colors "yellow,green" `
-    "_backend.bat" `
-    "_frontend.bat"
+    "scripts\_backend.bat" `
+    "scripts\_frontend.bat"

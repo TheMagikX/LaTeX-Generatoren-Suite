@@ -18,9 +18,9 @@ Die Generator-Suite bringt plattformübergreifende Starter-Dateien mit, die das 
 
 | Aktion | Windows | macOS | Linux |
 | :--- | :--- | :--- | :--- |
-| **Starten & Browser öffnen** | Doppelklick auf `start.bat` | Doppelklick auf `start.command` | Ausführen von `./start.sh` |
-| **Beenden / Stoppen** | Doppelklick auf `stop.bat` | Doppelklick auf `stop.command` | Ausführen von `./stop.sh` |
-| **System-Aktualisierung** | Doppelklick auf `update.bat` | Doppelklick auf `update.command` | Ausführen von `./update.sh` |
+| **Starten & Browser öffnen** | Doppelklick auf `scripts/start.bat` | Doppelklick auf `scripts/start.command` | Ausführen von `./scripts/start.sh` |
+| **Beenden / Stoppen** | Doppelklick auf `scripts/stop.bat` | Doppelklick auf `scripts/stop.command` | Ausführen von `./scripts/stop.sh` |
+| **System-Aktualisierung** | Doppelklick auf `scripts/update.bat` | Doppelklick auf `scripts/update.command` | Ausführen von `./scripts/update.sh` |
 
 *Beim Starten wird der Container im Hintergrund hochgefahren und die Web-App automatisch in deinem Standardbrowser unter [http://localhost:8000](http://localhost:8000) geöffnet.*
 
@@ -54,9 +54,9 @@ docker compose down
 
 Die Generator-Suite bringt plattformübergreifende Starter-Dateien mit, die das Ziehen von Updates, den Container-Neustart und die Bereinigung alter Images vollautomatisch per einfachem Doppelklick erledigen:
 
-* **Windows:** Doppelklick auf `update.bat`
-* **macOS:** Doppelklick auf `update.command` (öffnet automatisch das Mac-Terminal)
-* **Linux:** Ausführen von `./update.sh`
+* **Windows:** Doppelklick auf `scripts/update.bat`
+* **macOS:** Doppelklick auf `scripts/update.command` (öffnet automatisch das Mac-Terminal)
+* **Linux:** Ausführen von `./scripts/update.sh`
 
 Die Skripte führen im Hintergrund `git pull`, `docker compose pull`, `docker compose up -d` und ein automatisches `docker image prune -f` durch, damit kein ungenutzter Festplattenspeicher belegt bleibt.
 

@@ -1,7 +1,7 @@
 ﻿@echo off
 chcp 65001 >nul
 title LaTeX-Generatoren-Suite -- Anwendungsstart
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 echo.
 echo ================================================================================
@@ -62,7 +62,7 @@ if %ERRORLEVEL% equ 0 goto :launch_browser
 
 echo.
 echo [FEHLER] Container konnte nicht gestartet werden.
-echo Bitte stelle sicher, dass Docker Desktop aktiv ist oder fuehre 'update.bat' aus.
+echo Bitte stelle sicher, dass Docker Desktop aktiv ist oder fuehre 'scripts\update.bat' aus.
 echo.
 pause
 exit /b 1
@@ -75,7 +75,7 @@ echo   Die Web-App wird jetzt in deinem Standardbrowser geoeffnet:
 echo   👉 http://localhost:8000
 echo ================================================================================
 echo.
-echo Hinweis: Zum Beenden kannst du 'stop.bat' doppelklicken.
+echo Hinweis: Zum Beenden kannst du 'scripts\stop.bat' doppelklicken.
 echo.
 start http://localhost:8000
 echo Druecke eine beliebige Taste, um dieses Konsolenfenster zu schliessen...
@@ -86,7 +86,7 @@ exit /b 0
 if exist "backend\.venv\Scripts\python.exe" (
     echo [INFO] Docker nicht gefunden, aber natives Setup vorhanden.
     echo        Starte native Umgebung via 'run_app.bat'...
-    call "%~dp0run_app.bat"
+    call "%~dp0..\run_app.bat"
     exit /b 0
 )
 

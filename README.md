@@ -194,9 +194,9 @@ Beim ersten Aufruf lädt Docker das schlanke Basis-Image herunter und baut Front
 #### Nützliche Docker-Befehle
 | Aktion | Befehl |
 | :--- | :--- |
-| **Starten & Browser öffnen (Doppelklick)** | `start.bat` (Windows) / `start.command` (macOS) / `./start.sh` (Linux) |
-| **Beenden / Stoppen (Doppelklick)** | `stop.bat` (Windows) / `stop.command` (macOS) / `./stop.sh` (Linux) |
-| **System-Update (Doppelklick)** | `update.bat` (Windows) / `update.command` (macOS) / `./update.sh` (Linux) |
+| **Starten & Browser öffnen (Doppelklick)** | `scripts/start.bat` (Windows) / `scripts/start.command` (macOS) / `./scripts/start.sh` (Linux) |
+| **Beenden / Stoppen (Doppelklick)** | `scripts/stop.bat` (Windows) / `scripts/stop.command` (macOS) / `./scripts/stop.sh` (Linux) |
+| **System-Update (Doppelklick)** | `scripts/update.bat` (Windows) / `scripts/update.command` (macOS) / `./scripts/update.sh` (Linux) |
 | **Aktualisieren (Docker Hub)** | `docker compose pull && docker compose up -d` |
 | **Logs in Echtzeit ansehen** | `docker compose logs -f` |
 | **Status der Container prüfen** | `docker compose ps` |
@@ -245,7 +245,7 @@ Falls du die Suite direkt nativ auf deinem Host-System ausführen möchtest:
    ```
 3. **App starten:**
    - **Komfortabel:** Doppelklick auf die beiliegende Datei **`run_app.bat`** (startet Backend und Frontend synchron in einem Terminalfenster).
-   - **Oder via PowerShell:** `.\start.ps1` ausführen.
+   - **Oder via PowerShell:** `.\scripts\start.ps1` ausführen.
    - Die App öffnet sich automatisch im Browser unter **[http://localhost:8000](http://localhost:8000)** (Backend läuft auf Port 9000).
 
 ---

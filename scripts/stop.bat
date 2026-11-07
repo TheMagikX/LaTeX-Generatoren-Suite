@@ -1,7 +1,7 @@
 ﻿@echo off
 chcp 65001 >nul
 title LaTeX-Generatoren-Suite -- Beenden
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 echo.
 echo ================================================================================

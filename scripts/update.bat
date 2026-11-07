@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 title LaTeX-Generatoren-Suite -- System-Aktualisierung
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 echo.
 echo ================================================================================

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# LaTeX-Generatoren-Suite -- Linux Updater
+# LaTeX-Generatoren-Suite -- macOS Doppelklick-Updater
 # Copyright (C) 2026 C. Meyer -- GNU AGPLv3 (AGPL-3.0-or-later)
 
-# In das Verzeichnis dieses Skripts wechseln
-cd "$(dirname "$0")" || exit 1
+# In das Verzeichnis dieses Skripts wechseln (egal von wo im Finder geklickt)
+cd "$(dirname "$0")/.." || exit 1
 
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'
@@ -13,7 +13,7 @@ NC='\033[0m'
 
 echo ""
 echo -e "${CYAN}================================================================================${NC}"
-echo -e "${CYAN}  LaTeX-Generatoren-Suite -- System-Aktualisierung (Linux)${NC}"
+echo -e "${CYAN}  LaTeX-Generatoren-Suite -- System-Aktualisierung (macOS)${NC}"
 echo -e "${CYAN}  Copyright (C) 2026 C. Meyer -- GNU AGPLv3 (AGPL-3.0-or-later)${NC}"
 echo -e "${CYAN}================================================================================${NC}"
 echo ""
@@ -22,7 +22,7 @@ echo ""
 if [ -d ".git" ]; then
     if ! command -v git >/dev/null 2>&1; then
         echo -e "${RED}[FEHLER] Git wurde nicht auf diesem Computer gefunden.${NC}"
-        echo "Bitte stelle sicher, dass Git installiert ist (z. B. sudo apt install git)."
+        echo "Bitte stelle sicher, dass die Apple Command Line Tools oder Git installiert sind."
         echo ""
         read -n 1 -s -r -p "Drücke eine beliebige Taste zum Beenden..."
         echo ""
@@ -62,7 +62,7 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
             if ! docker compose up -d; then
                 echo ""
                 echo -e "${RED}[FEHLER] Container konnte nicht gestartet werden.${NC}"
-                echo "Bitte stelle sicher, dass Docker fehlerfrei läuft."
+                echo "Bitte stelle sicher, dass Docker Desktop fehlerfrei läuft."
                 echo ""
                 read -n 1 -s -r -p "Drücke eine beliebige Taste zum Beenden..."
                 echo ""
@@ -80,7 +80,7 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
             if ! docker compose up -d --build; then
                 echo ""
                 echo -e "${RED}[FEHLER] Container konnte nicht gebaut oder gestartet werden.${NC}"
-                echo "Bitte stelle sicher, dass Docker fehlerfrei läuft."
+                echo "Bitte stelle sicher, dass Docker Desktop fehlerfrei läuft."
                 echo ""
                 read -n 1 -s -r -p "Drücke eine beliebige Taste zum Beenden..."
                 echo ""
@@ -91,11 +91,11 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     echo ""
     echo "      Räume alte Docker-Images auf (Speicherplatz freigeben)..."
     docker image prune -f
-    if command -v xdg-open >/dev/null 2>&1; then
-        xdg-open "http://localhost:8000" >/dev/null 2>&1 &
+    if command -v open >/dev/null 2>&1; then
+        open "http://localhost:8000"
     fi
 elif [ -f "backend/.venv/bin/python" ]; then
-    echo -e "${GREEN}[INFO] Natives Linux-Setup erkannt. Aktualisiere Python- und Node-Pakete...${NC}"
+    echo -e "${GREEN}[INFO] Natives macOS-Setup erkannt. Aktualisiere Python- und Node-Pakete...${NC}"
     echo ""
     echo "      Aktualisiere Python-Pakete..."
     backend/.venv/bin/python -m pip install -r backend/requirements.txt

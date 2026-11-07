@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# LaTeX-Generatoren-Suite -- Linux Stopp-Skript
+# LaTeX-Generatoren-Suite -- macOS Stopp-Skript
 # Copyright (C) 2026 C. Meyer -- GNU AGPLv3 (AGPL-3.0-or-later)
 
-cd "$(dirname "$0")" || exit 1
+cd "$(dirname "$0")/.." || exit 1
 
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'
@@ -10,7 +10,7 @@ NC='\033[0m'
 
 echo ""
 echo -e "${CYAN}================================================================================${NC}"
-echo -e "${CYAN}  LaTeX-Generatoren-Suite -- Container beenden (Linux)${NC}"
+echo -e "${CYAN}  LaTeX-Generatoren-Suite -- Container beenden (macOS)${NC}"
 echo -e "${CYAN}  Copyright (C) 2026 C. Meyer -- GNU AGPLv3 (AGPL-3.0-or-later)${NC}"
 echo -e "${CYAN}================================================================================${NC}"
 echo ""

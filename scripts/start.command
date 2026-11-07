@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# LaTeX-Generatoren-Suite -- Linux Starter
+# LaTeX-Generatoren-Suite -- macOS Starter
 # Copyright (C) 2026 C. Meyer -- GNU AGPLv3 (AGPL-3.0-or-later)
 
-cd "$(dirname "$0")" || exit 1
+cd "$(dirname "$0")/.." || exit 1
 
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'
@@ -12,7 +12,7 @@ NC='\033[0m'
 
 echo ""
 echo -e "${CYAN}================================================================================${NC}"
-echo -e "${CYAN}  LaTeX-Generatoren-Suite -- Anwendungsstart (Linux)${NC}"
+echo -e "${CYAN}  LaTeX-Generatoren-Suite -- Anwendungsstart (macOS)${NC}"
 echo -e "${CYAN}  Copyright (C) 2026 C. Meyer -- GNU AGPLv3 (AGPL-3.0-or-later)${NC}"
 echo -e "${CYAN}================================================================================${NC}"
 echo ""
@@ -21,10 +21,23 @@ echo ""
 if command -v docker >/dev/null 2>&1; then
     echo -e "${YELLOW}[1/2] Prüfe Docker-Umgebung...${NC}"
     if ! docker info >/dev/null 2>&1; then
-        echo -e "${RED}[FEHLER] Docker-Daemon läuft nicht oder fehlende Berechtigungen (sudo usermod -aG docker $USER).${NC}"
-        read -n 1 -s -r -p "Drücke eine beliebige Taste zum Beenden..."
-        echo ""
-        exit 1
+        echo -e "${YELLOW}[INFO] Docker Desktop ist noch nicht aktiv. Starte Docker.app...${NC}"
+        if [ -d "/Applications/Docker.app" ]; then
+            open -a Docker
+        fi
+        echo "      Warte auf Docker-Dienst (kann bis zu 30 Sekunden dauern)..."
+        count=0
+        while ! docker info >/dev/null 2>&1; do
+            sleep 3
+            count=$((count + 1))
+            if [ $count -ge 12 ]; then
+                echo -e "${RED}[FEHLER] Docker Desktop konnte nicht rechtzeitig gestartet werden.${NC}"
+                echo "Bitte starte Docker Desktop manuell und führe dieses Skript erneut aus."
+                read -n 1 -s -r -p "Drücke eine beliebige Taste zum Beenden..."
+                echo ""
+                exit 1
+            fi
+        done
     fi
 
     echo -e "${YELLOW}[2/2] Starte Generator-Suite Container...${NC}"
@@ -41,26 +54,26 @@ if command -v docker >/dev/null 2>&1; then
     echo -e "${GREEN}  👉 http://localhost:8000${NC}"
     echo -e "${GREEN}================================================================================${NC}"
     echo ""
-    echo "Hinweis: Zum Beenden kannst du './stop.sh' ausführen."
+    echo "Hinweis: Zum Beenden kannst du 'scripts/stop.command' doppelklicken."
     echo ""
 
-    if command -v xdg-open >/dev/null 2>&1; then
-        xdg-open "http://localhost:8000" >/dev/null 2>&1 &
+    if command -v open >/dev/null 2>&1; then
+        open "http://localhost:8000"
     fi
     sleep 2
     exit 0
 elif [ -f "backend/.venv/bin/python" ]; then
-    echo -e "${GREEN}[INFO] Natives Linux-Setup erkannt. Starte Server...${NC}"
+    echo -e "${GREEN}[INFO] Natives macOS-Setup erkannt. Starte Server...${NC}"
     (cd backend && .venv/bin/uvicorn main:app --port 9000) &
     (cd frontend && npm run dev) &
     sleep 3
-    if command -v xdg-open >/dev/null 2>&1; then
-        xdg-open "http://localhost:8000" >/dev/null 2>&1 &
+    if command -v open >/dev/null 2>&1; then
+        open "http://localhost:8000"
     fi
     wait
 else
-    echo -e "${RED}[FEHLER] Docker wurde nicht gefunden.${NC}"
-    echo "Bitte installiere Docker und Docker Compose."
+    echo -e "${RED}[FEHLER] Docker Desktop wurde nicht gefunden.${NC}"
+    echo "Bitte installiere Docker Desktop für Mac von: https://www.docker.com/products/docker-desktop/"
     read -n 1 -s -r -p "Drücke eine beliebige Taste zum Beenden..."
     echo ""
     exit 1
