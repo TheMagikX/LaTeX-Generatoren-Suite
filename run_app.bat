@@ -1,4 +1,4 @@
 @echo off
-title Generator-Suite v5.1.2 -- Copyright (C) 2026 C. Meyer -- GNU AGPLv3 (AGPL-3.0-or-later)
+title Generator-Suite v5.1.3 -- Copyright (C) 2026 C. Meyer -- GNU AGPLv3 (AGPL-3.0-or-later)
 :: Generator Suite Launcher - delegiert an start.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0start.ps1"
