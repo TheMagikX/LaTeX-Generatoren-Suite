@@ -66,14 +66,7 @@ _env_user_settings = os.getenv("USER_SETTINGS_FILE")
 if _env_user_settings:
     USER_SETTINGS_FILE = pathlib.Path(_env_user_settings).resolve()
 else:
-    _user_data_settings = USER_DATA_DIR / "user_settings.json"
-    _root_settings = PROJECT_ROOT / "user_settings.json"
-    if _user_data_settings.is_file():
-        USER_SETTINGS_FILE = _user_data_settings
-    elif _root_settings.is_file():
-        USER_SETTINGS_FILE = _root_settings
-    else:
-        USER_SETTINGS_FILE = _user_data_settings
+    USER_SETTINGS_FILE = (USER_DATA_DIR / "user_settings.json").resolve()
 COMMANDS_DEFAULT_FILE = LATEX_FILES_DIR / "commands-default.tex"
 PACKAGES_DEFAULT_FILE = LATEX_FILES_DIR / "Pakete-default.tex"
 GLUCKSRAD_PFEIL_PATH = LATEX_FILES_DIR / "GlücksradPfeilGeradeNeuTransp.png"
@@ -201,14 +194,6 @@ def save_user_settings(data: dict) -> None:
         USER_SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(USER_SETTINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-        # Mirror to root user_settings.json if it exists on host for developer convenience
-        root_file = PROJECT_ROOT / "user_settings.json"
-        if USER_SETTINGS_FILE != root_file and root_file.is_file():
-            try:
-                with open(root_file, "w", encoding="utf-8") as f:
-                    json.dump(data, f, indent=2, ensure_ascii=False)
-            except Exception:
-                pass
     except Exception as e:
         logger.error(f"Failed to write user_settings.json: {e}")
         raise

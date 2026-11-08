@@ -28,3 +28,13 @@ def _ensure_test_datasets():
             dest = config.DATASETS_DIR / f.name
             if not dest.exists():
                 shutil.copy2(f, dest)
+
+
+@pytest.fixture(autouse=True)
+def _isolate_user_settings(tmp_path, monkeypatch):
+    """
+    Isoliert USER_SETTINGS_FILE fuer jeden Testlauf auf eine temporaere Datei,
+    sodass echte Benutzerdaten niemals durch Tests ueberschrieben oder geloescht werden.
+    """
+    fake_settings_file = tmp_path / "user_settings.json"
+    monkeypatch.setattr(config, "USER_SETTINGS_FILE", fake_settings_file)
