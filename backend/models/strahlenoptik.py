@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel, Field
 from typing import List, Optional
+from models.base import BaseGeneratorConfig
 
 
 class LightSource(BaseModel):
@@ -96,7 +97,7 @@ class RefractionAnnotations(BaseModel):
     refracted_label: str = r"$\beta$"
 
 
-class StrahlenoptikConfig(BaseModel):
+class StrahlenoptikConfig(BaseGeneratorConfig):
     light_sources: List[LightSource] = Field(
         default_factory=lambda: [LightSource()]
     )

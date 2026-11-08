@@ -3,6 +3,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from enum import Enum
+from models.base import BaseGeneratorConfig
 
 class GlucksradMode(str, Enum):
     STANDARD = "standard"
@@ -50,7 +51,7 @@ class TikZArrowConfig(BaseModel):
     segment_length: float = 2.0
     amplitude: float = 0.15
 
-class GlucksradConfig(BaseModel):
+class GlucksradConfig(BaseGeneratorConfig):
     mode: GlucksradMode = GlucksradMode.STANDARD
     anzahl: int = 6
     seed: int = 42
@@ -69,5 +70,5 @@ class GlucksradConfig(BaseModel):
     pointer_pos: PointerPos = PointerPos.OBEN
     arrow_params: TikZArrowConfig = Field(default_factory=TikZArrowConfig)
     
-    font_family: str = "Fira"
     render_dpi: int = 1000
+

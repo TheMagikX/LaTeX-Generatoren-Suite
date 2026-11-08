@@ -2,8 +2,9 @@
 
 from pydantic import BaseModel, Field
 from typing import Optional, Literal
+from models.base import BaseGeneratorConfig
 
-class BruchConfig(BaseModel):
+class BruchConfig(BaseGeneratorConfig):
     zaehler: int = Field(3, ge=0, le=200)
     nenner: int = Field(4, ge=1, le=200)
     form: Literal["Rechteck", "Kreis"] = "Rechteck"
@@ -22,4 +23,4 @@ class BruchConfig(BaseModel):
     mixed_number: bool = False
     show_erweitern: bool = False
     show_kuerzen: bool = False
-    font_family: str = "Fira"
+

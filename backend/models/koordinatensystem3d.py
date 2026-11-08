@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional, Any
+from models.base import BaseGeneratorConfig
 
 class Point3DConfig(BaseModel):
     show: bool = True
@@ -152,7 +153,7 @@ class Shape3DConfig(BaseModel):
     style: str = "solid"
     closed: bool = False
 
-class CoordinateSystem3DConfig(BaseModel):
+class CoordinateSystem3DConfig(BaseGeneratorConfig):
     xmin: float = 0.0
     xmax: float = 5.0
     ymin: float = 0.0
@@ -243,7 +244,7 @@ class CoordinateSystem3DConfig(BaseModel):
     shapes: List[Shape3DConfig] = []
     
     manual_code: str = ""
-    
-    pakete_laden: bool = True
-    command_laden: bool = True
-    font_family: str = "Fira"
+
+
+Koordinatensystem3DConfig = CoordinateSystem3DConfig
+

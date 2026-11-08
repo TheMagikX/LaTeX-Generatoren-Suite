@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel
 from typing import Literal
+from models.base import BaseGeneratorConfig
 
 
 class TriangleConstructionConfig(BaseModel):
@@ -160,13 +161,11 @@ class QuadrilateralConstructionConfig(BaseModel):
     p_dy: float = 3.0
 
 
-class GeometrieConfig(BaseModel):
+class GeometrieConfig(BaseGeneratorConfig):
     shape: Literal["Triangle", "Quadrilateral"] = "Triangle"
     construction: TriangleConstructionConfig = TriangleConstructionConfig()
     quad_construction: QuadrilateralConstructionConfig = QuadrilateralConstructionConfig()
     elements: TriangleElementConfig = TriangleElementConfig()
     style: TriangleStyleConfig = TriangleStyleConfig()
-    pakete_laden: bool = True
-    command_laden: bool = True
-    font_family: str = "Fira"
     preamble_add: str = ""
+

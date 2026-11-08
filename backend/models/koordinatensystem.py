@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional, Union
+from models.base import BaseGeneratorConfig
 
 class ShadeConfig(BaseModel):
     show: bool = False
@@ -161,7 +162,7 @@ class ParametricPlotConfig(BaseModel):
     label_pos: float = 0.6
     label_style: str = r"above, sloped, font=\small, fill=white, inner sep=1pt"
 
-class CoordinateSystemConfig(BaseModel):
+class CoordinateSystemConfig(BaseGeneratorConfig):
     xmin: float = 0.0
     xmax: float = 7.25
     ymin: float = 0.0
@@ -267,7 +268,7 @@ class CoordinateSystemConfig(BaseModel):
     parametric_plots: List[ParametricPlotConfig] = []
     
     manual_code: str = ""
-    
-    pakete_laden: bool = True
-    command_laden: bool = True
-    font_family: str = "Fira"
+
+
+KoordinatensystemConfig = CoordinateSystemConfig
+

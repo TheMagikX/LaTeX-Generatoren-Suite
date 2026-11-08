@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel, Field, field_validator
 from typing import List
+from models.base import BaseGeneratorConfig
 
 
 class LensConfig(BaseModel):
@@ -51,7 +52,7 @@ class OptikObject(BaseModel):
     focal_ray: RayConfig = Field(default_factory=lambda: RayConfig(color="violet", width=1.0))
 
 
-class OptikConfig(BaseModel):
+class OptikConfig(BaseGeneratorConfig):
     """Vollständige Konfiguration des Optik-Generators."""
 
     # --- System-Modus ---
@@ -90,5 +91,3 @@ class OptikConfig(BaseModel):
     show_annot_G: bool = False
     show_annot_B: bool = False
 
-    # --- Globale Optionen ---
-    font_family: str = "Fira"

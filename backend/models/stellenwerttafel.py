@@ -3,6 +3,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 from enum import Enum
+from models.base import BaseGeneratorConfig
 
 class StellenwertMode(str, Enum):
     ZIFFERN = "Ziffern"
@@ -52,7 +53,7 @@ class StellenwertLayout(BaseModel):
     header_bg_opacity: float = 0.85
     column_bg_opacity_ratio: float = 0.80
 
-class StellenwertConfig(BaseModel):
+class StellenwertConfig(BaseGeneratorConfig):
     columns: List[StellenwertColumn]
     groups: List[StellenwertGroup] = []
     rows: List[StellenwertRow] = []
@@ -60,4 +61,4 @@ class StellenwertConfig(BaseModel):
     layout: StellenwertLayout = Field(default_factory=StellenwertLayout)
     decimal_separator_pos: Optional[int] = None # Thick line after X columns
     font_size: str = "Large"
-    font_family: str = "Fira"
+

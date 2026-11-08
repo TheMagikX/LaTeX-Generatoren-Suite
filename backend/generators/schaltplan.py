@@ -124,8 +124,8 @@ def generate_schaltplan_latex(cfg: SchaltplanConfig) -> str:
 \usepackage{circuitikz}"""
 
     preamble_parts = [
-        shared_package_input(cfg.load_packages, default_pakete),
-        shared_commands_input(cfg.load_commands),
+        shared_package_input(cfg.pakete_laden, default_pakete),
+        shared_commands_input(cfg.command_laden),
         font_input(cfg.font_family),
     ]
     if cfg.preamble_add and cfg.preamble_add.strip():

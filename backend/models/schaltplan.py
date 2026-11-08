@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from pydantic import BaseModel, model_validator
+from typing import Any, List, Optional
+from models.base import BaseGeneratorConfig
 
 class CircuitNode(BaseModel):
     id: str
@@ -19,7 +20,7 @@ class CircuitComponent(BaseModel):
     value: Optional[str] = ""
     style: Optional[str] = ""
 
-class SchaltplanConfig(BaseModel):
+class SchaltplanConfig(BaseGeneratorConfig):
     nodes: List[CircuitNode] = []
     components: List[CircuitComponent] = []
     style_standard: str = "europe (DIN)"
@@ -28,7 +29,24 @@ class SchaltplanConfig(BaseModel):
     show_nodes: bool = False
     show_node_labels: bool = False
     style_tikz_opts: str = ""
-    load_packages: bool = True
-    load_commands: bool = True
-    font_family: str = "Fira"
     preamble_add: str = ""
+
+    @model_validator(mode="before")
+    @classmethod
+    def _map_legacy_package_flags(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            data = dict(data)
+            if "load_packages" in data and "pakete_laden" not in data:
+                data["pakete_laden"] = data.pop("load_packages")
+            if "load_commands" in data and "command_laden" not in data:
+                data["command_laden"] = data.pop("load_commands")
+        return data
+
+    @property
+    def load_packages(self) -> bool:
+        return self.pakete_laden
+
+    @property
+    def load_commands(self) -> bool:
+        return self.command_laden
+

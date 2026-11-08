@@ -3,6 +3,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Union
 from enum import Enum
+from models.base import BaseGeneratorConfig
 
 class GrowDirection(str, Enum):
     right = "right"
@@ -58,7 +59,7 @@ class TreeStyleConfig(BaseModel):
     hide_edge_labels: bool = False
     highlight_style_default: str = "draw=red!70!black, line width=2pt, opacity=0.6, line cap=round"
 
-class BaumdiagrammConfig(BaseModel):
+class BaumdiagrammConfig(BaseGeneratorConfig):
     mode: TreeMode = TreeMode.symmetric
     max_depth: int = Field(default=2, ge=1, le=6)
     branches_global: int = Field(default=2, ge=1, le=8)
@@ -81,8 +82,5 @@ class BaumdiagrammConfig(BaseModel):
 
     style: TreeStyleConfig = TreeStyleConfig()
     
-    # LaTeX Extras
-    pakete_laden: bool = True
-    command_laden: bool = True
-    font_family: str = "Fira"
     preamble_add: str = ""
+

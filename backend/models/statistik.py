@@ -3,6 +3,7 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict
 from enum import Enum
+from models.base import BaseGeneratorConfig
 
 class DataMode(str, Enum):
     RAW = "Raw"
@@ -108,7 +109,7 @@ class TitleConfig(BaseModel):
     align: str = "center"
     custom_style: Optional[str] = ""
 
-class StatistikConfig(BaseModel):
+class StatistikConfig(BaseGeneratorConfig):
     model_config = ConfigDict(extra="ignore")
     type: StatistikType = StatistikType.BOXPLOT
     datasets: List[DatasetConfig] = Field(default_factory=lambda: [DatasetConfig()])
@@ -120,7 +121,7 @@ class StatistikConfig(BaseModel):
     summenkurve_opts: SummenkurveOptions = Field(default_factory=SummenkurveOptions)
     violin_opts: ViolinOptions = Field(default_factory=ViolinOptions)
     title_opts: TitleConfig = Field(default_factory=TitleConfig)
-    font_family: str = "Fira"
     font_size: str = "normalsize"
     width_cm: float = 12.0
     height_cm: float = 8.0
+
