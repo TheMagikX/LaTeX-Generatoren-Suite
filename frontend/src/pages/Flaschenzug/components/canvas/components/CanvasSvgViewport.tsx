@@ -349,8 +349,8 @@ export const CanvasSvgViewport = forwardRef<SVGSVGElement, CanvasSvgViewportProp
           const startPt = worldToCanvas({ x: sx, y: sy }, bounds, zoomLevel)
           const massPt = worldToCanvas({ x: sx, y: massWorldY }, bounds, zoomLevel)
 
-          const massW = Math.max(32, 0.6 * canvasScale)
-          const massH = Math.max(26, 0.6 * canvasScale)
+          const massW = Math.max(20, (m.width || 0.8) * canvasScale)
+          const massH = Math.max(16, (m.height || 0.6) * canvasScale)
 
           return (
             <g key={`mass-${m.id}`} pointerEvents="none">
@@ -358,25 +358,27 @@ export const CanvasSvgViewport = forwardRef<SVGSVGElement, CanvasSvgViewportProp
                 x1={startPt.x}
                 y1={startPt.y}
                 x2={massPt.x}
-                y2={massPt.y - massH / 2}
-                stroke="rgb(148,163,184)"
-                strokeWidth={1.5}
-                strokeDasharray="3,2"
+                y2={massPt.y}
+                stroke="rgb(245,158,11)"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                opacity={0.95}
               />
               <rect
                 x={massPt.x - massW / 2}
-                y={massPt.y - massH / 2}
+                y={massPt.y}
                 width={massW}
                 height={massH}
                 rx={4}
-                fill="rgba(30,41,59,0.95)"
-                stroke="rgb(148,163,184)"
-                strokeWidth={1.5}
+                fill="rgba(30,41,59,0.98)"
+                stroke="rgb(100,0,0)"
+                strokeWidth={2}
               />
               <text
                 x={massPt.x}
-                y={massPt.y + 4}
+                y={massPt.y + massH / 2}
                 textAnchor="middle"
+                dominantBaseline="central"
                 className="fill-slate-200 text-[11px] font-mono select-none"
               >
                 {m.label ? m.label.replace(/[$\\]/g, '') : (m.name || 'm')}

@@ -41,6 +41,8 @@ class MassConfig(BaseModel):
     ref: str = ""
     name: str = ""
     length: float = 1.0
+    width: float = 0.8
+    height: float = 0.6
     label: str = ""
     relation: str = "Mitte"
 

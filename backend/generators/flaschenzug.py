@@ -296,28 +296,8 @@ def generate_flaschenzug_latex(cfg: FlaschenzugConfig) -> str:
             rope_color=rope.color,
         )
 
-    for m in cfg.masses:
-        etype, elem = _find_element(cfg, m.ref)
-        if not elem:
-            continue
-        ref_x = elem.x
-        ref_y = elem.y
-        length = m.length
-        
-        if etype == "pulley":
-            pr = elem.radius
-            if m.relation == "Links":
-                start_x, start_y = ref_x - pr, ref_y
-            elif m.relation == "Rechts":
-                start_x, start_y = ref_x + pr, ref_y
-            else:
-                start_x, start_y = ref_x, ref_y
-        else:
-            start_x, start_y = ref_x, ref_y
-            
-        mass_y = start_y - length
-        code += f"  \\halterungseil{{({start_x:g},{start_y:g})}}{{-90}}{{{length:g}}};\n"
-        code += f"  \\node[masse, minimum width=0.6cm, minimum height=0.6cm] at ({start_x:g},{mass_y:g}) {{{m.label}}};\n"
+
+
 
     for a in cfg.anchors:
         if a.shape == "Kreis":
@@ -348,6 +328,49 @@ def generate_flaschenzug_latex(cfg: FlaschenzugConfig) -> str:
             code += f"  \\pic at ({p.x:g},{p.y:g}) {{HalterungEinseitig={p.mount_angle:g}:{p.mount_length:g}}};\n"
         elif p.mount == "Zweiseitig":
             code += f"  \\pic at ({p.x:g},{p.y:g}) {{HalterungZweiseitig={p.mount_angle:g}:{p.mount_length:g}}};\n"
+
+    # Halterungen der Massen (über den Rollen)
+    for m in cfg.masses:
+        etype, elem = _find_element(cfg, m.ref)
+        if not elem:
+            continue
+        ref_x = elem.x
+        ref_y = elem.y
+        length = m.length
+        if etype == "pulley":
+            pr = elem.radius
+            if m.relation == "Links":
+                start_x, start_y = ref_x - pr, ref_y
+            elif m.relation == "Rechts":
+                start_x, start_y = ref_x + pr, ref_y
+            else:
+                start_x, start_y = ref_x, ref_y
+        else:
+            start_x, start_y = ref_x, ref_y
+        code += f"  \\pic at ({start_x:g},{start_y:g}) {{HalterungEinseitig=-90:{length:g}}};\n"
+
+    # Massestücke (über den Halterungen, mit Rahmen zur sauberen Kantenüberdeckung)
+    for m in cfg.masses:
+        etype, elem = _find_element(cfg, m.ref)
+        if not elem:
+            continue
+        ref_x = elem.x
+        ref_y = elem.y
+        length = m.length
+        if etype == "pulley":
+            pr = elem.radius
+            if m.relation == "Links":
+                start_x, start_y = ref_x - pr, ref_y
+            elif m.relation == "Rechts":
+                start_x, start_y = ref_x + pr, ref_y
+            else:
+                start_x, start_y = ref_x, ref_y
+        else:
+            start_x, start_y = ref_x, ref_y
+        mass_y = start_y - length
+        w = getattr(m, "width", 0.8) or 0.8
+        h = getattr(m, "height", 0.6) or 0.6
+        code += f"  \\node[masse, draw={{rgb,255:red,100;green,0;blue,0}}, line width=0.6pt, minimum width={w:g}cm, minimum height={h:g}cm, anchor=north] at ({start_x:g},{mass_y:g}) {{{m.label}}};\n"
 
     label_pos_vectors = {
         "above": (0.0, 1.0),
@@ -383,7 +406,16 @@ def generate_flaschenzug_latex(cfg: FlaschenzugConfig) -> str:
                 if m.name == f.ref_name:
                     etype, elem = _find_element(cfg, m.ref)
                     if elem:
-                        pos = (elem.x, elem.y - m.length)
+                        pr = elem.radius if etype == "pulley" else 0.0
+                        if etype == "pulley" and m.relation == "Links":
+                            start_x = elem.x - pr
+                        elif etype == "pulley" and m.relation == "Rechts":
+                            start_x = elem.x + pr
+                        else:
+                            start_x = elem.x
+                        start_y = elem.y
+                        h = getattr(m, "height", 0.6) or 0.6
+                        pos = (start_x, start_y - m.length - h / 2.0)
                     break
 
         if pos:

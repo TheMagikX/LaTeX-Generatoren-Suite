@@ -22,6 +22,8 @@ export const FlascheTabMassen: React.FC<Props> = ({ cfg, setCfg }) => {
           ...source,
           id: genId(),
           name: getNextName('M', c.masses),
+          width: source.width ?? 0.8,
+          height: source.height ?? 0.6,
         }],
       }
     })
@@ -113,11 +115,11 @@ export const FlascheTabMassen: React.FC<Props> = ({ cfg, setCfg }) => {
                     onChange={e => {
                       const arr = [...cfg.masses]; arr[idx].label = e.target.value; setCfg(c => ({ ...c, masses: arr }))
                     }}
-                    placeholder="z.B. $m = 50\,\text{kg}$"
+                    placeholder="z. B. $m = \SI{2}{\kilo\gram}$"
                     className="h-8 text-sm"
                   />
                 </Field>
-                <Field label="Länge Seil">
+                <Field label="Länge Halterung">
                   <NumberInput
                     step="0.1"
                     value={m.length}
@@ -141,12 +143,34 @@ export const FlascheTabMassen: React.FC<Props> = ({ cfg, setCfg }) => {
                     <option value="Rechts">Rechts (Außen)</option>
                   </select>
                 </Field>
+                <Field label="Breite (cm)">
+                  <NumberInput
+                    step="0.1"
+                    min="0.1"
+                    value={m.width ?? 0.8}
+                    onChange={e => {
+                      const arr = [...cfg.masses]; arr[idx].width = parseFloat(e.target.value) || 0.8; setCfg(c => ({ ...c, masses: arr }))
+                    }}
+                    className="h-8 text-sm"
+                  />
+                </Field>
+                <Field label="Höhe (cm)">
+                  <NumberInput
+                    step="0.1"
+                    min="0.1"
+                    value={m.height ?? 0.6}
+                    onChange={e => {
+                      const arr = [...cfg.masses]; arr[idx].height = parseFloat(e.target.value) || 0.6; setCfg(c => ({ ...c, masses: arr }))
+                    }}
+                    className="h-8 text-sm"
+                  />
+                </Field>
               </div>
             </Collapsible>
           )
         })}
         <button
-          onClick={() => setCfg(c => ({ ...c, masses: [...c.masses, { id: genId(), name: `M${c.masses.length + 1}`, ref: '', length: 1.0, label: '', relation: 'Mitte' }] }))}
+          onClick={() => setCfg(c => ({ ...c, masses: [...c.masses, { id: genId(), name: `M${c.masses.length + 1}`, ref: '', length: 1.0, width: 0.8, height: 0.6, label: '', relation: 'Mitte' }] }))}
           className="w-full py-1.5 flex items-center justify-center gap-2 border border-rim border-dashed rounded-lg text-xs text-ink hover:bg-overlay/50 transition-colors"
         >
           <Plus size={14} /> Masse hinzufügen

@@ -53,6 +53,8 @@ export interface MassConfig {
   ref: string
   name: string
   length: number
+  width?: number
+  height?: number
   label: string
   relation: string
 }
