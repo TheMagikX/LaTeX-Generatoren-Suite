@@ -15,6 +15,24 @@ export const getNextName = (prefix: string, items: { name: string }[]) => {
   return `${prefix}99`
 }
 
+/**
+ * Erzeugt eine neue Array-Instanz, in der das Element an Position `index`
+ * unveränderlich (immutable) durch ein Teil-Objekt oder eine Updater-Funktion aktualisiert wird.
+ */
+export function updateListItem<T>(
+  items: readonly T[],
+  index: number,
+  patchOrUpdater: Partial<T> | ((item: T) => T),
+): T[] {
+  return items.map((item, idx) => {
+    if (idx !== index) return item
+    return typeof patchOrUpdater === 'function'
+      ? (patchOrUpdater as (item: T) => T)(item)
+      : { ...item, ...patchOrUpdater }
+  })
+}
+
+
 type RopeElement =
   | { type: 'pulley'; name: string; x: number; y: number; radius: number }
   | { type: 'anchor'; name: string; x: number; y: number; radius: 0 }
