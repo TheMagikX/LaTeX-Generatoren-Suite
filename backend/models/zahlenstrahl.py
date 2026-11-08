@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing import List, Optional
+from models.base import BaseGeneratorConfig
 
 class MarkedPointConfig(BaseModel):
     value: float
@@ -38,7 +39,7 @@ class PointerConfig(BaseModel):
     label_color: Optional[str] = None
     visible: bool = True
 
-class ZahlenstrahlConfig(BaseModel):
+class ZahlenstrahlConfig(BaseGeneratorConfig):
     # Range & Scaling
     min_val: float = -5.0
     max_val: float = 5.0
@@ -140,5 +141,3 @@ class ZahlenstrahlConfig(BaseModel):
     zoom_show_jumps: bool = False
     zoom_show_intervals: bool = True
 
-    # Global
-    font_family: str = "Fira"

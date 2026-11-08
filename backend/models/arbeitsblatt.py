@@ -2,8 +2,9 @@
 
 from pydantic import BaseModel, Field
 from typing import Optional, Any, Dict, Union
+from models.base import BaseGeneratorConfig
 
-class ArbeitsblattConfig(BaseModel):
+class ArbeitsblattConfig(BaseGeneratorConfig):
     template_text: str = Field(..., description="The Jinja2 LaTeX template")
     python_code: str = Field(default="", description="The Python code to generate variables")
     variables: Optional[Dict[str, Any]] = Field(None, description="Pre-executed variables to use for rendering")
@@ -18,8 +19,4 @@ class ArbeitsblattConfig(BaseModel):
     header_subject: str = "Mathematik"
     
     add_qrcode: bool = False
-    
-    # LaTeX Extras
-    pakete_laden: bool = True
-    command_laden: bool = True
-    font_family: str = "Fira"
+

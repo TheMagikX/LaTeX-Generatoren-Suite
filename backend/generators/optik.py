@@ -10,6 +10,7 @@ import math
 from typing import List, Dict, Any
 
 from core.latex_document import LatexDocumentSpec, font_input, render_latex_document
+from core.math_utils import fmt_float
 from models.optik import OptikConfig, LensConfig
 
 
@@ -19,14 +20,12 @@ from models.optik import OptikConfig, LensConfig
 
 def _f4(v: float) -> str:
     """Formatiert Float mit max. 4 Nachkommastellen, ohne trailing zeros."""
-    s = f"{v:.4f}".rstrip("0").rstrip(".")
-    return s if s else "0"
+    return fmt_float(v, 4)
 
 
 def _fmt_val(v: float) -> str:
     """Formatiert einen Zahlenwert für Maßpfeil-Beschriftungen (max. 2 Dez.)."""
-    s = f"{v:.2f}".rstrip("0").rstrip(".")
-    return s if s else "0"
+    return fmt_float(v, 2)
 
 
 def _sorted_lenses(cfg: OptikConfig) -> List[LensConfig]:

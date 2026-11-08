@@ -7,17 +7,7 @@ from pathlib import Path
 from models.glucksrad import GlucksradConfig, GlucksradMode, LabelMode, ArrowStyle, CenterStyle, PointerPos
 import config
 from core.latex_document import LatexDocumentSpec, font_input, render_latex_document
-
-def _hex_to_rgb01(hex_color: str) -> Tuple[float, float, float]:
-    """Konvertiert #RRGGBB → (r, g, b) im Bereich [0, 1]."""
-    h = hex_color.lstrip("#")
-    if len(h) == 3:
-        h = "".join(c * 2 for c in h)
-    try:
-        r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
-    except (ValueError, IndexError):
-        return 1.0, 1.0, 1.0
-    return r / 255, g / 255, b / 255
+from core.math_utils import hex_to_rgb01 as _hex_to_rgb01, tikz_color_def as _color_def
 
 def _luminance(hex_color: str) -> float:
     """Relative Luminanz (0=dunkel, 1=hell) nach WCAG-Formel."""
@@ -27,10 +17,6 @@ def _luminance(hex_color: str) -> float:
 def _label_text_color(hex_color: str) -> str:
     """Gibt 'white' oder 'black' zurück, je nach Hintergrundluminanz."""
     return "black" if _luminance(hex_color) > 0.5 else "white"
-
-def _color_def(name: str, hex_color: str) -> str:
-    r, g, b = _hex_to_rgb01(hex_color)
-    return rf"\definecolor{{{name}}}{{rgb}}{{{r:.4f},{g:.4f},{b:.4f}}}"
 
 def _build_sektor_farben(cfg: GlucksradConfig) -> List[dict]:
     """

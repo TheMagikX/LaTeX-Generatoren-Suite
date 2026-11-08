@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import math
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Callable
 from fractions import Fraction
 from models.zahlenstrahl import ZahlenstrahlConfig
 from core.latex_document import LatexDocumentSpec, font_input, render_latex_document
@@ -133,6 +133,204 @@ def _hex_to_tikz_color(name: str, hex_color: str) -> str:
     h = hex_color.lstrip("#")
     r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
     return rf"\definecolor{{{name}}}{{RGB}}{{{r},{g},{b}}}"
+
+def _generate_zoom_lens_tikz(
+    cfg: ZahlenstrahlConfig,
+    th_m: str,
+    register_color: Callable[[str, Optional[str]], None],
+) -> List[str]:
+    """Erzeugt die TikZ-Zeilen für die Lupen-/Zoom-Ansicht des Zahlenstrahls."""
+    zoom_lines: List[str] = []
+    z_min = cfg.zoom_min
+    z_max = cfg.zoom_max
+    if z_min > z_max:
+        z_min, z_max = z_max, z_min
+
+    z_y = -2.5
+    z_scale = cfg.zoom_scale
+    z_center = (z_min + z_max) / 2.0
+
+    # Highlight on main axis
+    zoom_lines.append(rf"  \draw[zsAxis, dashed, opacity=0.3] ({_fmt_num(z_min)},0.3) -- ({_fmt_num(z_min)},-0.3);")
+    zoom_lines.append(rf"  \draw[zsAxis, dashed, opacity=0.3] ({_fmt_num(z_max)},0.3) -- ({_fmt_num(z_max)},-0.3);")
+    zoom_lines.append(rf"  \fill[zsAxis, opacity=0.1] ({_fmt_num(z_min)},0.3) rectangle ({_fmt_num(z_max)},-0.3);")
+
+    # Scope for the zoomed axis
+    zoom_lines.append(rf"  \begin{{scope}}[yshift={z_y}cm, xshift={_fmt_num(z_center)}cm, xscale={z_scale}]")
+    zoom_lines.append(rf"    \begin{{scope}}[xshift=-{_fmt_num(z_center)}cm]")
+
+    # 1. Zoomed Intervals
+    if cfg.zoom_show_intervals:
+        for i, iv in enumerate(cfg.zoom_intervals):
+            if not iv.visible:
+                continue
+            iv_from, iv_to = iv.start, iv.end
+            if iv_from > iv_to:
+                iv_from, iv_to = iv_to, iv_from
+            if iv_to < z_min or iv_from > z_max:
+                continue
+
+            if iv.color and iv.color.startswith("#"):
+                iv_cname = f"zsZIvCol{i}"
+                register_color(iv_cname, iv.color)
+                fill_color = iv_cname
+                bound_color = iv_cname
+            else:
+                fill_color = iv.color or "blue!30"
+                bound_color = "zsAxis"
+
+            zoom_lines.append(rf"    \fill[{fill_color}, opacity=0.4] ({_fmt_num(max(iv_from, z_min))},-{th_m}) rectangle ({_fmt_num(min(iv_to, z_max))},{th_m});")
+            if z_min <= iv_from <= z_max:
+                if iv.left_type == "geschlossen":
+                    zoom_lines.append(rf"    \fill[{bound_color}] ({_fmt_num(iv_from)},0) circle (2.5pt);")
+                else:
+                    zoom_lines.append(rf"    \draw[{bound_color}, thick] ({_fmt_num(iv_from)},0) circle (2.5pt);")
+            if z_min <= iv_to <= z_max:
+                if iv.right_type == "geschlossen":
+                    zoom_lines.append(rf"    \fill[{bound_color}] ({_fmt_num(iv_to)},0) circle (2.5pt);")
+                else:
+                    zoom_lines.append(rf"    \draw[{bound_color}, thick] ({_fmt_num(iv_to)},0) circle (2.5pt);")
+
+    # 2. Zoomed Ticks Calculation
+    if cfg.zoom_use_divisions:
+        zs_main_step = (z_max - z_min) / cfg.zoom_divisions_main if cfg.zoom_divisions_main > 0 else 1.0
+        zs_mid = None
+        zs_sub = zs_main_step / cfg.zoom_divisions_sub if cfg.zoom_divisions_sub > 0 else 0
+    else:
+        zs_main_step = cfg.zoom_step_main if cfg.zoom_step_main is not None else cfg.step_main
+        zs_mid = cfg.zoom_step_mid if cfg.zoom_step_mid is not None else cfg.step_mid
+        zs_sub = cfg.zoom_step_sub if cfg.zoom_step_sub is not None else cfg.step_sub
+
+    zs_main_ticks = _frange(z_min, z_max, zs_main_step)
+    zs_main_set = {round(v, 8) for v in zs_main_ticks}
+
+    zs_mid_ticks = []
+    zs_mid_set = set()
+    if zs_mid and zs_mid > 0:
+        for t in _frange(z_min, z_max, zs_mid):
+            k = round(t, 8)
+            if k not in zs_main_set:
+                zs_mid_ticks.append(t)
+                zs_mid_set.add(k)
+
+    zs_sub_ticks = []
+    if zs_sub and zs_sub > 0:
+        for t in _frange(z_min, z_max, zs_sub):
+            k = round(t, 8)
+            if k not in zs_main_set and k not in zs_mid_set:
+                zs_sub_ticks.append(t)
+
+    for t in zs_sub_ticks:
+        zoom_lines.append(rf"    \draw[zsSubTick, {cfg.tick_sub_width}] ({_fmt_num(t)},{_fmt_num(cfg.tick_sub_h)}) -- ({_fmt_num(t)},-{_fmt_num(cfg.tick_sub_h)});")
+    for t in zs_mid_ticks:
+        zoom_lines.append(rf"    \draw[zsMidTick, {cfg.tick_mid_width}] ({_fmt_num(t)},{_fmt_num(cfg.tick_mid_h)}) -- ({_fmt_num(t)},-{_fmt_num(cfg.tick_mid_h)});")
+    for t in zs_main_ticks:
+        zoom_lines.append(rf"    \draw[zsMainTick, {cfg.tick_main_width}] ({_fmt_num(t)},{th_m}) -- ({_fmt_num(t)},-{th_m});")
+
+    # 3. Zoomed Labels
+    if cfg.zoom_show_labels:
+        z_density = cfg.zoom_label_density or cfg.label_density
+        if z_density == "major_and_mid":
+            z_labeled = sorted([(t, cfg.tick_main_h) for t in zs_main_ticks] + [(t, cfg.tick_mid_h) for t in zs_mid_ticks], key=lambda x: x[0])
+        elif z_density == "all":
+            z_labeled = sorted(
+                [(t, cfg.tick_main_h) for t in zs_main_ticks] +
+                [(t, cfg.tick_mid_h) for t in zs_mid_ticks] +
+                [(t, cfg.tick_sub_h) for t in zs_sub_ticks],
+                key=lambda x: x[0]
+            )
+        else:
+            z_labeled = [(t, cfg.tick_main_h) for t in zs_main_ticks]
+
+        for t, th in z_labeled:
+            lbl = _fmt_label(t, cfg)
+            zoom_lines.append(rf"    \node[below, font=\small, zsLabel] at ({_fmt_num(t)},-{_fmt_num(th)}) {{{lbl}}};")
+
+    # 4. Zoomed Axis
+    zoom_lines.append(rf"    \draw[zsAxis, {cfg.line_width}] ({_fmt_num(z_min)},0) -- ({_fmt_num(z_max)},0);")
+
+    # 5. Zoomed Marked Points
+    if cfg.zoom_show_points:
+        for i, pt in enumerate(cfg.zoom_points):
+            if not pt.visible:
+                continue
+            if z_min <= pt.value <= z_max:
+                px = pt.value
+                pt_color_name = "zsPoint"
+                if getattr(pt, "color", None):
+                    pt_color_name = f"zsZPtCol{i}"
+                    register_color(pt_color_name, pt.color)
+
+                lbl_color_name = "zsLabel"
+                if getattr(pt, "label_color", None):
+                    lbl_color_name = f"zsZPtLblCol{i}"
+                    register_color(lbl_color_name, pt.label_color)
+
+                if pt.type == "offen":
+                    zoom_lines.append(rf"    \draw[{pt_color_name}, thick] ({_fmt_num(px)},0) circle (2.5pt);")
+                elif pt.type == "gefüllt":
+                    zoom_lines.append(rf"    \fill[{pt_color_name}] ({_fmt_num(px)},0) circle (2.5pt);")
+                else:  # "kreuz"
+                    zoom_lines.append(
+                        rf"    \draw[{pt_color_name}, thick] ({_fmt_num(px)},0) +(-2.5pt,-2.5pt) -- +(2.5pt,2.5pt) "
+                        rf"({_fmt_num(px)},0) +(-2.5pt,2.5pt) -- +(2.5pt,-2.5pt);"
+                    )
+                if pt.label.strip():
+                    zoom_lines.append(rf"    \node[above, font=\small, {lbl_color_name}] at ({_fmt_num(px)},0.15) {{{pt.label.strip()}}};")
+
+    # 6. Zoomed Pointers
+    if cfg.zoom_show_pointers:
+        for i, ptr in enumerate(cfg.zoom_pointers):
+            if not ptr.visible:
+                continue
+            if z_min <= ptr.value <= z_max:
+                px = ptr.value
+                ptr_cname = f"zsPtrZ{i}"
+                register_color(ptr_cname, ptr.color or cfg.color_point)
+
+                lbl_cname = ptr_cname
+                if getattr(ptr, "label_color", None):
+                    lbl_cname = f"zsPtrZLbl{i}"
+                    register_color(lbl_cname, ptr.label_color)
+
+                zoom_lines.append(rf"    \draw[->, {cfg.line_width}, color={ptr_cname}, >=Stealth] ({_fmt_num(px)}, 1.0) -- ({_fmt_num(px)}, 0.1);")
+                if ptr.label.strip():
+                    zoom_lines.append(rf"    \node[above, font=\small, color={lbl_cname}] at ({_fmt_num(px)}, 1.0) {{{ptr.label.strip()}}};")
+
+    # 7. Zoomed Jumps
+    if cfg.zoom_show_jumps:
+        for i, jump in enumerate(cfg.jumps):
+            if not jump.visible:
+                continue
+            if (z_min <= jump.start <= z_max) or (z_min <= jump.end <= z_max):
+                js, je = jump.start, jump.end
+                h = 0.4
+
+                jump_cname = "zsJump"
+                if getattr(jump, "color", None):
+                    jump_cname = f"zsZJumpCol{i}"
+                    register_color(jump_cname, jump.color)
+
+                lbl_cname = "zsLabel"
+                if getattr(jump, "label_color", None):
+                    lbl_cname = f"zsZJumpLbl{i}"
+                    register_color(lbl_cname, jump.label_color)
+
+                zoom_lines.append(rf"    \draw[{jump_cname}, {jump.arrow or '->'}, thick] ({_fmt_num(js)},0) .. controls ({_fmt_num(js)},{h}) and ({_fmt_num(je)},{h}) .. ({_fmt_num(je)},0.1);")
+                if jump.label.strip():
+                    mid = (js + je) / 2.0
+                    zoom_lines.append(rf"    \node[above, font=\small, {lbl_cname}] at ({_fmt_num(mid)},{h*0.8}) {{{jump.label.strip()}}};")
+
+    zoom_lines.append(r"    \end{scope}")
+    zoom_lines.append(r"  \end{scope}")
+
+    # Connecting dashed lines from main to zoomed axis
+    z_left_x_cm = (z_center + (z_min - z_center) * z_scale)
+    z_right_x_cm = (z_center + (z_max - z_center) * z_scale)
+
+    zoom_lines.append(rf"  \draw[zsAxis, dashed, opacity=0.3] ({_fmt_num(z_min)},0) -- ({_fmt_num(z_left_x_cm)},{z_y});")
+    zoom_lines.append(rf"  \draw[zsAxis, dashed, opacity=0.3] ({_fmt_num(z_max)},0) -- ({_fmt_num(z_right_x_cm)},{z_y});")
+    return zoom_lines
 
 def generate_zahlenstrahl_latex(cfg: ZahlenstrahlConfig) -> str:
     """Generates the full TikZ code for a number line."""
@@ -432,195 +630,7 @@ def generate_zahlenstrahl_latex(cfg: ZahlenstrahlConfig) -> str:
 
     # 11) Zoom (Magnifying Glass)
     if cfg.zoom_active:
-        z_min = cfg.zoom_min
-        z_max = cfg.zoom_max
-        if z_min > z_max:
-            z_min, z_max = z_max, z_min
-
-        z_y = -2.5
-        z_scale = cfg.zoom_scale
-        z_center = (z_min + z_max) / 2.0
-
-        # Highlight on main axis
-        lines.append(rf"  \draw[zsAxis, dashed, opacity=0.3] ({_fmt_num(z_min)},0.3) -- ({_fmt_num(z_min)},-0.3);")
-        lines.append(rf"  \draw[zsAxis, dashed, opacity=0.3] ({_fmt_num(z_max)},0.3) -- ({_fmt_num(z_max)},-0.3);")
-        lines.append(rf"  \fill[zsAxis, opacity=0.1] ({_fmt_num(z_min)},0.3) rectangle ({_fmt_num(z_max)},-0.3);")
-
-        # Scope for the zoomed axis
-        lines.append(rf"  \begin{{scope}}[yshift={z_y}cm, xshift={_fmt_num(z_center)}cm, xscale={z_scale}]")
-        lines.append(rf"    \begin{{scope}}[xshift=-{_fmt_num(z_center)}cm]")
-
-        # 1. Zoomed Intervals
-        if cfg.zoom_show_intervals:
-            for i, iv in enumerate(cfg.zoom_intervals):
-                if not iv.visible:
-                    continue
-                iv_from, iv_to = iv.start, iv.end
-                if iv_from > iv_to:
-                    iv_from, iv_to = iv_to, iv_from
-                if iv_to < z_min or iv_from > z_max:
-                    continue
-
-                if iv.color and iv.color.startswith("#"):
-                    iv_cname = f"zsZIvCol{i}"
-                    register_color(iv_cname, iv.color)
-                    fill_color = iv_cname
-                    bound_color = iv_cname
-                else:
-                    fill_color = iv.color or "blue!30"
-                    bound_color = "zsAxis"
-
-                lines.append(rf"    \fill[{fill_color}, opacity=0.4] ({_fmt_num(max(iv_from, z_min))},-{th_m}) rectangle ({_fmt_num(min(iv_to, z_max))},{th_m});")
-                if z_min <= iv_from <= z_max:
-                    if iv.left_type == "geschlossen":
-                        lines.append(rf"    \fill[{bound_color}] ({_fmt_num(iv_from)},0) circle (2.5pt);")
-                    else:
-                        lines.append(rf"    \draw[{bound_color}, thick] ({_fmt_num(iv_from)},0) circle (2.5pt);")
-                if z_min <= iv_to <= z_max:
-                    if iv.right_type == "geschlossen":
-                        lines.append(rf"    \fill[{bound_color}] ({_fmt_num(iv_to)},0) circle (2.5pt);")
-                    else:
-                        lines.append(rf"    \draw[{bound_color}, thick] ({_fmt_num(iv_to)},0) circle (2.5pt);")
-
-        # 2. Zoomed Ticks Calculation
-        if cfg.zoom_use_divisions:
-            zs_main_step = (z_max - z_min) / cfg.zoom_divisions_main if cfg.zoom_divisions_main > 0 else 1.0
-            zs_mid = None
-            zs_sub = zs_main_step / cfg.zoom_divisions_sub if cfg.zoom_divisions_sub > 0 else 0
-        else:
-            zs_main_step = cfg.zoom_step_main if cfg.zoom_step_main is not None else cfg.step_main
-            zs_mid = cfg.zoom_step_mid if cfg.zoom_step_mid is not None else cfg.step_mid
-            zs_sub = cfg.zoom_step_sub if cfg.zoom_step_sub is not None else cfg.step_sub
-
-        zs_main_ticks = _frange(z_min, z_max, zs_main_step)
-        zs_main_set = {round(v, 8) for v in zs_main_ticks}
-
-        zs_mid_ticks = []
-        zs_mid_set = set()
-        if zs_mid and zs_mid > 0:
-            for t in _frange(z_min, z_max, zs_mid):
-                k = round(t, 8)
-                if k not in zs_main_set:
-                    zs_mid_ticks.append(t)
-                    zs_mid_set.add(k)
-
-        zs_sub_ticks = []
-        if zs_sub and zs_sub > 0:
-            for t in _frange(z_min, z_max, zs_sub):
-                k = round(t, 8)
-                if k not in zs_main_set and k not in zs_mid_set:
-                    zs_sub_ticks.append(t)
-
-        for t in zs_sub_ticks:
-            lines.append(rf"    \draw[zsSubTick, {cfg.tick_sub_width}] ({_fmt_num(t)},{_fmt_num(cfg.tick_sub_h)}) -- ({_fmt_num(t)},-{_fmt_num(cfg.tick_sub_h)});")
-        for t in zs_mid_ticks:
-            lines.append(rf"    \draw[zsMidTick, {cfg.tick_mid_width}] ({_fmt_num(t)},{_fmt_num(cfg.tick_mid_h)}) -- ({_fmt_num(t)},-{_fmt_num(cfg.tick_mid_h)});")
-        for t in zs_main_ticks:
-            lines.append(rf"    \draw[zsMainTick, {cfg.tick_main_width}] ({_fmt_num(t)},{th_m}) -- ({_fmt_num(t)},-{th_m});")
-
-        # 3. Zoomed Labels
-        if cfg.zoom_show_labels:
-            z_density = cfg.zoom_label_density or cfg.label_density
-            if z_density == "major_and_mid":
-                z_labeled = sorted([(t, cfg.tick_main_h) for t in zs_main_ticks] + [(t, cfg.tick_mid_h) for t in zs_mid_ticks], key=lambda x: x[0])
-            elif z_density == "all":
-                z_labeled = sorted(
-                    [(t, cfg.tick_main_h) for t in zs_main_ticks] +
-                    [(t, cfg.tick_mid_h) for t in zs_mid_ticks] +
-                    [(t, cfg.tick_sub_h) for t in zs_sub_ticks],
-                    key=lambda x: x[0]
-                )
-            else:
-                z_labeled = [(t, cfg.tick_main_h) for t in zs_main_ticks]
-
-            for t, th in z_labeled:
-                lbl = _fmt_label(t, cfg)
-                lines.append(rf"    \node[below, font=\small, zsLabel] at ({_fmt_num(t)},-{_fmt_num(th)}) {{{lbl}}};")
-
-        # 4. Zoomed Axis
-        lines.append(rf"    \draw[zsAxis, {cfg.line_width}] ({_fmt_num(z_min)},0) -- ({_fmt_num(z_max)},0);")
-
-        # 5. Zoomed Marked Points
-        if cfg.zoom_show_points:
-            for i, pt in enumerate(cfg.zoom_points):
-                if not pt.visible:
-                    continue
-                if z_min <= pt.value <= z_max:
-                    px = pt.value
-                    pt_color_name = "zsPoint"
-                    if getattr(pt, "color", None):
-                        pt_color_name = f"zsZPtCol{i}"
-                        register_color(pt_color_name, pt.color)
-
-                    lbl_color_name = "zsLabel"
-                    if getattr(pt, "label_color", None):
-                        lbl_color_name = f"zsZPtLblCol{i}"
-                        register_color(lbl_color_name, pt.label_color)
-
-                    if pt.type == "offen":
-                        lines.append(rf"    \draw[{pt_color_name}, thick] ({_fmt_num(px)},0) circle (2.5pt);")
-                    elif pt.type == "gefüllt":
-                        lines.append(rf"    \fill[{pt_color_name}] ({_fmt_num(px)},0) circle (2.5pt);")
-                    else:  # "kreuz"
-                        lines.append(
-                            rf"    \draw[{pt_color_name}, thick] ({_fmt_num(px)},0) +(-2.5pt,-2.5pt) -- +(2.5pt,2.5pt) "
-                            rf"({_fmt_num(px)},0) +(-2.5pt,2.5pt) -- +(2.5pt,-2.5pt);"
-                        )
-                    if pt.label.strip():
-                        lines.append(rf"    \node[above, font=\small, {lbl_color_name}] at ({_fmt_num(px)},0.15) {{{pt.label.strip()}}};")
-
-        # 6. Zoomed Pointers
-        if cfg.zoom_show_pointers:
-            for i, ptr in enumerate(cfg.zoom_pointers):
-                if not ptr.visible:
-                    continue
-                if z_min <= ptr.value <= z_max:
-                    px = ptr.value
-                    ptr_cname = f"zsPtrZ{i}"
-                    register_color(ptr_cname, ptr.color or cfg.color_point)
-
-                    lbl_cname = ptr_cname
-                    if getattr(ptr, "label_color", None):
-                        lbl_cname = f"zsPtrZLbl{i}"
-                        register_color(lbl_cname, ptr.label_color)
-
-                    lines.append(rf"    \draw[->, {cfg.line_width}, color={ptr_cname}, >=Stealth] ({_fmt_num(px)}, 1.0) -- ({_fmt_num(px)}, 0.1);")
-                    if ptr.label.strip():
-                        lines.append(rf"    \node[above, font=\small, color={lbl_cname}] at ({_fmt_num(px)}, 1.0) {{{ptr.label.strip()}}};")
-
-        # 7. Zoomed Jumps
-        if cfg.zoom_show_jumps:
-            for i, jump in enumerate(cfg.jumps):
-                if not jump.visible:
-                    continue
-                if (z_min <= jump.start <= z_max) or (z_min <= jump.end <= z_max):
-                    js, je = jump.start, jump.end
-                    h = 0.4
-
-                    jump_cname = "zsJump"
-                    if getattr(jump, "color", None):
-                        jump_cname = f"zsZJumpCol{i}"
-                        register_color(jump_cname, jump.color)
-
-                    lbl_cname = "zsLabel"
-                    if getattr(jump, "label_color", None):
-                        lbl_cname = f"zsZJumpLbl{i}"
-                        register_color(lbl_cname, jump.label_color)
-
-                    lines.append(rf"    \draw[{jump_cname}, {jump.arrow or '->'}, thick] ({_fmt_num(js)},0) .. controls ({_fmt_num(js)},{h}) and ({_fmt_num(je)},{h}) .. ({_fmt_num(je)},0.1);")
-                    if jump.label.strip():
-                        mid = (js + je) / 2.0
-                        lines.append(rf"    \node[above, font=\small, {lbl_cname}] at ({_fmt_num(mid)},{h*0.8}) {{{jump.label.strip()}}};")
-
-        lines.append(r"    \end{scope}")
-        lines.append(r"  \end{scope}")
-
-        # Connecting dashed lines from main to zoomed axis
-        z_left_x_cm = (z_center + (z_min - z_center) * z_scale)
-        z_right_x_cm = (z_center + (z_max - z_center) * z_scale)
-
-        lines.append(rf"  \draw[zsAxis, dashed, opacity=0.3] ({_fmt_num(z_min)},0) -- ({_fmt_num(z_left_x_cm)},{z_y});")
-        lines.append(rf"  \draw[zsAxis, dashed, opacity=0.3] ({_fmt_num(z_max)},0) -- ({_fmt_num(z_right_x_cm)},{z_y});")
+        lines.extend(_generate_zoom_lens_tikz(cfg, th_m, register_color))
 
     lines.append(r"\end{tikzpicture}")
 
