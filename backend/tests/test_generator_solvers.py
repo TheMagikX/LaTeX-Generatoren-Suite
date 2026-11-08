@@ -200,3 +200,17 @@ def test_baumdiagramm_node_limit_guard():
     cfg = BaumdiagrammConfig(max_depth=6, branches_global=4)
     with pytest.raises(ValueError, match="512"):
         generate_baumdiagramm_latex(cfg)
+
+
+def test_math_utils_helpers():
+    from core.math_utils import hex_to_rgb01, hex_to_rgb_csv, tikz_color_def, fmt_float
+
+    assert hex_to_rgb01("#000000") == (0.0, 0.0, 0.0)
+    assert hex_to_rgb01("#fff") == (1.0, 1.0, 1.0)
+    assert hex_to_rgb01("invalid", fallback=(0.5, 0.5, 0.5)) == (0.5, 0.5, 0.5)
+    assert hex_to_rgb_csv("#ff0000", precision=3) == "1.000,0.000,0.000"
+    assert hex_to_rgb_csv("#abc") == "0,0,0"
+    assert tikz_color_def("TestCol", "#00ff00") == r"\definecolor{TestCol}{rgb}{0.0000,1.0000,0.0000}"
+    assert fmt_float(3.1400, 4) == "3.14"
+    assert fmt_float(-0.0000001, 4) == "0"
+

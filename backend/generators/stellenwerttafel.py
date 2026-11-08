@@ -11,16 +11,7 @@ from core.latex_document import (
     shared_commands_input,
     shared_package_input,
 )
-
-def _hex_to_rgb(hex_color: str) -> str:
-    """Converts #RRGGBB to r,g,b in [0,1] for TikZ."""
-    hex_color = hex_color.lstrip('#')
-    if len(hex_color) != 6:
-        return "0,0,0"
-    r = int(hex_color[0:2], 16) / 255.0
-    g = int(hex_color[2:4], 16) / 255.0
-    b = int(hex_color[4:6], 16) / 255.0
-    return f"{r:.3f},{g:.3f},{b:.3f}"
+from core.math_utils import hex_to_rgb_csv as _hex_to_rgb
 
 def get_stellenwerttafel_color_defs(cfg: StellenwertConfig) -> list[str]:
     active_cols = [c for c in cfg.columns if c.active]

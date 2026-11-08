@@ -5,18 +5,7 @@ import random
 from typing import Tuple, Set, Optional, Dict
 from models.bruch import BruchConfig
 from core.latex_document import LatexDocumentSpec, font_input, render_latex_document
-
-def _hex_to_rgb01(hex_color: str) -> Tuple[float, float, float]:
-    """Converts #RRGGBB to (r, g, b) in range [0, 1]."""
-    h = hex_color.lstrip("#")
-    if len(h) == 3:
-        h = "".join(c * 2 for c in h)
-    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
-    return r / 255, g / 255, b / 255
-
-def _color_def(name: str, hex_color: str) -> str:
-    r, g, b = _hex_to_rgb01(hex_color)
-    return rf"\definecolor{{{name}}}{{rgb}}{{{r:.4f},{g:.4f},{b:.4f}}}"
+from core.math_utils import hex_to_rgb01 as _hex_to_rgb01, tikz_color_def as _color_def
 
 def _random_filled_indices(n_total: int, n_filled: int, seed: int) -> Set[int]:
     """Returns a reproducible random subset of indices."""
