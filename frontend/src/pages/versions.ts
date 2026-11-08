@@ -19,7 +19,7 @@ export const COMPONENT_VERSIONS = {
     tikz: "5.0.1",
     arbeitsblattgenerator: "5.0.6",
     flaschenzug: "5.0.3",
-    zahlenstrahlgenerator: "5.0.3",
+    zahlenstrahlgenerator: "5.0.4",
     optikgenerator: "5.0.2",
     bruchgenerator: "5.0.4",
     glucksradgenerator: "5.0.3",
