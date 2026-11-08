@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import { useEffect, useState } from 'react'
-import { FileJson, Maximize2, Save, Trash2, X } from 'lucide-react'
+import { useState } from 'react'
+import { FileJson, Maximize2, Save, Trash2 } from 'lucide-react'
 import { getPresetThumbnailUrl } from '../api/client'
+import { Lightbox } from './Lightbox'
 
 interface PresetCardProps {
   generator: string
@@ -18,38 +19,6 @@ interface PresetCardProps {
   onLoad: () => void
   onOverwrite: () => void
   onDelete: () => void
-}
-
-function Lightbox({ src, title, onClose }: { src: string; title: string; onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
-  return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Vorschau: ${title}`}
-      onClick={onClose}
-    >
-      <div className="relative max-h-full max-w-4xl rounded-xl bg-white p-2 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <button
-          type="button"
-          className="absolute -right-3 -top-3 rounded-full bg-panel p-1.5 text-ink shadow border border-rim hover:text-primary"
-          onClick={onClose}
-          aria-label="Schließen"
-        >
-          <X size={16} />
-        </button>
-        <img src={src} alt={title} className="max-h-[80vh] max-w-full object-contain" />
-      </div>
-    </div>
-  )
 }
 
 export function PresetCard({
@@ -77,7 +46,13 @@ export function PresetCard({
 
   return (
     <>
-      {lightbox && src && <Lightbox src={src} title={fullName} onClose={() => setLightbox(false)} />}
+      <Lightbox
+        open={lightbox && Boolean(src)}
+        src={src}
+        alt={`Vorschau: ${displayName}`}
+        caption={fullName}
+        onClose={() => setLightbox(false)}
+      />
 
       <div
         className={`group flex flex-col overflow-hidden rounded-xl border bg-panel transition-all hover:border-primary/50 hover:shadow-md ${

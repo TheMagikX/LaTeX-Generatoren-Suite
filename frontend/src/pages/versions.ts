@@ -4,7 +4,7 @@ export const APP_VERSION = "5.1.4";
 export const GITHUB_REPO = "TheMagikX/LaTeX-Generatoren-Suite";
 export const REPO_URL = `https://github.com/${GITHUB_REPO}`;
 
-export const PRESET_MANAGER = "5.1.0";
+export const PRESET_MANAGER = "5.1.1";
 export const LATEX_RENDERER = "5.0.7";
 export const FILE_SAVER = "5.0.1";
 
