@@ -20,9 +20,9 @@ export { BlurUpImage, Lightbox, LoadingButton, ReorderList }
 
 /* ─── Button ─────────────────────────────────────────────────────────────────── */
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost'
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost'
 
-const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
+export const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   primary: 'bg-primary hover:bg-amber-400 text-canvas font-semibold shadow-sm',
   secondary: 'bg-raised hover:bg-overlay text-muted hover:text-ink border border-line shadow-none',
   ghost: 'bg-transparent hover:bg-raised text-ghost hover:text-muted shadow-none',

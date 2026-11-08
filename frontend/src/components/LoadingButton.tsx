@@ -9,6 +9,7 @@
 import React from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useAsyncAction, type AsyncActionStatus } from '../hooks/useAsyncAction'
+import { BUTTON_VARIANTS, type ButtonVariant } from './ui'
 
 export type { AsyncActionStatus } from '../hooks/useAsyncAction'
 
@@ -49,14 +50,6 @@ function AlertMark() {
       <path d="M6 9.05h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   )
-}
-
-type ButtonVariant = 'primary' | 'secondary' | 'ghost'
-
-const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-primary hover:bg-amber-400 text-canvas font-semibold shadow-sm',
-  secondary: 'bg-raised hover:bg-overlay text-muted hover:text-ink border border-line shadow-none',
-  ghost: 'bg-transparent hover:bg-raised text-ghost hover:text-muted shadow-none',
 }
 
 export type LoadingButtonProps = {
