@@ -34,6 +34,7 @@ export interface AnchorConfig {
 }
 
 export interface RopeSegmentConfig {
+  id?: string
   name: string
   side: 'cw' | 'ccw' | 'none'
 }
