@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import useLocalStorage from './useLocalStorage.ts'
 
 describe('useLocalStorage', () => {
   beforeEach(() => {
     localStorage.clear()
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   describe('Konfigurationsobjekte', () => {
@@ -34,6 +39,11 @@ describe('useLocalStorage', () => {
       })
 
       expect(result.current[0]).toEqual({ theme: 'light', zoom: 2 })
+
+      act(() => {
+        vi.advanceTimersByTime(200)
+      })
+
       expect(JSON.parse(localStorage.getItem('test_cfg')!)).toEqual({ theme: 'light', zoom: 2 })
     })
 
@@ -45,6 +55,12 @@ describe('useLocalStorage', () => {
       })
 
       expect(result.current[0]).toEqual({ theme: 'dark', zoom: 2 })
+
+      act(() => {
+        vi.advanceTimersByTime(200)
+      })
+
+      expect(JSON.parse(localStorage.getItem('test_cfg')!)).toEqual({ theme: 'dark', zoom: 2 })
     })
 
     it('führt ein Shallow-Merge durch, wenn neue Felder im defaultValue hinzukommen', () => {
