@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useState } from 'react'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateSchaltplan, compileLatex } from '../../api/client'
 import { Card } from '../../components/ui'
 import { Tabs, TabContent } from '../../components/Tabs'
@@ -18,7 +18,7 @@ import { SchaltTabComponents } from './components/SchaltTabComponents'
 import { SchaltTabStyle } from './components/SchaltTabStyle'
 
 export default function SchaltPage() {
-  const [config, setConfig] = useLocalStorage<SchaltplanConfig>('ks-schaltplan', DEFAULT_CONFIG)
+  const [config, setConfig, history] = useGeneratorHistory<SchaltplanConfig>('ks-schaltplan', DEFAULT_CONFIG)
   const [activeTab, setActiveTab] = useState('editor')
   const [dpi, setDpi] = useState(600)
 
@@ -41,7 +41,8 @@ export default function SchaltPage() {
   return (
     <div className="flex flex-col gap-6 h-full overflow-hidden">
       <SchaltHeader
-        onReset={() => setConfig(DEFAULT_CONFIG)}
+        onReset={() => history.commitImmediate(DEFAULT_CONFIG)}
+        history={history}
         onCompile={handleCompile}
         isCompiling={isCompiling}
         latexCode={latexCode}
@@ -82,7 +83,7 @@ export default function SchaltPage() {
                   generator="schaltplan"
                   currentConfig={config}
                   thumbnailSource={compileData?.png_base64}
-                  onLoad={(c) => setConfig({ ...DEFAULT_CONFIG, ...c })}
+                  onLoad={(c) => history.commitImmediate({ ...DEFAULT_CONFIG, ...c })}
                 />
               </TabContent>
             </Tabs>

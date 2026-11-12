@@ -5,6 +5,7 @@ import { GeneratorHeader } from '../../../components/HeaderSection'
 import { COMPONENT_VERSIONS } from '../../versions'
 import type { OptikConfig } from '../typesOptik'
 import { DEFAULT_CONFIG } from '../constantsOptik'
+import type { HistoryActions } from '../../../hooks/useGeneratorHistory'
 
 interface OptikHeaderProps {
   config: OptikConfig
@@ -12,19 +13,22 @@ interface OptikHeaderProps {
   isCompiling: boolean
   handleCompile: () => void
   latexCode?: string
+  history?: HistoryActions
 }
 
 export const OptikHeader = ({
   setConfig,
   isCompiling,
   handleCompile,
-  latexCode
+  latexCode,
+  history,
 }: OptikHeaderProps) => {
   return (
     <GeneratorHeader
       title="Optik"
       icon={<Microscope size={24} />}
       version={COMPONENT_VERSIONS.optikgenerator}
+      history={history}
       onReset={() => setConfig({ ...DEFAULT_CONFIG })}
       onCompile={handleCompile}
       isCompiling={isCompiling}

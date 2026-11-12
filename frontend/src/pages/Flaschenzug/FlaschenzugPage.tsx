@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useState } from 'react'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateFlaschenzug, compileLatex } from '../../api/client'
 import { Accordion } from '../../components/ui'
 import { PresetManager } from '../../components/PresetManager'
@@ -35,7 +35,7 @@ const buildExportConfig = (cfg: FlaschenzugConfig): FlaschenzugConfig => {
 }
 
 export default function FlaschenzugPage() {
-  const [cfg, setCfg] = useLocalStorage<FlaschenzugConfig>('ks-flaschenzug', DEFAULT_CONFIG)
+  const [cfg, setCfg, history] = useGeneratorHistory<FlaschenzugConfig>('ks-flaschenzug', DEFAULT_CONFIG)
   const [dpi, setDpi] = useState(600)
 
   const updGlobal = (patch: Partial<FlaschenzugGlobalConfig>) =>
@@ -82,7 +82,7 @@ export default function FlaschenzugPage() {
   }
 
   const handleReset = () => {
-    setCfg({ ...DEFAULT_CONFIG })
+    history.commitImmediate({ ...DEFAULT_CONFIG })
   }
 
   return (
@@ -93,6 +93,7 @@ export default function FlaschenzugPage() {
         isCompiling={isCompiling}
         latexCode={latexCode}
         version={COMPONENT_VERSIONS.flaschenzug}
+        history={history}
       />
 
       <div className="flex gap-6 flex-1 overflow-hidden pb-4 relative">
@@ -106,7 +107,7 @@ export default function FlaschenzugPage() {
           <FlascheTabGlobal cfg={cfg} updGlobal={updGlobal} updEnv={updEnv} />
 
           <Accordion title="Presets Speichern / Laden" icon={<Settings size={18} />}>
-            <PresetManager generator="flaschenzug" currentConfig={cfg} thumbnailSource={compileResult?.png_base64} onLoad={setCfg} />
+            <PresetManager generator="flaschenzug" currentConfig={cfg} thumbnailSource={compileResult?.png_base64} onLoad={history.commitImmediate} />
           </Accordion>
         </div>
 

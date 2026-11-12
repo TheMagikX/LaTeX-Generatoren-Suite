@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Sun, Shield, Layers, Eye, Settings, Folders } from 'lucide-react'
 import { s } from '../../styles/tokens'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateStrahlenoptik, compileLatex } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
@@ -21,7 +21,7 @@ import { StrahlenTabSchatten } from './components/StrahlenTabSchatten'
 import { StrahlenTabDarstellung } from './components/StrahlenTabDarstellung'
 
 const StrahlenPage = () => {
-  const [config, setConfig] = useLocalStorage<StrahlenoptikConfig>('ks-strahlenoptik', DEFAULT_CONFIG)
+  const [config, setConfig, history] = useGeneratorHistory<StrahlenoptikConfig>('ks-strahlenoptik', DEFAULT_CONFIG)
   const [activeTab, setActiveTab] = useState('lichtquellen')
   const [previewDpi, setPreviewDpi] = useState(300)
   const [collapsedSources, setCollapsedSources] = useState<Set<number>>(new Set())
@@ -104,8 +104,9 @@ const StrahlenPage = () => {
     <div className="flex flex-col gap-6 h-full overflow-hidden">
       <StrahlenHeader 
         config={config}
-        setConfig={setConfig}
+        setConfig={history.commitImmediate}
         onCompile={handleCompile}
+        history={history}
         isCompiling={isCompiling}
         latexCode={latexCode}
       />
@@ -173,7 +174,7 @@ const StrahlenPage = () => {
                 generator="strahlenoptik"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={loaded => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={loaded => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>
           </Tabs>

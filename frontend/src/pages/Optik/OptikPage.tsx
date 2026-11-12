@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { s } from '../../styles/tokens'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateOptik, compileLatex } from '../../api/client'
 import { Ruler, Folders, Settings, Sun, ScanEye, Microscope } from 'lucide-react'
 import { Tabs, TabContent } from '../../components/Tabs'
@@ -21,7 +21,7 @@ import { OptikTabLinsen } from './components/OptikTabLinsen'
 import { OptikTabDarstellung } from './components/OptikTabDarstellung'
 
 const OptikPage = () => {
-  const [config, setConfig] = useLocalStorage<OptikConfig>('ks-optik-v5', DEFAULT_CONFIG)
+  const [config, setConfig, history] = useGeneratorHistory<OptikConfig>('ks-optik-v5', DEFAULT_CONFIG)
   const [activeTab, setActiveTab] = useState('objekte')
   const [previewDpi, setPreviewDpi] = useState(300)
 
@@ -64,9 +64,10 @@ const OptikPage = () => {
     <div className="flex flex-col gap-6 h-full overflow-hidden">
       <OptikHeader 
         config={config} 
-        setConfig={setConfig} 
+        setConfig={history.commitImmediate} 
         isCompiling={isCompiling} 
         handleCompile={handleCompile} 
+        history={history} 
         latexCode={optikData?.latex} 
       />
 
@@ -107,7 +108,7 @@ const OptikPage = () => {
                 generator="optik"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={loaded => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={loaded => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>
           </Tabs>
