@@ -214,3 +214,43 @@ def test_math_utils_helpers():
     assert fmt_float(3.1400, 4) == "3.14"
     assert fmt_float(-0.0000001, 4) == "0"
 
+
+def test_geometry3d_helpers():
+    import numpy as np
+    from core.geometry3d import (
+        get_camera_dir,
+        is_behind_plane,
+        calculate_plane_polygon,
+        intersect_line_with_bbox,
+        calculate_line_line_intersection,
+        calculate_line_plane_intersection,
+        calculate_plane_plane_intersection,
+    )
+    from models.koordinatensystem3d import Line3DConfig, Plane3DConfig
+
+    cam = get_camera_dir(90.0, 0.0)
+    assert np.allclose(cam, [1.0, 0.0, 0.0], atol=1e-6)
+    assert is_behind_plane(np.array([-1.0, 0.0, 0.0]), np.array([1.0, 0.0, 0.0]), 0.0, cam) is True
+
+    poly, centroid = calculate_plane_polygon(0.0, 0.0, 1.0, 2.0, 0.0, 5.0, 0.0, 5.0, 0.0, 5.0)
+    assert len(poly) == 4
+    assert centroid == (2.5, 2.5, 2.0)
+
+    clipped = intersect_line_with_bbox(0.0, 2.5, 2.5, 1.0, 0.0, 0.0, 0.0, 5.0, 0.0, 5.0, 0.0, 5.0)
+    assert clipped is not None
+    assert np.allclose(clipped[0], [0.0, 2.5, 2.5])
+    assert np.allclose(clipped[1], [5.0, 2.5, 2.5])
+
+    g1 = Line3DConfig(x0=0.0, y0=0.0, z0=0.0, rx=1.0, ry=1.0, rz=0.0)
+    g2 = Line3DConfig(x0=0.0, y0=2.0, z0=0.0, rx=1.0, ry=-1.0, rz=0.0)
+    pt_ll = calculate_line_line_intersection(g1, g2)
+    assert pt_ll is not None and np.allclose(pt_ll, [1.0, 1.0, 0.0])
+
+    e1 = Plane3DConfig(mode="Koordinatenform", n1=0.0, n2=0.0, n3=1.0, d=3.0)
+    g3 = Line3DConfig(x0=1.0, y0=2.0, z0=0.0, rx=0.0, ry=0.0, rz=1.0)
+    pt_lp = calculate_line_plane_intersection(g3, e1)
+    assert pt_lp is not None and np.allclose(pt_lp, [1.0, 2.0, 3.0])
+
+    e2 = Plane3DConfig(mode="Koordinatenform", n1=0.0, n2=1.0, n3=0.0, d=2.0)
+    res_pp = calculate_plane_plane_intersection(e1, e2)
+    assert res_pp is not None
