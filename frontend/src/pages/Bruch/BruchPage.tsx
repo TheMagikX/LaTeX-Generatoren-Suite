@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useState } from 'react'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateBruch, compileLatex } from '../../api/client'
 import { Accordion, FontSelector } from '../../components/ui'
 import { Tabs, TabContent } from '../../components/Tabs'
@@ -19,7 +19,7 @@ import { BruchTabForm } from './components/BruchTabForm'
 import { BruchTabErweitern } from './components/BruchTabErweitern'
 
 export default function BruchPage() {
-  const [config, setConfig] = useLocalStorage<BruchConfig>('ks-bruch', DEFAULT_CONFIG)
+  const [config, setConfig, history] = useGeneratorHistory<BruchConfig>('ks-bruch', DEFAULT_CONFIG)
   const [dpi, setDpi] = useState(600)
   const [activeTab, setActiveTab] = useState('bruch')
 
@@ -63,9 +63,10 @@ export default function BruchPage() {
       <BruchHeader
         onCompile={handleCompile}
         isCompiling={isCompiling}
-        setConfig={setConfig}
+        setConfig={history.commitImmediate}
         currentConfig={config}
-        onApplyConfig={setConfig}
+        onApplyConfig={history.commitImmediate}
+        history={history}
       />
 
       <div className="flex-1 flex gap-6 overflow-hidden pb-4">
@@ -89,7 +90,7 @@ export default function BruchPage() {
                 generator="bruch"
                 currentConfig={config}
                 thumbnailSource={mainPreview?.png_base64}
-                onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={(loaded) => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>
           </Tabs>

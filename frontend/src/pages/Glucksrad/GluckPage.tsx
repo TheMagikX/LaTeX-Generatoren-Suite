@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { s } from '../../styles/tokens'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateGlucksrad, compileLatex } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
@@ -17,7 +17,7 @@ import { GluckTabBeschriftung } from './components/GluckTabBeschriftung'
 import { GluckTabPfeil } from './components/GluckTabPfeil'
 
 const GluckPage = () => {
-  const [config, setConfig] = useLocalStorage<GluckConfig>('ks-glucksrad', DEFAULT_CONFIG)
+  const [config, setConfig, history] = useGeneratorHistory<GluckConfig>('ks-glucksrad', DEFAULT_CONFIG)
   const [activeTab, setActiveTab] = useState('sektoren')
   const [previewDpi, setPreviewDpi] = useState(300)
 
@@ -107,10 +107,11 @@ const GluckPage = () => {
     <div className="flex flex-col gap-6 h-full overflow-hidden">
       <GluckHeader
         config={config}
-        setConfig={setConfig}
+        setConfig={history.commitImmediate}
         onCompile={handleCompile}
         isCompiling={isCompiling}
         latexCode={latexCode}
+        history={history}
       />
 
       <div className="flex-1 flex gap-6 overflow-hidden pb-4">
@@ -147,7 +148,7 @@ const GluckPage = () => {
                 generator="glucksrad"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={(loaded) => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>
           </Tabs>

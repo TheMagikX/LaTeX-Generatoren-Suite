@@ -10,7 +10,7 @@ export const FILE_SAVER = "5.0.1";
 
 export const COMPONENT_VERSIONS = {
     koordinatensystem: "5.1.5",
-    koordinatensystem_3d: "5.0.4",
+    koordinatensystem_3d: "5.0.5",
     baumdiagramm: "5.0.7",
     schaltplan: "5.0.1",
     geometrie: "5.0.5",
@@ -19,13 +19,13 @@ export const COMPONENT_VERSIONS = {
     tikz: "5.0.1",
     arbeitsblattgenerator: "5.0.6",
     flaschenzug: "5.0.6",
-    zahlenstrahlgenerator: "5.0.4",
+    zahlenstrahlgenerator: "5.0.5",
     optikgenerator: "5.0.2",
-    bruchgenerator: "5.0.4",
-    glucksradgenerator: "5.0.3",
+    bruchgenerator: "5.0.5",
+    glucksradgenerator: "5.0.4",
     sitzplangenerator: "5.0.3",
     strahlenoptik: "5.0.1",
-    stellwerttafel: "5.0.2",
-    statistik: "5.0.2",
+    stellwerttafel: "5.0.3",
+    statistik: "5.0.3",
     qrcode: "5.0.0",
 } as const;

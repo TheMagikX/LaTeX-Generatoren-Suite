@@ -8,6 +8,7 @@ import { AiPromptDialog } from '../../../components/AiPromptDialog'
 import { useAi } from '../../../context/AiContext'
 import { COMPONENT_VERSIONS } from '../../versions'
 import type { Config3D } from '../typesKoord3D'
+import type { HistoryActions } from '../../../hooks/useGeneratorHistory'
 
 interface Koord3DHeaderProps {
   latexCode: string | null
@@ -16,6 +17,7 @@ interface Koord3DHeaderProps {
   onReset: () => void
   config?: Config3D
   onApplyConfig?: (config: Config3D) => void
+  history?: HistoryActions
 }
 
 const DEFAULT_KOORD3D_EXAMPLES = [
@@ -43,7 +45,8 @@ export const Koord3DHeader = ({
   onCompile,
   onReset,
   config,
-  onApplyConfig
+  onApplyConfig,
+  history,
 }: Koord3DHeaderProps) => {
   const [showAiModal, setShowAiModal] = useState(false)
   const { aiEnabled } = useAi()
@@ -54,6 +57,7 @@ export const Koord3DHeader = ({
         title="3D Koordinatensystem"
         icon={<Box size={24} />}
         version={COMPONENT_VERSIONS.koordinatensystem_3d}
+        history={history}
         onReset={onReset}
         resetConfirmation={{
           title: 'Konfiguration zurücksetzen?',

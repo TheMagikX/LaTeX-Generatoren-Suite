@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useState } from 'react'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateStellenwerttafel, compileLatex } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
@@ -19,7 +19,7 @@ import { StellenwertTabDarstellung } from './components/StellenwertTabDarstellun
 import { StellenwertTabErweitert } from './components/StellenwertTabErweitert'
 
 const StellenwertPage = () => {
-  const [config, setConfig] = useLocalStorage<StellenwertConfig>('ks-stellenwerttafel-v2', DEFAULT_CONFIG)
+  const [config, setConfig, history] = useGeneratorHistory<StellenwertConfig>('ks-stellenwerttafel-v2', DEFAULT_CONFIG)
   const [activeTab, setActiveTab] = useState('spalten')
   const [previewDpi, setPreviewDpi] = useState(600)
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
@@ -65,10 +65,11 @@ const StellenwertPage = () => {
     <div className="flex flex-col gap-6 h-full overflow-hidden">
       <StellenwertHeader
         config={config}
-        setConfig={setConfig}
+        setConfig={history.commitImmediate}
         onCompile={handleCompile}
         isCompiling={isCompiling}
         latexCode={latexCode}
+        history={history}
       />
 
       <div className="flex-1 flex gap-6 overflow-hidden pb-4">
@@ -109,7 +110,7 @@ const StellenwertPage = () => {
                 generator="stellenwerttafel"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={loaded => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={loaded => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>
           </Tabs>

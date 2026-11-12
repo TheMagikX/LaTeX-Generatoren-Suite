@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useState } from 'react'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateZahlenstrahl, compileLatex } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
@@ -36,7 +36,7 @@ const normalizeConfig = (raw: Partial<ZahlenstrahlConfig>): ZahlenstrahlConfig =
 }
 
 const ZahlenPage = () => {
-  const [storedConfig, setConfig] = useLocalStorage<ZahlenstrahlConfig>('ks-zahlenstrahl', DEFAULT_CONFIG)
+  const [storedConfig, setConfig, history] = useGeneratorHistory<ZahlenstrahlConfig>('ks-zahlenstrahl', DEFAULT_CONFIG)
   const config = storedConfig.width_cm == null ? normalizeConfig(storedConfig) : storedConfig
 
   const [activeTab, setActiveTab] = useState('achse')
@@ -106,9 +106,10 @@ const ZahlenPage = () => {
     <div className="flex flex-col gap-6 h-full overflow-hidden">
       <ZahlenHeader
         config={config}
-        onReset={() => setConfig({ ...DEFAULT_CONFIG })}
+        onReset={() => history.commitImmediate({ ...DEFAULT_CONFIG })}
         onCompile={handleCompile}
-        onApplyConfig={setConfig}
+        onApplyConfig={history.commitImmediate}
+        history={history}
         isCompiling={isCompiling}
         latexCode={latexCode}
       />
@@ -157,7 +158,7 @@ const ZahlenPage = () => {
                 generator="zahlenstrahl"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={loaded => setConfig(normalizeConfig(loaded))}
+                onLoad={loaded => history.commitImmediate(normalizeConfig(loaded))}
               />
             </TabContent>
 

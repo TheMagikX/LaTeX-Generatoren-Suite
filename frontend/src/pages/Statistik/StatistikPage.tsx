@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useState } from 'react'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateStatistik, compileLatex } from '../../api/client'
 import type { CompileResponse } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
@@ -17,7 +17,7 @@ import { StatistikTabDaten } from './components/StatistikTabDaten'
 import { StatistikTabStil } from './components/StatistikTabStil'
 
 const StatistikPage = () => {
-  const [rawConfig, setConfig] = useLocalStorage<StatistikConfig>('ks-statistik', DEFAULT_CONFIG)
+  const [rawConfig, setConfig, history] = useGeneratorHistory<StatistikConfig>('ks-statistik', DEFAULT_CONFIG)
   const legacyConfig = rawConfig as Partial<StatistikConfig> & {
     axis?: Partial<AxisConfig>
     datasets?: Partial<DatasetConfig>[]
@@ -138,7 +138,8 @@ const StatistikPage = () => {
     <div className="flex flex-col gap-6 h-full overflow-hidden">
       <StatistikHeader
         onCompile={handleCompile}
-        onReset={() => setConfig(DEFAULT_CONFIG)}
+        onReset={() => history.commitImmediate(DEFAULT_CONFIG)}
+        history={history}
         isCompiling={isCompiling}
         latexCode={latexCode}
       />
@@ -167,7 +168,7 @@ const StatistikPage = () => {
                 generator="statistik"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={loaded => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={loaded => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>
           </Tabs>

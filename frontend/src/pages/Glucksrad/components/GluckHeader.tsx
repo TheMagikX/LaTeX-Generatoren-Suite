@@ -9,6 +9,7 @@ import { useAi } from '../../../context/AiContext'
 import { COMPONENT_VERSIONS } from '../../versions'
 import type { GluckConfig } from '../typesGluck'
 import { DEFAULT_CONFIG } from '../constantsGluck'
+import type { HistoryActions } from '../../../hooks/useGeneratorHistory'
 
 interface GluckHeaderProps {
   config: GluckConfig
@@ -16,6 +17,7 @@ interface GluckHeaderProps {
   onCompile: () => void
   isCompiling: boolean
   latexCode: string | null
+  history?: HistoryActions
 }
 
 const DEFAULT_GLUCK_EXAMPLES = [
@@ -37,7 +39,7 @@ const DEFAULT_GLUCK_EXAMPLES = [
   }
 ]
 
-export const GluckHeader = ({ config, setConfig, onCompile, isCompiling, latexCode }: GluckHeaderProps) => {
+export const GluckHeader = ({ config, setConfig, onCompile, isCompiling, latexCode, history }: GluckHeaderProps) => {
   const [showAiModal, setShowAiModal] = useState(false)
   const { aiEnabled } = useAi()
 
@@ -47,6 +49,7 @@ export const GluckHeader = ({ config, setConfig, onCompile, isCompiling, latexCo
         title="Glücksrad"
         icon={<RotateCw size={24} />}
         version={COMPONENT_VERSIONS.glucksradgenerator}
+        history={history}
         onReset={() => setConfig({ ...DEFAULT_CONFIG })}
         onCompile={onCompile}
         isCompiling={isCompiling}

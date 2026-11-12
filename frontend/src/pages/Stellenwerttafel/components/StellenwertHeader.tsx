@@ -9,6 +9,7 @@ import { useAi } from '../../../context/AiContext'
 import { COMPONENT_VERSIONS } from '../../versions'
 import type { StellenwertConfig } from '../typesStellenwert'
 import { DEFAULT_CONFIG } from '../constantsStellenwert'
+import type { HistoryActions } from '../../../hooks/useGeneratorHistory'
 
 interface StellenwertHeaderProps {
   config: StellenwertConfig
@@ -16,6 +17,7 @@ interface StellenwertHeaderProps {
   onCompile: () => void
   isCompiling: boolean
   latexCode: string | null
+  history?: HistoryActions
 }
 
 const DEFAULT_STELLENWERT_EXAMPLES = [
@@ -37,7 +39,7 @@ const DEFAULT_STELLENWERT_EXAMPLES = [
   }
 ]
 
-export const StellenwertHeader = ({ config, setConfig, onCompile, isCompiling, latexCode }: StellenwertHeaderProps) => {
+export const StellenwertHeader = ({ config, setConfig, onCompile, isCompiling, latexCode, history }: StellenwertHeaderProps) => {
   const [showAiModal, setShowAiModal] = useState(false)
   const { aiEnabled } = useAi()
 
@@ -47,6 +49,7 @@ export const StellenwertHeader = ({ config, setConfig, onCompile, isCompiling, l
         title="Stellenwerttafel"
         icon={<Layers size={24} />}
         version={COMPONENT_VERSIONS.stellwerttafel}
+        history={history}
         onReset={() => setConfig({ ...DEFAULT_CONFIG })}
         onCompile={onCompile}
         isCompiling={isCompiling}

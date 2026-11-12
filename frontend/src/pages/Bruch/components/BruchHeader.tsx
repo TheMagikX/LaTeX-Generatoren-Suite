@@ -9,6 +9,7 @@ import { useAi } from '../../../context/AiContext'
 import { COMPONENT_VERSIONS } from '../../versions'
 import type { BruchConfig } from '../typesBruch'
 import { DEFAULT_CONFIG } from '../constantsBruch'
+import type { HistoryActions } from '../../../hooks/useGeneratorHistory'
 
 interface BruchHeaderProps {
   onCompile: () => void
@@ -16,6 +17,7 @@ interface BruchHeaderProps {
   setConfig: (config: BruchConfig) => void
   currentConfig?: BruchConfig
   onApplyConfig?: (config: BruchConfig) => void
+  history?: HistoryActions
 }
 
 const DEFAULT_BRUCH_EXAMPLES = [
@@ -42,7 +44,8 @@ export function BruchHeader({
   isCompiling,
   setConfig,
   currentConfig,
-  onApplyConfig
+  onApplyConfig,
+  history,
 }: BruchHeaderProps) {
   const [showAiModal, setShowAiModal] = useState(false)
   const { aiEnabled } = useAi()
@@ -55,14 +58,15 @@ export function BruchHeader({
         title="Bruch-Visualisierer"
         icon={<PieChart size={24} />}
         version={COMPONENT_VERSIONS.bruchgenerator}
+        history={history}
         onReset={() => setConfig(DEFAULT_CONFIG)}
         resetConfirmation={{
           title: 'Konfiguration zurücksetzen?',
-          message: 'Alle nicht gespeicherten Eingaben gehen verloren. Die Konfiguration wird auf die Standardwerte zurückgesetzt.',
+          message: 'Möchtest du wirklich alle Einstellungen auf den Standardwert zurücksetzen?',
         }}
         onCompile={onCompile}
         isCompiling={isCompiling}
-        showCompileSpinner={false}
+        showPalette={false}
         actionsBefore={
           aiEnabled && (
             <Button
@@ -70,7 +74,7 @@ export function BruchHeader({
               variant="secondary"
               onClick={() => setShowAiModal(true)}
               className="flex items-center gap-2 whitespace-nowrap text-amber-500 hover:text-amber-400 border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20"
-              title="Bruch per KI-Sprachbefehl konfigurieren"
+              title="Bruch per KI konfigurieren"
             >
               <Sparkles size={16} /> KI-Assistent
             </Button>
@@ -84,9 +88,7 @@ export function BruchHeader({
           onClose={() => setShowAiModal(false)}
           generator="bruch"
           generatorTitle="Bruch-Visualisierer"
-          onApplyConfig={(newCfg) => {
-            handleApply(newCfg)
-          }}
+          onApplyConfig={handleApply}
           currentConfig={currentConfig}
           promptExamples={DEFAULT_BRUCH_EXAMPLES}
         />

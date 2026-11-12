@@ -8,6 +8,7 @@ import { AiPromptDialog } from '../../../components/AiPromptDialog'
 import { useAi } from '../../../context/AiContext'
 import { COMPONENT_VERSIONS } from '../../versions'
 import type { ZahlenstrahlConfig } from '../typesZahlen'
+import type { HistoryActions } from '../../../hooks/useGeneratorHistory'
 
 interface ZahlenHeaderProps {
   config: ZahlenstrahlConfig
@@ -16,6 +17,7 @@ interface ZahlenHeaderProps {
   isCompiling: boolean
   latexCode: string | null
   onApplyConfig?: (config: ZahlenstrahlConfig) => void
+  history?: HistoryActions
 }
 
 const DEFAULT_ZAHLEN_EXAMPLES = [
@@ -43,7 +45,8 @@ export const ZahlenHeader = ({
   onCompile,
   isCompiling,
   latexCode,
-  onApplyConfig
+  onApplyConfig,
+  history,
 }: ZahlenHeaderProps) => {
   const [showAiModal, setShowAiModal] = useState(false)
   const { aiEnabled } = useAi()
@@ -54,6 +57,7 @@ export const ZahlenHeader = ({
         title="Zahlenstrahl"
         icon={<Ruler size={24} />}
         version={COMPONENT_VERSIONS.zahlenstrahlgenerator}
+        history={history}
         onReset={onReset}
         onCompile={onCompile}
         isCompiling={isCompiling}
