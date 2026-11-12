@@ -8,6 +8,7 @@ import { AiPromptDialog } from '../../../components/AiPromptDialog'
 import { useAi } from '../../../context/AiContext'
 import { COMPONENT_VERSIONS } from '../../versions'
 import type { Config } from '../typesBaum'
+import type { HistoryActions } from '../../../hooks/useGeneratorHistory'
 
 interface BaumHeaderProps {
   latexCode: string | null;
@@ -16,6 +17,7 @@ interface BaumHeaderProps {
   onReset: () => void;
   onApplyConfig?: (config: Config) => void;
   currentConfig?: Config;
+  history?: HistoryActions;
 }
 
 export const BaumHeader = ({
@@ -25,6 +27,7 @@ export const BaumHeader = ({
   onReset,
   onApplyConfig,
   currentConfig,
+  history,
 }: BaumHeaderProps) => {
   const [showAiModal, setShowAiModal] = useState(false)
   const { aiEnabled } = useAi()
@@ -35,6 +38,7 @@ export const BaumHeader = ({
         title="Baumdiagramm"
         icon={<GitGraph size={24} />}
         version={COMPONENT_VERSIONS.baumdiagramm}
+        history={history}
         onReset={onReset}
         resetConfirmation={{ confirmClass: 'bg-error hover:bg-error/80' }}
         onCompile={onCompile}
@@ -62,9 +66,7 @@ export const BaumHeader = ({
           onClose={() => setShowAiModal(false)}
           generator="baumdiagramm"
           generatorTitle="Baumdiagramm"
-          onApplyConfig={(newCfg) => {
-            onApplyConfig(newCfg)
-          }}
+          onApplyConfig={onApplyConfig}
           currentConfig={currentConfig}
         />
       )}

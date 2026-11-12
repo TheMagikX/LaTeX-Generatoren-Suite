@@ -9,6 +9,7 @@ import { useAi } from '../../../context/AiContext'
 import { COMPONENT_VERSIONS } from '../../versions'
 import { DEFAULT_CONFIG } from '../constantsKoord'
 import type { Config } from '../typesKoord'
+import type { HistoryActions } from '../../../hooks/useGeneratorHistory'
 
 interface KoordHeaderProps {
   config: Config
@@ -16,6 +17,7 @@ interface KoordHeaderProps {
   onCompile: () => void
   isCompiling: boolean
   latexCode: string | null
+  history?: HistoryActions
 }
 
 const DEFAULT_KOORD_EXAMPLES = [
@@ -37,7 +39,7 @@ const DEFAULT_KOORD_EXAMPLES = [
   }
 ]
 
-export const KoordHeader = ({ config, setConfig, onCompile, isCompiling, latexCode }: KoordHeaderProps) => {
+export const KoordHeader = ({ config, setConfig, onCompile, isCompiling, latexCode, history }: KoordHeaderProps) => {
   const [showAiModal, setShowAiModal] = useState(false)
   const { aiEnabled } = useAi()
 
@@ -47,6 +49,7 @@ export const KoordHeader = ({ config, setConfig, onCompile, isCompiling, latexCo
         title="Koordinatensystem"
         icon={<LineChart size={24} />}
         version={COMPONENT_VERSIONS.koordinatensystem}
+        history={history}
         onReset={() => setConfig(DEFAULT_CONFIG)}
         resetConfirmation={{
           title: 'Konfiguration zurücksetzen?',

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { s } from '../../styles/tokens'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateKoordinatensystem, compileLatex } from '../../api/client'
 import { TabContent, Tabs } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
@@ -19,7 +19,7 @@ import { KoordTabAchsen } from './components/KoordTabAchsen'
 import { KoordTabLayers } from './components/KoordTabLayers'
 
 const KoordPage = () => {
-  const [config, setConfig] = useLocalStorage<Config>('ks-koordinatensystem', DEFAULT_CONFIG)
+  const [config, setConfig, history] = useGeneratorHistory<Config>('ks-koordinatensystem', DEFAULT_CONFIG)
   const [activeTab, setActiveTab] = useState('quick')
   const [previewDpi, setPreviewDpi] = useState(300)
   const [plotSubTabs, setPlotSubTabs] = useState<Record<number, string>>({})
@@ -68,13 +68,14 @@ const KoordPage = () => {
   ]
 
   return (
-    <div className="flex flex-col gap-6 h-full overflow-hidden" >
+    <div className="flex flex-col gap-6 h-full overflow-hidden">
       <KoordHeader
         config={config}
-        setConfig={setConfig}
+        setConfig={history.commitImmediate}
         onCompile={handleCompile}
         isCompiling={isCompiling}
         latexCode={latexCode}
+        history={history}
       />
 
       <div className="flex-1 flex gap-6 overflow-hidden pb-4">
@@ -131,7 +132,7 @@ const KoordPage = () => {
                   generator="koord"
                   currentConfig={config}
                   thumbnailSource={compileData?.png_base64}
-                  onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
+                  onLoad={(loaded) => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
                 />
               </div>
             </TabContent>

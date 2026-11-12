@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useState } from 'react'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateGeometrie, compileLatex } from '../../api/client'
 import type { CompileResponse, GeoResponse } from '../../api/client'
 import { Input, Slider, Switch, SecHead, Field, Accordion, FontSelector, ConfirmDialog } from '../../components/ui'
@@ -20,7 +20,7 @@ import { GeoTabPointsAngles } from './components/GeoTabPointsAngles'
 import { GeoTabSpecialLines } from './components/GeoTabSpecialLines'
 
 export default function GeoPage() {
-  const [cfg, setCfg] = useLocalStorage<Config>('ks-geometrie', DEFAULT_CONFIG)
+  const [cfg, setCfg, history] = useGeneratorHistory<Config>('ks-geometrie', DEFAULT_CONFIG)
   const [dpi, setDpi] = useState(600)
 
   // Typed setters
@@ -87,6 +87,7 @@ export default function GeoPage() {
         onCompile={handleCompile}
         isCompiling={isCompiling}
         latexCode={genData?.latex}
+        history={history}
       />
 
       <GeoSolvedInfo
@@ -241,7 +242,7 @@ export default function GeoPage() {
               generator="geo"
               currentConfig={cfg}
               thumbnailSource={compileResult?.png_base64}
-              onLoad={setCfg}
+              onLoad={history.commitImmediate}
             />
           </Accordion>
 
@@ -266,7 +267,7 @@ export default function GeoPage() {
           message="Alle Einstellungen werden auf die Standardwerte zurückgesetzt. Nicht gespeicherte Änderungen gehen verloren."
           confirmLabel="Zurücksetzen"
           confirmClass="bg-red-600 hover:bg-red-500"
-          onConfirm={() => { setCfg({ ...DEFAULT_CONFIG }); setShowResetConfirm(false) }}
+          onConfirm={() => { history.commitImmediate({ ...DEFAULT_CONFIG }); setShowResetConfirm(false) }}
           onCancel={() => setShowResetConfirm(false)}
         />
       )}

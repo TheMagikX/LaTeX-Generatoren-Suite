@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { s } from '../../styles/tokens'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateBaumdiagramm, compileLatex } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
@@ -21,7 +21,7 @@ import { BaumTabStil } from './components/BaumTabStil'
 import { BaumTabErweitert } from './components/BaumTabErweitert'
 
 const BaumPage = () => {
-  const [config, setConfig] = useLocalStorage<Config>('ks-baumdiagramm', DEFAULT_CONFIG)
+  const [config, setConfig, history] = useGeneratorHistory<Config>('ks-baumdiagramm', DEFAULT_CONFIG)
   const [activeTab, setActiveTab] = useState('struktur')
   const [previewDpi, setPreviewDpi] = useState(300)
   const [showIndivStyles, setShowIndivStyles] = useState(false)
@@ -41,12 +41,12 @@ const BaumPage = () => {
 
   const applyBernoulliPreset = (n: number) => {
     const { nodes, results } = buildBernoulliNodes(n)
-    setConfig({ ...DEFAULT_CONFIG, mode: 'Symmetrisch (Standard)', max_depth: n, branches_global: 2, nodes, results })
+    history.commitImmediate({ ...DEFAULT_CONFIG, mode: 'Symmetrisch (Standard)', max_depth: n, branches_global: 2, nodes, results })
   }
 
   const applyBinomialPreset = (n: number, p: number, annotate: boolean) => {
     const { nodes, results } = buildBinomialNodes(n, p, annotate)
-    setConfig({ ...DEFAULT_CONFIG, mode: 'Symmetrisch (Standard)', max_depth: n, branches_global: 2, use_numeric_probs: true, nodes, results })
+    history.commitImmediate({ ...DEFAULT_CONFIG, mode: 'Symmetrisch (Standard)', max_depth: n, branches_global: 2, use_numeric_probs: true, nodes, results })
   }
 
   const handleCompile = async () => {
@@ -234,9 +234,10 @@ const BaumPage = () => {
         latexCode={latexCode}
         isCompiling={isCompiling}
         onCompile={handleCompile}
-        onReset={() => setConfig({ ...DEFAULT_CONFIG })}
-        onApplyConfig={setConfig}
+        onReset={() => history.commitImmediate({ ...DEFAULT_CONFIG })}
+        onApplyConfig={history.commitImmediate}
         currentConfig={config}
+        history={history}
       />
 
       <div className="flex-1 flex gap-6 overflow-hidden pb-4">
@@ -298,7 +299,7 @@ const BaumPage = () => {
                 generator="baum"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={(loaded) => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>
           </Tabs>

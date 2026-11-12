@@ -9,11 +9,11 @@ export const LATEX_RENDERER = "5.0.7";
 export const FILE_SAVER = "5.0.1";
 
 export const COMPONENT_VERSIONS = {
-    koordinatensystem: "5.1.4",
+    koordinatensystem: "5.1.5",
     koordinatensystem_3d: "5.0.4",
-    baumdiagramm: "5.0.6",
+    baumdiagramm: "5.0.7",
     schaltplan: "5.0.1",
-    geometrie: "5.0.4",
+    geometrie: "5.0.5",
     latex: "5.0.2",
     erwartungshorizont: "5.0.2",
     tikz: "5.0.1",
