@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef } from 'react'
 import type { EditorView } from '@codemirror/view'
 import useGeneratorHistory from '../../hooks/useGeneratorHistory'
-import { generateTikzPicture, compileLatex } from '../../api/client'
+import { generateTikzPicture, compileLatex, extractApiErrorMessage } from '../../api/client'
 import { Input, Label, Switch, FontSelector } from '../../components/ui'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
@@ -47,6 +47,9 @@ const TikzPage = () => {
       setLatexCode(gen.latex)
       const result = await compileLatex(gen.latex, previewDpi)
       setCompileData(result)
+    } catch (err: unknown) {
+      const msg = extractApiErrorMessage(err, 'Fehler bei der Code-Generierung')
+      setCompileData({ ok: false, log: msg })
     } finally {
       setIsCompiling(false)
     }

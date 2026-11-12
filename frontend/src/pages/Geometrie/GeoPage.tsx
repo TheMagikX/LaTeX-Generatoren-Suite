@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import useGeneratorHistory from '../../hooks/useGeneratorHistory'
-import { generateGeometrie, compileLatex } from '../../api/client'
+import { generateGeometrie, compileLatex, extractApiErrorMessage } from '../../api/client'
 import type { CompileResponse, GeoResponse } from '../../api/client'
 import { Input, Slider, Switch, SecHead, Field, Accordion, FontSelector, ConfirmDialog } from '../../components/ui'
 import { PresetManager } from '../../components/PresetManager'
@@ -45,6 +45,9 @@ export default function GeoPage() {
       setGenData(gen)
       const result = await compileLatex(gen.latex, dpi)
       setCompileResult(result)
+    } catch (err: unknown) {
+      const msg = extractApiErrorMessage(err, 'Fehler bei der Code-Generierung')
+      setCompileResult({ ok: false, log: msg })
     } finally {
       setIsCompiling(false)
     }

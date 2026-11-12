@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import useGeneratorHistory from '../../hooks/useGeneratorHistory'
-import { generateBruch, compileLatex } from '../../api/client'
+import { generateBruch, compileLatex, extractApiErrorMessage } from '../../api/client'
 import { Accordion, FontSelector } from '../../components/ui'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
@@ -44,6 +44,9 @@ export default function BruchPage() {
         const ku = await compileLatex(gen.kuerzen_latex, dpi)
         setKuerzenPreview(ku)
       }
+    } catch (err: unknown) {
+      const msg = extractApiErrorMessage(err, 'Fehler bei der Code-Generierung')
+      setMainPreview({ ok: false, log: msg })
     } finally {
       setIsCompiling(false)
     }

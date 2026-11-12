@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Sun, Shield, Layers, Eye, Settings, Folders } from 'lucide-react'
 import { s } from '../../styles/tokens'
 import useGeneratorHistory from '../../hooks/useGeneratorHistory'
-import { generateStrahlenoptik, compileLatex } from '../../api/client'
+import { generateStrahlenoptik, compileLatex, extractApiErrorMessage } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
 
@@ -75,7 +75,7 @@ const StrahlenPage = () => {
       setCompileData(result)
     } catch (err: unknown) {
       console.error('Generation failed:', err)
-      const msg = err instanceof Error ? err.message : 'Serverfehler bei der Generierung'
+      const msg = extractApiErrorMessage(err, 'Serverfehler bei der Generierung')
       setCompileData({ ok: false, log: msg })
     } finally {
       setIsCompiling(false)

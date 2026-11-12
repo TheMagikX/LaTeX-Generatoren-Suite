@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { s } from '../../styles/tokens'
 import useGeneratorHistory from '../../hooks/useGeneratorHistory'
-import { generateOptik, compileLatex } from '../../api/client'
+import { generateOptik, compileLatex, extractApiErrorMessage } from '../../api/client'
 import { Ruler, Folders, Settings, Sun, ScanEye, Microscope } from 'lucide-react'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
@@ -38,6 +38,9 @@ const OptikPage = () => {
       setOptikData(gen)
       const result = await compileLatex(gen.latex, previewDpi)
       setCompileData(result)
+    } catch (err: unknown) {
+      const msg = extractApiErrorMessage(err, 'Fehler bei der Code-Generierung')
+      setCompileData({ ok: false, log: msg })
     } finally {
       setIsCompiling(false)
     }

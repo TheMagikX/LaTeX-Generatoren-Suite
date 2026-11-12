@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { s } from '../../styles/tokens'
 import useGeneratorHistory from '../../hooks/useGeneratorHistory'
-import { generateBaumdiagramm, compileLatex } from '../../api/client'
+import { generateBaumdiagramm, compileLatex, extractApiErrorMessage } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
 import {
@@ -56,6 +56,9 @@ const BaumPage = () => {
       setLatexCode(gen.latex)
       const result = await compileLatex(gen.latex, previewDpi)
       setCompileData(result)
+    } catch (err: unknown) {
+      const msg = extractApiErrorMessage(err, 'Fehler bei der Code-Generierung')
+      setCompileData({ ok: false, log: msg })
     } finally {
       setIsCompiling(false)
     }

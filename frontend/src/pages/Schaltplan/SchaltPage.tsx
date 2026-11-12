@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import useGeneratorHistory from '../../hooks/useGeneratorHistory'
-import { generateSchaltplan, compileLatex } from '../../api/client'
+import { generateSchaltplan, compileLatex, extractApiErrorMessage } from '../../api/client'
 import { Card } from '../../components/ui'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
@@ -33,6 +33,9 @@ export default function SchaltPage() {
       setLatexCode(gen.latex)
       const result = await compileLatex(gen.latex, dpi)
       setCompileData(result)
+    } catch (err: unknown) {
+      const msg = extractApiErrorMessage(err, 'Fehler bei der Code-Generierung')
+      setCompileData({ ok: false, log: msg })
     } finally {
       setIsCompiling(false)
     }

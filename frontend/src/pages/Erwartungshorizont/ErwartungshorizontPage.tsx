@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import useGeneratorHistory from '../../hooks/useGeneratorHistory'
-import { generateErwartungshorizont, compileLatex } from '../../api/client'
+import { generateErwartungshorizont, compileLatex, extractApiErrorMessage } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
 import { Code, Settings, Folders } from 'lucide-react'
@@ -44,6 +44,9 @@ const ErwartungshorizontPage = () => {
       // allPages=true activates multi-page rendering for individual subtask images
       const result = await compileLatex(gen.latex, previewDpi, true)
       setCompileData(result)
+    } catch (err: unknown) {
+      const msg = extractApiErrorMessage(err, 'Fehler bei der Code-Generierung')
+      setCompileData({ ok: false, log: msg })
     } finally {
       setIsCompiling(false)
     }

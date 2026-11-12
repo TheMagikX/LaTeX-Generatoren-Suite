@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import useGeneratorHistory from '../../hooks/useGeneratorHistory'
-import { generateFlaschenzug, compileLatex } from '../../api/client'
+import { generateFlaschenzug, compileLatex, extractApiErrorMessage } from '../../api/client'
 import { Accordion } from '../../components/ui'
 import { PresetManager } from '../../components/PresetManager'
 import { COMPONENT_VERSIONS } from '../versions'
@@ -70,6 +70,9 @@ export default function FlaschenzugPage() {
       setLatexCode(exportGen.latex)
       const result = await compileLatex(previewGen.latex, dpi)
       setCompileResult(result)
+    } catch (err: unknown) {
+      const msg = extractApiErrorMessage(err, 'Fehler bei der Code-Generierung')
+      setCompileResult({ ok: false, log: msg })
     } finally {
       setIsCompiling(false)
     }

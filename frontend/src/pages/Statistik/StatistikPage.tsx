@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import useGeneratorHistory from '../../hooks/useGeneratorHistory'
-import { generateStatistik, compileLatex } from '../../api/client'
+import { generateStatistik, compileLatex, extractApiErrorMessage } from '../../api/client'
 import type { CompileResponse } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
@@ -72,7 +72,7 @@ const StatistikPage = () => {
       setCompileData(result)
     } catch (err: unknown) {
       console.error('Generation failed:', err)
-      const errorLog = err instanceof Error ? err.message : 'Generierung fehlgeschlagen'
+      const errorLog = extractApiErrorMessage(err, 'Generierung fehlgeschlagen')
       setCompileData({
         ok: false,
         log: errorLog

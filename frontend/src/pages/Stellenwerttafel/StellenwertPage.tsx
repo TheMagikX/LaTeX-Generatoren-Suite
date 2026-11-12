@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import useGeneratorHistory from '../../hooks/useGeneratorHistory'
-import { generateStellenwerttafel, compileLatex } from '../../api/client'
+import { generateStellenwerttafel, compileLatex, extractApiErrorMessage } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
 import { s } from '../../styles/tokens'
@@ -38,6 +38,9 @@ const StellenwertPage = () => {
       setLatexCode(gen.latex)
       const result = await compileLatex(gen.latex, previewDpi)
       setCompileData(result)
+    } catch (err: unknown) {
+      const msg = extractApiErrorMessage(err, 'Fehler bei der Code-Generierung')
+      setCompileData({ ok: false, log: msg })
     } finally {
       setIsCompiling(false)
     }
