@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import React, { useEffect, useState } from 'react'
-import { Check, Copy, FileText, Palette, Play, RotateCcw } from 'lucide-react'
+import { Check, Copy, FileText, Palette, Play, Redo2, RotateCcw, Undo2 } from 'lucide-react'
+import type { HistoryActions } from '../hooks/useGeneratorHistory'
 import { Button, ConfirmDialog } from './ui'
 import { LoadingButton } from './LoadingButton'
 import { triggerFileDownload } from '../api/client'
@@ -224,6 +225,7 @@ export const GeneratorHeader = ({
   icon,
   version,
   showPalette = true,
+  history,
   onReset,
   resetConfirmation,
   onCompile,
@@ -241,6 +243,7 @@ export const GeneratorHeader = ({
   icon: React.ReactNode
   version?: string
   showPalette?: boolean
+  history?: HistoryActions
   onReset?: () => void
   resetConfirmation?: false | GeneratorHeaderResetConfig
   onCompile?: () => void
@@ -303,6 +306,32 @@ export const GeneratorHeader = ({
         <div className="flex gap-2 items-center shrink-0 ml-4 mb-8">
           {showPalette && <ColorPaletteButton />}
           {actionsBefore}
+          {history && (
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={history.undo}
+                disabled={!history.canUndo}
+                title="Rückgängig (Strg+Z)"
+                aria-label="Rückgängig"
+                className="px-2.5 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Undo2 size={16} />
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={history.redo}
+                disabled={!history.canRedo}
+                title="Wiederholen (Strg+Y)"
+                aria-label="Wiederholen"
+                className="px-2.5 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Redo2 size={16} />
+              </Button>
+            </div>
+          )}
           {onReset && (
             <Button
               onClick={handleResetClick}
