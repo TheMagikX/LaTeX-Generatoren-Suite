@@ -5,6 +5,12 @@ const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || process.env.BASE_URL || `htt
 
 export default defineConfig({
   testDir: './e2e',
+  grepInvert:
+    process.env.PLAYWRIGHT_FULLSTACK ||
+    process.argv.includes('--grep') ||
+    process.argv.some((arg) => arg.startsWith('--grep='))
+      ? undefined
+      : /@fullstack/,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

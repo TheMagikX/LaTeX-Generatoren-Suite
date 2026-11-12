@@ -1,28 +1,26 @@
 import { test, expect } from '@playwright/test'
+import { mockTikzCompileError } from './helpers/apiMocks'
 
 test.describe('Error Handling - Fehleranzeige & Navigation', () => {
   test('Syntaxfehler provozieren und Fehler-Panel anzeigen', async ({ page }) => {
+    await mockTikzCompileError(page, 1, '\\definitelyInvalidMacro{')
     await page.goto('/tikzpicture')
 
     const editor = page.locator('.cm-content')
     await expect(editor).toBeVisible()
 
-    // Fehlerhaften LaTeX-Code eingeben (ungültiges Makro / ungeschlossene Syntax)
     const invalidCode = '\\definitelyInvalidMacro{\n\\draw (0,0);'
     await editor.click()
     await page.keyboard.press('ControlOrMeta+A')
     await page.keyboard.press('Backspace')
     await page.keyboard.insertText(invalidCode)
 
-    // Kompilieren auslösen
     const compileButton = page.getByRole('button', { name: /Kompilieren/i })
     await compileButton.click()
 
-    // Fehler-Panel muss sichtbar werden
     const errorPanelHeader = page.getByText(/LaTeX Kompilierfehler/i)
-    await expect(errorPanelHeader).toBeVisible({ timeout: 25000 })
+    await expect(errorPanelHeader).toBeVisible({ timeout: 5000 })
 
-    // Mindestens eine Fehlermeldung / Log-Zeile muss im Panel sichtbar sein
     const errorCodeElement = page.locator('.bg-error\\/8 code, pre')
     await expect(errorCodeElement.first()).toBeVisible()
     const errorText = await errorCodeElement.first().innerText()
@@ -30,6 +28,7 @@ test.describe('Error Handling - Fehleranzeige & Navigation', () => {
   })
 
   test('Klick auf Fehler springt im Editor zur betreffenden Zeile', async ({ page }) => {
+    await mockTikzCompileError(page, 2, '\\invalidMacroAtLineTwo')
     await page.goto('/tikzpicture')
 
     const editor = page.locator('.cm-content')
@@ -44,14 +43,11 @@ test.describe('Error Handling - Fehleranzeige & Navigation', () => {
     const compileButton = page.getByRole('button', { name: /Kompilieren/i })
     await compileButton.click()
 
-    // Fehler-Panel abwarten
     const errorMsg = page.locator('.bg-error\\/8 code')
-    await expect(errorMsg).toBeVisible({ timeout: 25000 })
+    await expect(errorMsg).toBeVisible({ timeout: 5000 })
 
-    // Klick auf die Fehlermeldung in der Log-Ansicht
     await errorMsg.click()
 
-    // Erwartung: Cursor oder aktive Zeile springt zu Zeile 2 im CodeMirror Editor
     const activeLine = page.locator('.cm-activeLine')
     await expect(activeLine).toContainText('\\invalidMacroAtLineTwo')
   })

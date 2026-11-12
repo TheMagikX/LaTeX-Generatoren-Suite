@@ -1,19 +1,21 @@
 import { test, expect } from '@playwright/test'
+import { mockTikzCompileSuccess } from './helpers/apiMocks'
 
 test.describe('Editor Workflow - Kern-Funktionalität', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockTikzCompileSuccess(page)
+  })
+
   test('Erfolgreicher Render-Flow über Button und Shortcut', async ({ page }) => {
-    // 1. Startseite aufrufen
     await page.goto('/')
     await expect(page).toHaveTitle(/Generatoren/i)
 
-    // Navigiere zum TikZ-Editor über die Dashboard-Kachel
     const tikzLink = page.getByRole('link', { name: /TikZ-Grafik|TikZ/i }).first()
     await expect(tikzLink).toBeVisible()
     await tikzLink.click()
 
     await expect(page).toHaveURL(/.*tikzpicture/)
 
-    // 2. Editor lokalisieren & gültigen Code eingeben
     const editor = page.locator('.cm-content')
     await expect(editor).toBeVisible()
 
@@ -24,16 +26,13 @@ test.describe('Editor Workflow - Kern-Funktionalität', () => {
     await page.keyboard.insertText(validCode)
     await expect(editor).toContainText(validCode)
 
-    // 3. Compile-Vorgang auslösen
     const compileButton = page.getByRole('button', { name: /Kompilieren/i })
     await expect(compileButton).toBeVisible()
 
-    // Shortcut Control+Enter auslösen
     await page.keyboard.press('Control+Enter')
 
-    // 4. Prüfen, dass der Ladezustand/Spinner und anschließend das Vorschau-Element sichtbar ist
     const previewImage = page.locator('[data-testid="preview-container"], img[alt="LaTeX Vorschau"]').first()
-    await expect(previewImage).toBeVisible({ timeout: 25000 })
+    await expect(previewImage).toBeVisible({ timeout: 5000 })
   })
 
   test('Persistenz bei Neuladen (localStorage)', async ({ page }) => {
@@ -49,10 +48,14 @@ test.describe('Editor Workflow - Kern-Funktionalität', () => {
     await page.keyboard.insertText(uniqueSnippet)
     await expect(editor).toContainText(uniqueSnippet)
 
-    // Seite neu laden
+    // Warten auf LocalStorage-Debounce (useGeneratorHistory + useLocalStorage)
+    await expect
+      .poll(async () => {
+        return await page.evaluate(() => window.localStorage.getItem('ks-tikzpicture') ?? '')
+      })
+      .toContain(uniqueSnippet)
     await page.reload()
 
-    // Nach Reload prüfen, ob der geänderte Code noch vorhanden ist
     const reloadedEditor = page.locator('.cm-content')
     await expect(reloadedEditor).toBeVisible()
     await expect(reloadedEditor).toContainText(uniqueSnippet)

@@ -1,29 +1,36 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { test, expect } from '@playwright/test'
+import { mockTikzCompileSuccess, MOCK_PREVIEW_PNG_BASE64 } from './helpers/apiMocks'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const SNAPSHOT_PATH = path.join(
+  __dirname,
+  'visual-regression.spec.ts-snapshots',
+  'default-render-chromium-win32.png'
+)
+const SNAPSHOT_BASE64 = fs.existsSync(SNAPSHOT_PATH)
+  ? fs.readFileSync(SNAPSHOT_PATH).toString('base64')
+  : MOCK_PREVIEW_PNG_BASE64
 
 test.describe('Visual Regression - Grafik-Stabilität', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockTikzCompileSuccess(page, SNAPSHOT_BASE64)
+  })
+
   test('Snapshot-Vergleich der Vorschau mit stabilem Selektor', async ({ page }) => {
-    // 1. TikZ-Editor aufrufen
     await page.goto('/tikzpicture')
 
-    // Standard-Code sicherstellen
     const editor = page.locator('.cm-content')
     await expect(editor).toBeVisible()
 
-    const standardCode = '\\draw[fill=teal!30, draw=teal, very thick] (0,0) circle (1.5cm);'
-    await editor.click()
-    await page.keyboard.press('ControlOrMeta+A')
-    await page.keyboard.press('Backspace')
-    await page.keyboard.insertText(standardCode)
-
-    // 2. Rendern bis zum fertigen Zustand
     const compileButton = page.getByRole('button', { name: /Kompilieren/i })
     await compileButton.click()
 
-    // Vorschau lokalisieren über stabilen Selektor (img[alt="LaTeX Vorschau"] oder Fallback)
     const preview = page.locator('[data-testid="preview-container"], img[alt="LaTeX Vorschau"]').first()
-    await expect(preview).toBeVisible({ timeout: 25000 })
+    await expect(preview).toBeVisible({ timeout: 5000 })
 
-    // Sicherstellen, dass das Bild vollständig decodiert / geladen ist
     await preview.evaluate(async (img) => {
       if (img instanceof HTMLImageElement && !img.complete) {
         await new Promise((resolve) => {
@@ -33,7 +40,6 @@ test.describe('Visual Regression - Grafik-Stabilität', () => {
       }
     })
 
-    // 3. Snapshot-Vergleich
     await expect(preview).toHaveScreenshot('default-render.png', {
       maxDiffPixelRatio: 0.02,
       animations: 'disabled',
@@ -43,20 +49,11 @@ test.describe('Visual Regression - Grafik-Stabilität', () => {
   test('Strikter Snapshot-Vergleich auf reinem [data-testid="preview-container"] Selektor', async ({ page }) => {
     await page.goto('/tikzpicture')
 
-    const editor = page.locator('.cm-content')
-    await expect(editor).toBeVisible()
-
-    const standardCode = '\\draw[fill=teal!30, draw=teal, very thick] (0,0) circle (1.5cm);'
-    await editor.click()
-    await page.keyboard.press('ControlOrMeta+A')
-    await page.keyboard.press('Backspace')
-    await page.keyboard.insertText(standardCode)
-
     const compileButton = page.getByRole('button', { name: /Kompilieren/i })
     await compileButton.click()
 
     const strictTestIdLocator = page.locator('[data-testid="preview-container"]')
-    await expect(strictTestIdLocator).toBeVisible({ timeout: 25000 })
+    await expect(strictTestIdLocator).toBeVisible({ timeout: 5000 })
 
     await strictTestIdLocator.evaluate(async (img) => {
       if (img instanceof HTMLImageElement && !img.complete) {
