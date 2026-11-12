@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import QRCodeStyling from 'qr-code-styling'
 import type {
   DrawType,
@@ -8,7 +9,7 @@ import type {
   Mode
 } from 'qr-code-styling'
 import { QrCode } from 'lucide-react'
-import { PageHeader } from '../../components/HeaderSection'
+import { GeneratorHeader } from '../../components/HeaderSection'
 import { COMPONENT_VERSIONS } from "../versions"
 import type { QRConfig } from './typesQR'
 import { DEFAULT_QR_CONFIG } from './constantsQR'
@@ -62,7 +63,7 @@ const wrapCanvasText = (
 }
 
 export default function QRPage() {
-  const [config, setConfig] = useState<QRConfig>(DEFAULT_QR_CONFIG)
+  const [config, setConfig, history] = useGeneratorHistory<QRConfig>('ks-qrcode', DEFAULT_QR_CONFIG)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -227,10 +228,16 @@ export default function QRPage() {
 
   return (
     <div className="w-full flex flex-col gap-6 h-full overflow-hidden">
-      <PageHeader
+      <GeneratorHeader
         title="QR-Code Generator Pro"
         icon={<QrCode size={24} />}
         version={COMPONENT_VERSIONS.qrcode}
+        showPalette={false}
+        history={history}
+        onReset={() => {
+          history.commitImmediate(DEFAULT_QR_CONFIG)
+          setLogoFile(null)
+        }}
       />
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(560px,1fr)_minmax(360px,520px)] gap-8 flex-1 overflow-hidden">

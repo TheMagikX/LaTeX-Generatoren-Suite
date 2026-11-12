@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-export const APP_VERSION = "5.1.4";
+export const APP_VERSION = "5.1.5";
 export const GITHUB_REPO = "TheMagikX/LaTeX-Generatoren-Suite";
 export const REPO_URL = `https://github.com/${GITHUB_REPO}`;
 
@@ -14,18 +14,18 @@ export const COMPONENT_VERSIONS = {
     baumdiagramm: "5.0.7",
     schaltplan: "5.0.2",
     geometrie: "5.0.5",
-    latex: "5.0.2",
-    erwartungshorizont: "5.0.2",
-    tikz: "5.0.1",
-    arbeitsblattgenerator: "5.0.6",
+    latex: "5.0.3",
+    erwartungshorizont: "5.0.3",
+    tikz: "5.0.2",
+    arbeitsblattgenerator: "5.0.7",
     flaschenzug: "5.0.7",
     zahlenstrahlgenerator: "5.0.5",
     optikgenerator: "5.0.3",
     bruchgenerator: "5.0.5",
     glucksradgenerator: "5.0.4",
-    sitzplangenerator: "5.0.3",
+    sitzplangenerator: "5.0.4",
     strahlenoptik: "5.0.2",
     stellwerttafel: "5.0.3",
     statistik: "5.0.3",
-    qrcode: "5.0.0",
+    qrcode: "5.0.1",
 } as const;

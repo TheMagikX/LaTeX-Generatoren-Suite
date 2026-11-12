@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef } from 'react'
 import type { EditorView } from '@codemirror/view'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateTikzPicture, compileLatex } from '../../api/client'
 import { Input, Label, Switch, FontSelector } from '../../components/ui'
 import { Tabs, TabContent } from '../../components/Tabs'
@@ -16,7 +16,7 @@ import { parseLatexLog } from '../../utils/parseLatexLog'
 import type { TikzConfig } from './typesTikz'
 
 const TikzPage = () => {
-  const [config, setConfig] = useLocalStorage<TikzConfig>('ks-tikzpicture', DEFAULT_CONFIG)
+  const [config, setConfig, history] = useGeneratorHistory<TikzConfig>('ks-tikzpicture', DEFAULT_CONFIG)
   const [activeTab, setActiveTab] = useState('snippet')
   const [previewDpi, setPreviewDpi] = useState(600)
 
@@ -71,7 +71,8 @@ const TikzPage = () => {
   return (
     <div className="flex flex-col gap-6 h-full overflow-hidden">
       <TikzHeader
-        setConfig={setConfig}
+        setConfig={history.commitImmediate}
+        history={history}
         isCompiling={isCompiling}
         onCompile={handleCompile}
         latexCode={latexCode}
@@ -133,7 +134,7 @@ const TikzPage = () => {
                 generator="tikz"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={(loaded) => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>
           </Tabs>

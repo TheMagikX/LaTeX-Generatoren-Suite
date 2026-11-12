@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef } from 'react'
 import type { EditorView } from '@codemirror/view'
 import { parseLatexLog } from '../../utils/parseLatexLog'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateLatexImage, compileLatex } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
@@ -18,7 +18,7 @@ import LatexImageTabSnippet from './components/LatexImageTabSnippet'
 import LatexImageTabDocument from './components/LatexImageTabDocument'
 
 const LatexImagePage = () => {
-  const [config, setConfig] = useLocalStorage<LatexImageConfig>('ks-lateximage', DEFAULT_CONFIG)
+  const [config, setConfig, history] = useGeneratorHistory<LatexImageConfig>('ks-lateximage', DEFAULT_CONFIG)
   const [activeTab, setActiveTab] = useState('snippet')
   const [previewDpi, setPreviewDpi] = useState(600)
 
@@ -75,7 +75,8 @@ const LatexImagePage = () => {
         latexCode={latexCode}
         isCompiling={isCompiling}
         onCompile={handleCompile}
-        onReset={() => setConfig({ ...DEFAULT_CONFIG })}
+        onReset={() => history.commitImmediate({ ...DEFAULT_CONFIG })}
+        history={history}
       />
 
       <div className="flex-1 flex gap-6 overflow-hidden pb-4">
@@ -101,7 +102,7 @@ const LatexImagePage = () => {
                 generator="latex"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={(loaded) => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>
           </Tabs>

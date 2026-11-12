@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useState, useEffect } from 'react'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { generateErwartungshorizont, compileLatex } from '../../api/client'
 import { Tabs, TabContent } from '../../components/Tabs'
 import { PresetManager } from '../../components/PresetManager'
@@ -16,7 +16,7 @@ import ErwartungshorizontTabSnippet from './components/ErwartungshorizontTabSnip
 import ErwartungshorizontTabDocument from './components/ErwartungshorizontTabDocument'
 
 const ErwartungshorizontPage = () => {
-  const [config, setConfig] = useLocalStorage<ErwartungshorizontConfig>(
+  const [config, setConfig, history] = useGeneratorHistory<ErwartungshorizontConfig>(
     'ks-erwartungshorizont',
     DEFAULT_CONFIG
   )
@@ -77,7 +77,8 @@ const ErwartungshorizontPage = () => {
         latexCode={latexCode}
         isCompiling={isCompiling}
         onCompile={handleCompile}
-        onReset={() => setConfig({ ...DEFAULT_CONFIG })}
+        onReset={() => history.commitImmediate({ ...DEFAULT_CONFIG })}
+        history={history}
       />
 
       <div className="flex-1 flex gap-6 overflow-hidden pb-4">
@@ -102,7 +103,7 @@ const ErwartungshorizontPage = () => {
                 generator="erwartungshorizont"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={(loaded) => setConfig({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={(loaded) => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
               />
             </TabContent>
           </Tabs>

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useState } from 'react'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { useMutation } from '@tanstack/react-query'
 import { generateArbeitsblatt, compileLatex, executeArbeitsblattCode } from '../../api/client'
 import type { ArbeitsblattGenerateResponse, CompileResponse } from '../../api/client'
@@ -19,7 +19,7 @@ type GenerateMutationArgs = {
 const createRandomSeed = () => Math.floor(Math.random() * 1_000_000_000).toString()
 
 export default function ArbeitsblattPage() {
-  const [config, setConfig] = useLocalStorage<ArbeitsblattConfig>('ks-arbeitsblatt', DEFAULT_CONFIG)
+  const [config, setConfig, history] = useGeneratorHistory<ArbeitsblattConfig>('ks-arbeitsblatt', DEFAULT_CONFIG)
   const [activeTab, setActiveTab] = useState('template')
   const [dpi, setDpi] = useState(300)
   const [pythonVars, setPythonVars] = useState<Record<string, unknown> | null>(null)
@@ -105,7 +105,8 @@ export default function ArbeitsblattPage() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-6">
       <ArbeitsblattHeader
-        onReset={() => setConfig(DEFAULT_CONFIG)}
+        onReset={() => history.commitImmediate(DEFAULT_CONFIG)}
+        history={history}
         onExecute={handleExecute}
         onGenerate={() => handleGenerate(false)}
         onGenerateNewSeed={() => handleGenerate(true)}
@@ -122,7 +123,7 @@ export default function ArbeitsblattPage() {
           updateConfig={updateConfig}
           pythonError={pythonError}
           pythonVars={pythonVars}
-          onConfigChange={(newConfig) => setConfig({ ...DEFAULT_CONFIG, ...newConfig })}
+          onConfigChange={(newConfig) => history.commitImmediate({ ...DEFAULT_CONFIG, ...newConfig })}
           thumbnailSource={compileTasks?.png_base64}
         />
 

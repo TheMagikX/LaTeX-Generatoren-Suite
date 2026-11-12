@@ -4,6 +4,7 @@ import { FileText, RotateCw, Play, CheckCircle2, Dices } from 'lucide-react'
 import { GeneratorHeader } from '../../../components/HeaderSection'
 import { Button } from '../../../components/ui'
 import { COMPONENT_VERSIONS } from "../../versions"
+import type { HistoryActions } from '../../../hooks/useGeneratorHistory'
 
 interface Props {
   onReset: () => void
@@ -13,6 +14,7 @@ interface Props {
   isPendingExecution: boolean
   isWorking: boolean
   showCodeSuccess: boolean
+  history?: HistoryActions
 }
 
 export default function ArbeitsblattHeader({
@@ -22,13 +24,15 @@ export default function ArbeitsblattHeader({
   onGenerateNewSeed,
   isPendingExecution,
   isWorking,
-  showCodeSuccess
+  showCodeSuccess,
+  history,
 }: Props) {
   return (
     <GeneratorHeader
       title="Arbeitsblattgenerator"
       icon={<FileText size={24} />}
       version={COMPONENT_VERSIONS.arbeitsblattgenerator}
+      history={history}
       onReset={onReset}
       resetConfirmation={{
         title: 'Konfiguration zurücksetzen?',
@@ -59,14 +63,15 @@ export default function ArbeitsblattHeader({
           onClick={onGenerate}
           disabled={isWorking}
         >
-          <RotateCw size={18} className={isWorking ? 'animate-spin' : ''} /> Arbeitsblatt generieren
+          <RotateCw size={18} className={isWorking ? 'animate-spin' : ''} /> {isWorking ? 'Generiere...' : 'Generieren'}
         </Button>
         <Button
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-raised hover:bg-raised/80 text-ink border border-line"
           onClick={onGenerateNewSeed}
           disabled={isWorking}
+          title="Generiert neue Zufallswerte für alle Variablen"
         >
-          <Dices size={18} className={isWorking ? 'animate-spin' : ''} /> Mit neuem Seed generieren
+          <Dices size={18} /> Neuer Seed
         </Button>
         </>
       }

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react'
 import { Users, Layout, Target, Scale, Play } from 'lucide-react'
-import useLocalStorage from '../../hooks/useLocalStorage'
+import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { solveSitzplan } from '../../api/client'
 import { Card } from '../../components/ui'
 import { Tabs, TabContent } from '../../components/Tabs'
@@ -19,7 +19,7 @@ import SitzplanResultTab from './components/SitzplanResultTab'
 import SitzplanStatusSidebar from './components/SitzplanStatusSidebar'
 
 const SitzplanPage: React.FC = () => {
-  const [config, setConfig] = useLocalStorage<SitzplanConfig>('sitzplan_config', DEFAULT_SITZPLAN_CONFIG)
+  const [config, setConfig, history] = useGeneratorHistory<SitzplanConfig>('sitzplan_config', DEFAULT_SITZPLAN_CONFIG)
   const [result, setResult] = useState<SitzplanResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('students')
@@ -60,13 +60,13 @@ const SitzplanPage: React.FC = () => {
   }, [config.layout.matrix])
 
   const handleReset = () => {
-    setConfig(DEFAULT_SITZPLAN_CONFIG)
+    history.commitImmediate(DEFAULT_SITZPLAN_CONFIG)
     setResult(null)
   }
 
   return (
     <div className="flex flex-col gap-6 h-full overflow-hidden">
-      <SitzplanHeader onReset={handleReset} />
+      <SitzplanHeader onReset={handleReset} history={history} />
 
       <div className="flex-1 flex gap-6 overflow-hidden pb-4">
         {/* Left: Configuration */}
