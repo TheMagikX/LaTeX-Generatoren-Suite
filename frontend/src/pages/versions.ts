@@ -26,6 +26,6 @@ export const COMPONENT_VERSIONS = {
     sitzplangenerator: "5.0.5",
     strahlenoptik: "5.0.3",
     stellwerttafel: "5.0.4",
-    statistik: "5.0.4",
+    statistik: "5.0.5",
     qrcode: "5.0.1",
 } as const;

@@ -11,6 +11,10 @@ from models.statistik import (
 )
 from core.latex_document import LatexDocumentSpec, font_input, latex_input, render_latex_document
 
+_MAX_FREQ_COUNT_PER_ENTRY = 10_000
+_MAX_EXPANDED_DATA_LEN = 50_000
+_MAX_HISTOGRAM_BINS = 500
+
 def parse_frequency_data(freq_string: str) -> List[float]:
     """Parse 'value:count' or 'value,count' pairs into an expanded list of floats."""
     result: List[float] = []
@@ -25,8 +29,12 @@ def parse_frequency_data(freq_string: str) -> List[float]:
         try:
             val = float(parts[0].strip().replace(',', '.'))
             count = int(float(parts[1].strip().replace(',', '.')))
-            result.extend([val] * max(count, 0))
-        except (ValueError, IndexError):
+            safe_count = min(max(count, 0), _MAX_FREQ_COUNT_PER_ENTRY)
+            remaining = _MAX_EXPANDED_DATA_LEN - len(result)
+            if remaining <= 0:
+                break
+            result.extend([val] * min(safe_count, remaining))
+        except (ValueError, IndexError, OverflowError):
             continue
     return result
 
@@ -305,10 +313,21 @@ def generate_histogram_tikz(config: StatistikConfig) -> str:
     xmin_val = config.x_axis.min if config.x_axis.min is not None else 0
     xmax_val = config.x_axis.max if config.x_axis.max is not None else 10
     ymin_val = config.y_axis.min if config.y_axis.min is not None else 0
+    if bin_width <= 0:
+        bin_width = 1.0
+    if xmin_val > xmax_val:
+        xmin_val, xmax_val = xmax_val, xmin_val
+    elif xmin_val == xmax_val:
+        xmax_val = xmin_val + max(bin_width, 1.0)
+
+    if (xmax_val - xmin_val) / bin_width > _MAX_HISTOGRAM_BINS:
+        bin_width = (xmax_val - xmin_val) / _MAX_HISTOGRAM_BINS
 
     max_h = 5.0
     if all_data:
         bins = np.arange(xmin_val, xmax_val + bin_width, bin_width)
+        if len(bins) < 2:
+            bins = [xmin_val, xmax_val if xmax_val > xmin_val else xmin_val + max(bin_width, 1.0)]
         if len(bins) >= 2:
             for ds in config.datasets:
                 d_list = get_dataset_data(ds)
@@ -345,7 +364,7 @@ def generate_histogram_tikz(config: StatistikConfig) -> str:
             data = np.array(data_list)
             bins = np.arange(xmin_val, xmax_val + bin_width, bin_width)
             if len(bins) < 2:
-                 bins = [xmin_val, xmax_val]
+                 bins = [xmin_val, xmax_val if xmax_val > xmin_val else xmin_val + max(bin_width, 1.0)]
 
             hist, bin_edges = np.histogram(data, bins=bins, density=config.histogram_opts.density)
             

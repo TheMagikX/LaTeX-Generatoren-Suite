@@ -7,8 +7,15 @@ from models.geometrie import TriangleConstructionConfig, QuadrilateralConstructi
 from generators.geometrie import solve_triangle, solve_quadrilateral
 from models.optik import OptikConfig, OptikObject, LensConfig
 from generators.optik import calculate_images
-from models.statistik import DatasetConfig, DataMode
-from generators.statistik import calculate_params
+from models.statistik import DatasetConfig, DataMode, StatistikConfig, StatistikType, AxisConfig, HistogramOptions
+from generators.statistik import (
+    calculate_params,
+    parse_frequency_data,
+    generate_histogram_tikz,
+    _MAX_FREQ_COUNT_PER_ENTRY,
+    _MAX_EXPANDED_DATA_LEN,
+    _MAX_HISTOGRAM_BINS,
+)
 from models.sitzplan import SitzplanRequest, StudentConfig, LayoutConfig, HardRuleConfig
 from generators.sitzplan import solve_sitzplan
 
@@ -179,6 +186,78 @@ def test_statistik_horizontal_boxplot_auto_range():
     )
     tikz = generate_boxplot_tikz(cfg)
     assert "xmin=4, xmax=56" in tikz
+
+
+def test_statistik_parse_frequency_data_oom_protection():
+    # 1. Single extreme frequency is capped to _MAX_FREQ_COUNT_PER_ENTRY
+    res_single = parse_frequency_data("1: 100000000")
+    assert len(res_single) == _MAX_FREQ_COUNT_PER_ENTRY
+    assert all(v == 1.0 for v in res_single)
+
+    # 2. Cumulative frequency capped to _MAX_EXPANDED_DATA_LEN
+    # 6 entries with 10_000 each -> should be clamped to 50_000
+    res_multi = parse_frequency_data("1: 10000; 2: 10000; 3: 10000; 4: 10000; 5: 10000; 6: 10000")
+    assert len(res_multi) == _MAX_EXPANDED_DATA_LEN
+
+    # 3. Handling invalid tokens, overflows and negative numbers safely
+    res_edge = parse_frequency_data("1: -5; 2: 0; 3: inf; 4: abc; 5: 3")
+    assert res_edge == [5.0, 5.0, 5.0]
+
+    # 4. Empty string returns empty list
+    assert parse_frequency_data("") == []
+
+
+def test_statistik_histogram_bin_edge_cases():
+    # 1. Inverted boundaries (xmin > xmax) are swapped and do not throw ValueError
+    cfg_inverted = StatistikConfig(
+        type=StatistikType.HISTOGRAMM,
+        datasets=[DatasetConfig(name="D1", data_mode=DataMode.RAW, raw_data=[3.0, 4.0, 5.0])],
+        x_axis=AxisConfig(min=10.0, max=2.0),
+        histogram_opts=HistogramOptions(bin_width=1.0)
+    )
+    tikz_inv = generate_histogram_tikz(cfg_inverted)
+    assert "xmin=2.0, xmax=10.0" in tikz_inv
+    assert r"\begin{axis}" in tikz_inv
+
+    # 2. Equal boundaries (xmin == xmax) are expanded by max(bin_width, 1.0)
+    cfg_equal = StatistikConfig(
+        type=StatistikType.HISTOGRAMM,
+        datasets=[DatasetConfig(name="D1", data_mode=DataMode.RAW, raw_data=[5.0])],
+        x_axis=AxisConfig(min=5.0, max=5.0),
+        histogram_opts=HistogramOptions(bin_width=2.0)
+    )
+    tikz_eq = generate_histogram_tikz(cfg_equal)
+    assert "xmin=5.0, xmax=7.0" in tikz_eq
+
+    # 3. Non-positive bin_width (<= 0) is normalized to 1.0
+    cfg_zero_bw = StatistikConfig(
+        type=StatistikType.HISTOGRAMM,
+        datasets=[DatasetConfig(name="D1", data_mode=DataMode.RAW, raw_data=[1.0, 2.0, 3.0])],
+        x_axis=AxisConfig(min=0.0, max=5.0),
+        histogram_opts=HistogramOptions(bin_width=0.0)
+    )
+    tikz_zero_bw = generate_histogram_tikz(cfg_zero_bw)
+    assert r"\begin{axis}" in tikz_zero_bw
+
+    # 4. Excessively small bin_width is clamped to avoid bin explosion (_MAX_HISTOGRAM_BINS)
+    cfg_tiny_bw = StatistikConfig(
+        type=StatistikType.HISTOGRAMM,
+        datasets=[DatasetConfig(name="D1", data_mode=DataMode.RAW, raw_data=[10.0, 50.0])],
+        x_axis=AxisConfig(min=0.0, max=1000.0),
+        histogram_opts=HistogramOptions(bin_width=1e-5)
+    )
+    tikz_tiny = generate_histogram_tikz(cfg_tiny_bw)
+    assert r"\begin{axis}" in tikz_tiny
+
+    # 5. Empty dataset renders empty axis without errors
+    cfg_empty = StatistikConfig(
+        type=StatistikType.HISTOGRAMM,
+        datasets=[],
+        x_axis=AxisConfig(min=0.0, max=10.0),
+        histogram_opts=HistogramOptions(bin_width=1.0)
+    )
+    tikz_empty = generate_histogram_tikz(cfg_empty)
+    assert r"\begin{axis}" in tikz_empty
 
 
 def test_sitzplan_solver_allocation():

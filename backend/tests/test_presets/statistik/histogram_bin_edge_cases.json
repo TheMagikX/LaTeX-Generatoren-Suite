@@ -1,0 +1,41 @@
+{
+  "type": "Histogramm",
+  "datasets": [
+    {
+      "name": "Klassenverteilung",
+      "data_mode": "Frequency",
+      "raw_data": [],
+      "raw_data_string": "",
+      "freq_data_string": "1: 4; 2: 9; 3: 14; 4: 7; 5: 2",
+      "color": "teal",
+      "show_outliers": false
+    }
+  ],
+  "x_axis": {
+    "min": 6.0,
+    "max": 1.0,
+    "step": 1.0,
+    "label": "Intervall",
+    "show_grid": true,
+    "grid_style": "kaestchen"
+  },
+  "y_axis": {
+    "min": 0.0,
+    "max": 16.0,
+    "step": 2.0,
+    "label": "Häufigkeit",
+    "show_grid": true
+  },
+  "histogram_opts": {
+    "bin_width": 0.0,
+    "density": false
+  },
+  "title_opts": {
+    "show": true,
+    "text": "Histogramm Edge Cases"
+  },
+  "font_family": "Fira",
+  "font_size": "normalsize",
+  "width_cm": 11.0,
+  "height_cm": 7.0
+}
