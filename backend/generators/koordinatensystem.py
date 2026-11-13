@@ -1,8 +1,98 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import ast
+import math
 import re
 import pathlib
 from models.koordinatensystem import CoordinateSystemConfig, PlotConfig, CSVPlotConfig, ParametricPlotConfig, PointConfig, NodeConfig
+
+_PGFMATH_FUNCS = {
+    "sin": lambda u: math.sin(math.radians(u)),
+    "cos": lambda u: math.cos(math.radians(u)),
+    "tan": lambda u: math.tan(math.radians(u)),
+    "asin": lambda u: math.degrees(math.asin(u)),
+    "acos": lambda u: math.degrees(math.acos(u)),
+    "atan": lambda u: math.degrees(math.atan(u)),
+    "deg": math.degrees,
+    "rad": math.radians,
+    "ln": math.log,
+    "log10": math.log10,
+    "log2": math.log2,
+    "exp": math.exp,
+    "sqrt": math.sqrt,
+    "abs": abs,
+    "sinh": math.sinh,
+    "cosh": math.cosh,
+    "tanh": math.tanh,
+    "floor": math.floor,
+    "ceil": math.ceil,
+    "round": round,
+}
+
+_PGFMATH_CONSTS = {
+    "pi": math.pi,
+    "e": math.e,
+}
+
+
+def _eval_ast_node(node: ast.AST, x_val: float) -> float:
+    if isinstance(node, ast.Expression):
+        return _eval_ast_node(node.body, x_val)
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return float(node.value)
+    if isinstance(node, ast.Name):
+        if node.id == "x":
+            return float(x_val)
+        if node.id in _PGFMATH_CONSTS:
+            return _PGFMATH_CONSTS[node.id]
+        raise ValueError(f"Unbekannte Variable: {node.id}")
+    if isinstance(node, ast.UnaryOp):
+        val = _eval_ast_node(node.operand, x_val)
+        if isinstance(node.op, ast.UAdd):
+            return +val
+        if isinstance(node.op, ast.USub):
+            return -val
+    if isinstance(node, ast.BinOp):
+        left = _eval_ast_node(node.left, x_val)
+        right = _eval_ast_node(node.right, x_val)
+        if isinstance(node.op, ast.Add):
+            return left + right
+        if isinstance(node.op, ast.Sub):
+            return left - right
+        if isinstance(node.op, ast.Mult):
+            return left * right
+        if isinstance(node.op, ast.Div):
+            return left / right
+        if isinstance(node.op, ast.Pow):
+            return float(left ** right)
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and len(node.args) == 1:
+        fn = _PGFMATH_FUNCS.get(node.func.id)
+        if fn is not None:
+            return float(fn(_eval_ast_node(node.args[0], x_val)))
+    raise ValueError("Nicht unterstützter Ausdruck")
+
+
+def _eval_pgfmath_func(func_str: str, x_val: float) -> float | None:
+    if not func_str or len(func_str) > 500:
+        return None
+    expr = func_str.replace("\\x", "x").replace("^", "**").strip()
+    try:
+        tree = ast.parse(expr, mode="eval")
+        res = _eval_ast_node(tree, x_val)
+        if math.isfinite(res):
+            return res
+    except Exception:
+        return None
+    return None
+
+
+def _numerical_derivative(func_str: str, x0: float, eps: float = 0.001) -> float | None:
+    y_plus = _eval_pgfmath_func(func_str, x0 + eps)
+    y_minus = _eval_pgfmath_func(func_str, x0 - eps)
+    if y_plus is None or y_minus is None:
+        return None
+    m = (y_plus - y_minus) / (2.0 * eps)
+    return m if math.isfinite(m) else None
 
 def _format_stroke_style(p: PlotConfig | CSVPlotConfig | ParametricPlotConfig) -> str:
     parts = []
@@ -341,17 +431,27 @@ def generate_koordinatensystem_latex(cfg: CoordinateSystemConfig) -> str:
             # Numerical derivative at x0
             m_expr = f"(func_{i}(({x0})+{eps}) - func_{i}(({x0})-{eps})) / (2*{eps})"
             y0_expr = f"func_{i}({x0})"
-            
-            if ta.is_normal:
-                # Normal: y = -1/m * (x - x0) + y0
-                func_expr = f"(-1 / (({m_expr}) + 0.0000001)) * (x - ({x0})) + ({y0_expr})"
-            else:
-                # Tangent: y = m * (x - x0) + y0
-                func_expr = f"({m_expr}) * (x - ({x0})) + ({y0_expr})"
-            
+            m_val = _numerical_derivative(p.func, x0, eps)
+
             lbl = ""
             if ta.label_show and ta.label_text:
                 lbl = f" node[pos={ta.label_pos}, above, sloped, font=\\small] {{{ta.label_text}}}"
+            
+            if ta.is_normal:
+                if m_val is not None and abs(m_val) < 1e-5:
+                    style_tokens = [t.strip() for t in (ta.style or "").split(",") if t.strip()]
+                    if not any(t in {"dashed", "dotted", "dashdotted", "solid"} for t in style_tokens):
+                        style_tokens.append("dashed")
+                    normal_style = ", ".join(style_tokens) if style_tokens else "dashed"
+                    curve_cmds.append(
+                        rf"\draw[{normal_style}] (axis cs:{x0},{cfg.ymin}) -- (axis cs:{x0},{cfg.ymax}){lbl};"
+                    )
+                    continue
+                # Normal: y = -1/m * (x - x0) + y0
+                func_expr = f"(ifthenelse(abs({m_expr}) < 0.00001, 0, -1 / ({m_expr}))) * (x - ({x0})) + ({y0_expr})"
+            else:
+                # Tangent: y = m * (x - x0) + y0
+                func_expr = f"({m_expr}) * (x - ({x0})) + ({y0_expr})"
             
             curve_cmds.append(rf"\addplot[{ta.style}, domain={txmin}:{txmax}, samples=2, forget plot] {{{func_expr}}}{lbl};")
 

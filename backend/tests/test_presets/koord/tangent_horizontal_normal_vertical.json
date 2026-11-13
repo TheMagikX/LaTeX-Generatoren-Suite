@@ -1,0 +1,35 @@
+{
+  "xmin": -4.0,
+  "xmax": 4.0,
+  "ymin": -2.0,
+  "ymax": 6.0,
+  "plots": [
+    {
+      "show": true,
+      "func": "x^2",
+      "color": "blue",
+      "tangents": [
+        {
+          "show": true,
+          "x0": 0.0,
+          "is_normal": true,
+          "style": "red, thick",
+          "label_show": true,
+          "label_text": "n"
+        },
+        {
+          "show": true,
+          "x0": 0.0,
+          "is_normal": false,
+          "style": "blue, thick"
+        },
+        {
+          "show": true,
+          "x0": 1.0,
+          "is_normal": true,
+          "style": "green, thick"
+        }
+      ]
+    }
+  ]
+}
