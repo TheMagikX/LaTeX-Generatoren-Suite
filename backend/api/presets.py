@@ -168,7 +168,7 @@ async def save_preset_thumbnail(generator: str, name: str, body: ThumbnailSaveRe
     if not file_path.is_file():
         raise HTTPException(status_code=404, detail="Preset not found")
     data = _decode_thumbnail(body.thumbnail_base64)
-    _thumbnail_path(file_path).write_bytes(data)
+    config.atomic_write_bytes(_thumbnail_path(file_path), data)
     return {"message": f"Thumbnail for {name} saved successfully"}
 
 
@@ -231,8 +231,7 @@ async def save_preset(generator: str, name: str, data: Dict[str, Any]):
             status_code=413,
             detail="Preset payload exceeds maximum allowed size (1 MB).",
         )
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-    file_path.write_text(serialized, "utf-8")
+    config.atomic_write_text(file_path, serialized, encoding="utf-8")
     return {"message": f"Preset {name} saved successfully"}
 
 @router.delete("/{generator}/{name:path}")

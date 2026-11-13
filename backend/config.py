@@ -5,6 +5,7 @@ import os
 import pathlib
 import json
 import logging
+import time
 
 logger = logging.getLogger("generator_suite.config")
 
@@ -188,12 +189,60 @@ def get_user_settings() -> dict:
     return {}
 
 
+def atomic_write_bytes(
+    target: pathlib.Path,
+    data: bytes,
+    max_retries: int = 3,
+    base_delay: float = 0.05,
+) -> None:
+    """Write bytes to a .tmp file and atomically replace target with OneDrive/AV retry resilience."""
+    target.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = target.with_name(f"{target.name}.tmp")
+    last_err: OSError | None = None
+    try:
+        for attempt in range(max_retries):
+            try:
+                with open(tmp_path, "wb") as f:
+                    f.write(data)
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(tmp_path, target)
+                return
+            except OSError as e:
+                last_err = e
+                if attempt < max_retries - 1:
+                    time.sleep(base_delay * (attempt + 1))
+        if last_err is not None:
+            raise last_err
+    finally:
+        if tmp_path.exists():
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass
+
+
+def atomic_write_text(
+    target: pathlib.Path,
+    content: str,
+    encoding: str = "utf-8",
+    max_retries: int = 3,
+    base_delay: float = 0.05,
+) -> None:
+    """Write text to a .tmp file and atomically replace target with OneDrive/AV retry resilience."""
+    atomic_write_bytes(
+        target,
+        content.encode(encoding),
+        max_retries=max_retries,
+        base_delay=base_delay,
+    )
+
+
 def save_user_settings(data: dict) -> None:
     """Save user settings to user_settings.json."""
     try:
-        USER_SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with open(USER_SETTINGS_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        serialized = json.dumps(data, indent=2, ensure_ascii=False)
+        atomic_write_text(USER_SETTINGS_FILE, serialized, encoding="utf-8")
     except Exception as e:
         logger.error(f"Failed to write user_settings.json: {e}")
         raise
