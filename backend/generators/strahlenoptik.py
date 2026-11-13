@@ -212,6 +212,8 @@ def ray_cubic_bezier_intersection(
     
     ox, oy = O
     rx, ry = D # Ray direction
+    if abs(rx) < EPS and abs(ry) < EPS:
+        return None
     
     # (ry*ax - rx*ay)*t^3 + (ry*bx - rx*by)*t^2 + (ry*cx - rx*cy)*t + (ry*(dx - ox) - rx*(dy - oy)) = 0
     c3 = ry * ax_ - rx * ay_
@@ -219,14 +221,23 @@ def ray_cubic_bezier_intersection(
     c1 = ry * cx_ - rx * cy_
     c0 = ry * (dx_ - ox) - rx * (dy_ - oy)
     
-    roots = np.roots([c3, c2, c1, c0])
+    # Strip leading near-zero coefficients to avoid ill-conditioned companion matrices
+    coeffs = [c3, c2, c1, c0]
+    while len(coeffs) > 1 and abs(coeffs[0]) < EPS:
+        coeffs.pop(0)
+
+    # Degenerate / collinear polynomial (constant only, no discrete intersection)
+    if len(coeffs) <= 1:
+        return None
+
+    roots = np.roots(coeffs)
     
     best_t_ray = float('inf')
     best_hit = None
     
     for rt in roots:
-        if np.isreal(rt):
-            t = rt.real
+        if abs(rt.imag) < 1e-7:
+            t = float(rt.real)
             if -EPS <= t <= 1.0 + EPS:
                 t = max(0.0, min(1.0, t))
                 ix = ax_*t**3 + bx_*t**2 + cx_*t + dx_

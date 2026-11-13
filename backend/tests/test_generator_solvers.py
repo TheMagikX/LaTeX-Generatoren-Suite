@@ -415,3 +415,21 @@ def test_geometry3d_helpers():
     e2 = Plane3DConfig(mode="Koordinatenform", n1=0.0, n2=1.0, n3=0.0, d=2.0)
     res_pp = calculate_plane_plane_intersection(e1, e2)
     assert res_pp is not None
+
+
+def test_strahlenoptik_bezier_collinear_and_zero_direction():
+    from generators.strahlenoptik import ray_cubic_bezier_intersection
+
+    # Kollineare Kontrollpunkte entlang der x-Achse, Strahl ebenfalls entlang x-Achse -> None
+    assert ray_cubic_bezier_intersection((0.0, 0.0), (1.0, 0.0), (1.0, 0.0), (2.0, 0.0), (3.0, 0.0), (4.0, 0.0)) is None
+    # Null-Richtungsvektor -> None (kein ZeroDivisionError)
+    assert ray_cubic_bezier_intersection((0.0, 0.0), (0.0, 0.0), (1.0, -1.0), (1.0, 0.0), (1.0, 0.0), (1.0, 1.0)) is None
+
+    # Normaler Schnittpunkt: Strahl von (0, 0) nach (1, 0), vertikale Linie als Bezier bei x=2
+    hit = ray_cubic_bezier_intersection((0.0, 0.0), (1.0, 0.0), (2.0, -1.0), (2.0, -0.33), (2.0, 0.33), (2.0, 1.0))
+    assert hit is not None
+    s, ix, iy, nx, ny = hit
+    assert math.isclose(s, 2.0, abs_tol=1e-4)
+    assert math.isclose(ix, 2.0, abs_tol=1e-4)
+    assert math.isclose(iy, 0.0, abs_tol=1e-4)
+
