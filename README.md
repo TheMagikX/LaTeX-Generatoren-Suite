@@ -2,7 +2,7 @@
 
 > **Die modulare Web-App zur Erstellung professioneller LaTeX-, TikZ- und Unterrichtsmaterialien für Mathematik, Physik und den Schulalltag.**
 
-![Version](https://img.shields.io/badge/Version-5.1.4-blue)
+![Version](https://img.shields.io/badge/Version-5.1.5-blue)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
