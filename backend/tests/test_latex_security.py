@@ -66,3 +66,49 @@ def test_glucksrad_image_arrow_generates_relative_graphic_path():
     tex = generate_glucksrad_latex(cfg)
     assert r"\includegraphics" in tex
     assert config.LATEX_FILES_DIR.as_posix() not in tex
+
+
+def test_latex_render_timeout_kills_process_tree():
+    """Ensure Popen timeout triggers _terminate_process_tree and returns clean timeout LatexRenderResult."""
+    import subprocess as sp
+
+    mock_proc = MagicMock()
+    mock_proc.pid = 42424
+    mock_proc.communicate.side_effect = [
+        sp.TimeoutExpired(cmd=["xelatex"], timeout=45),
+        (b"", b""),
+    ]
+
+    with patch("core.latex_render.subprocess.Popen", return_value=mock_proc) as mock_popen, \
+         patch("core.latex_render._terminate_process_tree") as mock_kill_tree:
+        res = compile_latex_to_pdf_bytes(r"\documentclass{article}\begin{document}Hi\end{document}")
+        assert mock_popen.called
+        assert mock_kill_tree.called
+        assert mock_kill_tree.call_args[0][0] is mock_proc
+        assert res.ok is False
+        assert res.pdf_bytes is None
+        assert "Zeitlimit" in res.log and "Timeout" in res.log
+
+
+def test_terminate_process_tree_calls_taskkill_or_killpg():
+    """Ensure _terminate_process_tree calls taskkill on Windows or os.killpg on POSIX."""
+    from core.latex_render import _terminate_process_tree
+    import os
+
+    mock_proc = MagicMock()
+    mock_proc.pid = 12345
+    mock_proc.communicate.return_value = (b"", b"")
+
+    if os.name == "nt":
+        with patch("core.latex_render.subprocess.run") as mock_run:
+            _terminate_process_tree(mock_proc)
+            assert mock_run.called
+            called_cmd = mock_run.call_args[0][0]
+            assert called_cmd == ["taskkill", "/F", "/T", "/PID", "12345"]
+    else:
+        with patch("os.killpg") as mock_killpg, patch("os.getpgid", return_value=12345):
+            _terminate_process_tree(mock_proc)
+            assert mock_killpg.called
+
+    assert mock_proc.kill.called
+    assert mock_proc.communicate.called

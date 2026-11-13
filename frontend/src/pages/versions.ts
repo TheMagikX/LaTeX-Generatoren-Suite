@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-export const APP_VERSION = "5.1.5";
+export const APP_VERSION = "5.1.6";
 export const GITHUB_REPO = "TheMagikX/LaTeX-Generatoren-Suite";
 export const REPO_URL = `https://github.com/${GITHUB_REPO}`;
 
 export const PRESET_MANAGER = "5.1.1";
-export const LATEX_RENDERER = "5.0.7";
+export const LATEX_RENDERER = "5.0.8";
 export const FILE_SAVER = "5.0.1";
 
 export const COMPONENT_VERSIONS = {

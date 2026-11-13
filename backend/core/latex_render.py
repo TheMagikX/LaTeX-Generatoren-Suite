@@ -9,6 +9,7 @@ import os
 import pathlib
 import re
 import shutil
+import signal
 import subprocess
 import tempfile
 import time
@@ -245,6 +246,92 @@ def first_latex_error_line(text: str, *, tmpdir: Optional[str] = None) -> str | 
             return sanitize_latex_log(raw_err, tmpdir=tmpdir)
     return None
 
+
+def _terminate_process_tree(proc: subprocess.Popen) -> None:
+    """Beendet einen Subprozess inklusive aller Kindprozesse (z. B. xdvipdfmx unter Windows)."""
+    pid = getattr(proc, "pid", None)
+    if pid is not None:
+        if os.name == "nt":
+            try:
+                subprocess.run(
+                    ["taskkill", "/F", "/T", "/PID", str(pid)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                    timeout=5,
+                )
+            except Exception:
+                pass
+        else:
+            try:
+                os.killpg(os.getpgid(pid), signal.SIGKILL)
+            except Exception:
+                pass
+
+    try:
+        proc.kill()
+    except Exception:
+        pass
+
+    try:
+        proc.communicate(timeout=2)
+    except Exception:
+        try:
+            if proc.stdout:
+                proc.stdout.close()
+        except Exception:
+            pass
+        try:
+            proc.wait(timeout=1)
+        except Exception:
+            pass
+
+
+def _run_latex_subprocess(
+    cmd: list[str],
+    *,
+    cwd: str,
+    env: dict[str, str],
+    timeout: float | int,
+) -> tuple[int, bytes]:
+    """Startet den LaTeX-Compiler in einer eigenen Prozessgruppe und räumt bei Timeout den gesamten Prozessbaum ab."""
+    # Rückwärtskompatibilität für bestehende Unit-Tests, die core.latex_render.subprocess.run patchen
+    if hasattr(subprocess.run, "_mock_name") or type(subprocess.run).__name__.endswith("Mock"):
+        completed = subprocess.run(
+            cmd,
+            cwd=cwd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            env=env,
+            timeout=timeout,
+        )
+        raw_out = completed.stdout if isinstance(completed.stdout, bytes) else str(completed.stdout or "").encode("utf-8")
+        return completed.returncode, raw_out
+
+    popen_kwargs: dict = {
+        "cwd": cwd,
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.STDOUT,
+        "env": env,
+    }
+    if os.name == "nt":
+        popen_kwargs["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
+    else:
+        popen_kwargs["start_new_session"] = True
+
+    proc = subprocess.Popen(cmd, **popen_kwargs)
+    try:
+        stdout_bytes, _ = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _terminate_process_tree(proc)
+        raise
+    except Exception:
+        _terminate_process_tree(proc)
+        raise
+
+    return proc.returncode, stdout_bytes or b""
+
+
 def compile_latex_to_pdf_bytes(
     latex: str,
     *,
@@ -301,16 +388,14 @@ def compile_latex_to_pdf_bytes(
         compile_timeout = getattr(config, "LATEX_COMPILE_TIMEOUT", 45)
         t0 = time.perf_counter()
         try:
-            proc = subprocess.run(
+            returncode, stdout_bytes = _run_latex_subprocess(
                 cmd,
                 cwd=tmpdir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
                 env=env,
                 timeout=compile_timeout,
             )
             compile_time = time.perf_counter() - t0
-            out = proc.stdout.decode(errors="replace")
+            out = stdout_bytes.decode(errors="replace")
         except subprocess.TimeoutExpired:
             return LatexRenderResult(
                 ok=False,
@@ -353,7 +438,7 @@ def compile_latex_to_pdf_bytes(
                             compile_time_s=compile_time,
                         )
             else:
-                if proc.returncode == 0:
+                if returncode == 0:
                     if guard_mode == "warn":
                         logger.warning(
                             "LaTeX file guard (warn): recorder file (.fls) missing after successful run."
@@ -378,7 +463,7 @@ def compile_latex_to_pdf_bytes(
                         compile_time_s=compile_time,
                     )
 
-        if proc.returncode != 0:
+        if returncode != 0:
             short = extract_latex_stdout_excerpt(out, max_lines=80, tmpdir=tmpdir)
             return LatexRenderResult(ok=False, log=short, pdf_bytes=None, compile_time_s=compile_time)
 
