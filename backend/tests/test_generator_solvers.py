@@ -229,6 +229,33 @@ def test_sitzplan_dislikes_symmetric():
     assert res.per_student_report["Tom"]["violates_dislike"] is False
 
 
+def test_sitzplan_solve_greedy_deterministic():
+    from generators.sitzplan import solve_greedy
+    import numpy as np
+
+    req = SitzplanRequest(
+        students=[
+            StudentConfig(name="Alice", wants_neighbors=["Bob", "Charlie"], wants_front=True),
+            StudentConfig(name="Bob", wants_neighbors=["Alice"]),
+            StudentConfig(name="Charlie", wants_neighbors=["Alice"], dislikes_neighbors=["David"]),
+            StudentConfig(name="David", dislikes_neighbors=["Charlie"]),
+            StudentConfig(name="Eve", wants_front=True),
+            StudentConfig(name="Frank"),
+        ],
+        layout=LayoutConfig(rows=3, cols=3, front_rows=1),
+        hard_rules=HardRuleConfig(no_alone=True),
+    )
+
+    assignment1 = solve_greedy(req)
+    assignment2 = solve_greedy(req)
+
+    assert assignment1 == assignment2
+    assert len(assignment1) == 6
+    for name, seat in assignment1.items():
+        assert isinstance(seat, (int, np.integer))
+        assert 0 <= int(seat) < 9
+
+
 def test_flaschenzug_tangent_clamping():
     from generators.flaschenzug import tangent_point_external, tangent_line_two_circles
     # If point is barely at boundary or float exceeds slightly

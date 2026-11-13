@@ -4,6 +4,7 @@ import numpy as np
 from typing import List, Tuple, Dict, Set
 from dataclasses import dataclass, field
 from collections import defaultdict
+import os
 import time
 
 try:
@@ -260,7 +261,8 @@ def solve_with_ortools(req: SitzplanRequest) -> Dict[str, int]:
     
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = 15.0
-    solver.parameters.num_search_workers = 8
+    solver.parameters.num_search_workers = min(4, os.cpu_count() or 1)
+    solver.parameters.random_seed = 42
     res = solver.Solve(model)
     
     if res in (cp_model.OPTIMAL, cp_model.FEASIBLE):
@@ -323,7 +325,7 @@ def solve_greedy(req: SitzplanRequest) -> Dict[str, int]:
     for hub in hubs:
         if hub in used or not free: continue
         # Find a seat with free neighbors
-        seat = next(iter(free))
+        seat = min(free)
         place(hub, seat)
         
     # Then pairs
@@ -331,15 +333,15 @@ def solve_greedy(req: SitzplanRequest) -> Dict[str, int]:
     for st in req.students:
         for n in st.wants_neighbors:
             if n in idx_by_name and n != st.name:
-                wish_neighbors_pairs.add(frozenset([st.name, n]))
+                wish_neighbors_pairs.add(tuple(sorted((st.name, n))))
     
-    pairs = [list(p) for p in wish_neighbors_pairs]
+    pairs = [list(p) for p in sorted(wish_neighbors_pairs)]
     rng.shuffle(pairs)
     for a, b in pairs:
         if a in used or b in used: continue
         done = False
-        for p in list(free):
-            for q in adj_map[p]:
+        for p in sorted(free):
+            for q in sorted(adj_map[p]):
                 if q in free and not forbidden(a, b):
                     place(a, p); place(b, q)
                     done = True
@@ -348,7 +350,7 @@ def solve_greedy(req: SitzplanRequest) -> Dict[str, int]:
             
     # Then front wishes
     front_seat_ids = [rc_to_id(r, c, cols) for r in range(rows - layout.front_rows, rows) for c in range(cols) if (r, c) in allowed_coords]
-    front_free = [p for p in free if p in front_seat_ids]
+    front_free = [p for p in sorted(free) if p in front_seat_ids]
     rng.shuffle(front_free)
     for s in req.students:
         if s.name in used: continue
@@ -376,14 +378,14 @@ def solve_greedy(req: SitzplanRequest) -> Dict[str, int]:
             if s.name in used or not free:
                 continue
             # Prefer free seat with occupied neighbor
-            candidate_seats = [p for p in free if any(q in free for q in alone_adj_map[p]) or any(assignment.get(name) in alone_adj_map[p] for name in used)]
+            candidate_seats = [p for p in sorted(free) if any(q in free for q in alone_adj_map[p]) or any(assignment.get(name) in alone_adj_map[p] for name in used)]
             if candidate_seats:
-                chosen = rng.choice(candidate_seats)
+                chosen = int(rng.choice(candidate_seats))
             else:
-                chosen = next(iter(free))
+                chosen = min(free)
             place(s.name, chosen)
     else:
-        rest = list(free); rng.shuffle(rest)
+        rest = sorted(free); rng.shuffle(rest)
         for s in req.students:
             if s.name in used: continue
             if rest:
