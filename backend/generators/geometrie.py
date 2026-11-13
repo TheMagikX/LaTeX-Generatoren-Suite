@@ -569,7 +569,7 @@ def _generate_tikz_quad(cfg: GeometrieConfig, result: dict) -> str:
     if ms.a or ms.b or ms.c or ms.d:
         code.append(
             f"  \\draw[{st.line_width}, draw={st.stroke_color}, fill={st.fill_color}, fill opacity={st.fill_opacity}] "
-            f"(A) -- node[below] {{{l_a}}} (B) -- node[right] {{{l_b}}} (C) -- node[above] {{{l_c}}} (D) -- node[left] {{{l_d}}} cycle;"
+            f"(A) -- node[auto] {{{l_a}}} (B) -- node[auto] {{{l_b}}} (C) -- node[auto] {{{l_c}}} (D) -- node[auto] {{{l_d}}} cycle;"
         )
     else:
         code.append(
@@ -629,7 +629,6 @@ def generate_geometrie_latex(
     default_pakete = (
         "\\usepackage{tikz}\n"
         "\\usetikzlibrary{calc, angles, quotes, intersections}\n"
-        "\\usepackage[utf8]{inputenc}\n"
     )
     body = "\\begin{tikzpicture}\n" + tikz_body.strip() + "\n\\end{tikzpicture}"
 

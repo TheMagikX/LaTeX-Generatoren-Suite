@@ -13,7 +13,7 @@ export const COMPONENT_VERSIONS = {
     koordinatensystem_3d: "5.0.6",
     baumdiagramm: "5.0.8",
     schaltplan: "5.0.3",
-    geometrie: "5.0.6",
+    geometrie: "5.0.7",
     latex: "5.0.4",
     erwartungshorizont: "5.0.4",
     tikz: "5.0.3",
