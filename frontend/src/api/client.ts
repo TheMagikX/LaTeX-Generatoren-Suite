@@ -281,18 +281,25 @@ export const generateStatistik = async (config: StatistikConfig): Promise<Statis
   return response.data
 }
 
+export const encodePresetPath = (name: string): string => {
+  return name
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/')
+}
+
 export const listPresets = async <TConfig>(generator: string): Promise<PresetMap<TConfig>> => {
-  const response = await apiClient.get<PresetMap<TConfig>>(`presets/${generator}`)
+  const response = await apiClient.get<PresetMap<TConfig>>(`presets/${encodeURIComponent(generator)}`)
   return response.data
 }
 
 export const savePreset = async <TConfig>(generator: string, name: string, data: TConfig): Promise<{ ok: boolean }> => {
-  const response = await apiClient.post(`presets/${generator}/${name}`, data)
+  const response = await apiClient.post<{ ok: boolean }>(`presets/${encodeURIComponent(generator)}/${encodePresetPath(name)}`, data)
   return response.data
 }
 
 export const deletePreset = async (generator: string, name: string): Promise<{ ok: boolean }> => {
-  const response = await apiClient.delete<{ ok: boolean }>(`presets/${generator}/${name}`)
+  const response = await apiClient.delete<{ ok: boolean }>(`presets/${encodeURIComponent(generator)}/${encodePresetPath(name)}`)
   return response.data
 }
 
@@ -305,18 +312,18 @@ export interface PresetItemData<TConfig> {
 export type DetailedPresetMap<TConfig> = Record<string, PresetItemData<TConfig>>
 
 export const listPresetsDetailed = async <TConfig>(generator: string): Promise<DetailedPresetMap<TConfig>> => {
-  const response = await apiClient.get<DetailedPresetMap<TConfig>>(`presets/${generator}/detailed`)
+  const response = await apiClient.get<DetailedPresetMap<TConfig>>(`presets/${encodeURIComponent(generator)}/detailed`)
   return response.data
 }
 
 export const savePresetThumbnail = async (generator: string, name: string, thumbnailBase64: string): Promise<void> => {
-  await apiClient.put(`presets/${generator}/thumbnail`, { thumbnail_base64: thumbnailBase64 }, { params: { name } })
+  await apiClient.put(`presets/${encodeURIComponent(generator)}/thumbnail`, { thumbnail_base64: thumbnailBase64 }, { params: { name } })
 }
 
 export const getPresetThumbnailUrl = (generator: string, presetName: string, version?: number): string => {
   const params = new URLSearchParams({ name: presetName })
   if (version !== undefined) params.set('v', String(version))
-  return `${API_BASE_URL}presets/${generator}/thumbnail?${params.toString()}`
+  return `${API_BASE_URL}presets/${encodeURIComponent(generator)}/thumbnail?${params.toString()}`
 }
 
 export const triggerFileDownload = (source: Blob | string, filename: string): void => {

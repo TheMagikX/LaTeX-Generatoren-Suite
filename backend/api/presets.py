@@ -19,6 +19,7 @@ MAX_PRESET_BYTES = 1 * 1024 * 1024  # 1 MB Maximum pro Preset-JSON
 MAX_THUMBNAIL_BYTES = 2 * 1024 * 1024  # 2 MB Maximum pro Thumbnail-PNG
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 THUMBNAIL_SUFFIX = ".thumb.png"
+INVALID_FILENAME_CHARS: frozenset[str] = frozenset('<>:"|?*\x00')
 
 
 class ThumbnailSaveRequest(BaseModel):
@@ -58,15 +59,21 @@ def _validate_generator_name(generator: str) -> Path:
         raise HTTPException(status_code=400, detail=f"Invalid generator name: '{generator}'")
     return config.PRESETS_DIR / clean
 
+
+def _has_invalid_filename_chars(part: str) -> bool:
+    return any(ch in INVALID_FILENAME_CHARS or ord(ch) < 32 for ch in part)
+
+
 def _resolve_preset_file(generator: str, name: str) -> Path:
     base_dir = _validate_generator_name(generator)
-    clean_path = name.replace(" / ", "/").strip()
+    unquoted_name = urllib.parse.unquote(name)
+    clean_path = unquoted_name.replace(" / ", "/").strip()
     parts = [p.strip() for p in clean_path.split("/") if p.strip() and p.strip() != "."]
     if not parts:
         raise HTTPException(status_code=400, detail="Invalid preset name")
 
     for part in parts:
-        if part == ".." or "\\" in part:
+        if part == ".." or "\\" in part or _has_invalid_filename_chars(part):
             raise HTTPException(status_code=400, detail="Invalid preset name")
 
     filename = parts[-1] + ".json"
@@ -75,7 +82,7 @@ def _resolve_preset_file(generator: str, name: str) -> Path:
 
     try:
         file_path.resolve().relative_to(base_dir.resolve())
-    except ValueError:
+    except (ValueError, OSError):
         raise HTTPException(status_code=400, detail="Invalid preset path")
 
     return file_path
@@ -178,12 +185,13 @@ async def download_preset_folder(generator: str, folder: str = ""):
     if not base_dir.exists():
         raise HTTPException(status_code=404, detail="Generator presets directory not found")
     
-    clean_path = folder.replace(" / ", "/").strip()
+    unquoted_folder = urllib.parse.unquote(folder)
+    clean_path = unquoted_folder.replace(" / ", "/").strip()
     parts = [p.strip() for p in clean_path.split("/") if p.strip() and p.strip() != "."]
     
     # Check for path traversal attempt
     for part in parts:
-        if part == ".." or "\\" in part:
+        if part == ".." or "\\" in part or _has_invalid_filename_chars(part):
             raise HTTPException(status_code=400, detail="Invalid folder path")
     
     target_dir = base_dir.joinpath(*parts) if parts else base_dir
@@ -191,7 +199,7 @@ async def download_preset_folder(generator: str, folder: str = ""):
     # Ensure target_dir is inside base_dir
     try:
         target_dir.resolve().relative_to(base_dir.resolve())
-    except ValueError:
+    except (ValueError, OSError):
         raise HTTPException(status_code=400, detail="Invalid folder path")
 
     if not target_dir.exists() or not target_dir.is_dir():
@@ -232,7 +240,7 @@ async def save_preset(generator: str, name: str, data: Dict[str, Any]):
             detail="Preset payload exceeds maximum allowed size (1 MB).",
         )
     config.atomic_write_text(file_path, serialized, encoding="utf-8")
-    return {"message": f"Preset {name} saved successfully"}
+    return {"ok": True, "message": f"Preset {name} saved successfully"}
 
 @router.delete("/{generator}/{name:path}")
 async def delete_preset(generator: str, name: str):
@@ -242,6 +250,6 @@ async def delete_preset(generator: str, name: str):
         thumb = _thumbnail_path(file_path)
         if thumb.is_file():
             thumb.unlink()
-        return {"message": f"Preset {name} deleted successfully"}
+        return {"ok": True, "message": f"Preset {name} deleted successfully"}
     else:
         raise HTTPException(status_code=404, detail="Preset not found")
