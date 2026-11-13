@@ -100,6 +100,61 @@ def test_optik_lens_formula_virtual_image():
     assert math.isclose(abs(img["m"]), 2.0, abs_tol=1e-2)
 
 
+def test_optik_multi_lens_object_at_focal_point_collimator_converging():
+    """Objekt im Brennpunkt der 1. Linse -> Bild im Unendlichen -> 2. Sammellinse fokussiert in Brennebene."""
+    cfg = OptikConfig(
+        telescope_mode=False,
+        lenses=[
+            LensConfig(x=0.0, f=3.0, h=5.0),
+            LensConfig(x=5.0, f=4.0, h=5.0),
+        ],
+        objects=[OptikObject(x=-3.0, G=2.0, label="G")]
+    )
+    images = calculate_images(cfg)
+    assert len(images) == 2
+
+    # Bild 1: Im Unendlichen
+    img1 = images[0]
+    assert math.isclose(img1["g"], 3.0, abs_tol=1e-4)
+    assert not math.isfinite(img1["b"])
+    assert not math.isfinite(img1["x"])
+    assert not math.isfinite(img1["y"])
+
+    # Bild 2: In Brennebene von Linse 2 (x = 5 + 4 = 9.0), y = -(G / f1) * f2 = -2/3 * 4 = -8/3
+    img2 = images[1]
+    assert math.isclose(img2["b"], 4.0, abs_tol=1e-4)
+    assert math.isclose(img2["x"], 9.0, abs_tol=1e-4)
+    assert math.isclose(img2["y"], -8.0 / 3.0, abs_tol=1e-4)
+    assert img2["virtual"] is False
+    assert math.isfinite(img2["x"])
+    assert math.isfinite(img2["y"])
+
+
+def test_optik_multi_lens_object_at_focal_point_collimator_diverging():
+    """Objekt im Brennpunkt der 1. Linse -> Bild im Unendlichen -> 2. Zerstreuungslinse fokussiert virtuell."""
+    cfg = OptikConfig(
+        telescope_mode=False,
+        lenses=[
+            LensConfig(x=0.0, f=3.0, h=5.0),
+            LensConfig(x=5.0, f=-4.0, h=5.0),
+        ],
+        objects=[OptikObject(x=-3.0, G=2.0, label="G")]
+    )
+    images = calculate_images(cfg)
+    assert len(images) == 2
+
+    img1 = images[0]
+    assert not math.isfinite(img1["x"])
+
+    img2 = images[1]
+    assert math.isclose(img2["b"], -4.0, abs_tol=1e-4)
+    assert math.isclose(img2["x"], 1.0, abs_tol=1e-4)
+    assert math.isclose(img2["y"], 8.0 / 3.0, abs_tol=1e-4)
+    assert img2["virtual"] is True
+    assert math.isfinite(img2["x"])
+    assert math.isfinite(img2["y"])
+
+
 def test_statistik_calculate_params():
     data = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
     params = calculate_params(data)

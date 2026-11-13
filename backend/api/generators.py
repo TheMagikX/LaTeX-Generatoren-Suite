@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import logging
+import math
 from fastapi import APIRouter, HTTPException
 from models.koordinatensystem import CoordinateSystemConfig
 from generators.koordinatensystem import generate_koordinatensystem_latex
@@ -172,9 +173,9 @@ async def generate_optik(cfg: OptikConfig):
     images = calculate_images(cfg)
     latex = generate_optik_latex(cfg, images)
 
-    # Serialisiere Inf-Werte für JSON
+    # Serialisiere Inf-/NaN-Werte für JSON
     def _safe(v):
-        if v == float("inf") or v == float("-inf"):
+        if isinstance(v, float) and not math.isfinite(v):
             return None
         return v
 

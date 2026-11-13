@@ -50,6 +50,9 @@ def calculate_images(cfg: OptikConfig, x_start: float = None, y_start: float = N
     # Bestimme Startwerte
     x_curr = x_start
     y_curr = y_start
+    # Steigung eines kollimierten (parallelen) Strahlenbündels, falls das
+    # vorherige Bild im Unendlichen liegt (g_k == f_k).
+    parallel_slope: float | None = None
 
     # Default-Fallback (für Metrics-Anzeige des ersten Objekts)
     if x_curr is None:
@@ -71,6 +74,18 @@ def calculate_images(cfg: OptikConfig, x_start: float = None, y_start: float = N
             y_new = Lf * math.tan(math.radians(-cfg.alpha))
             mk = float("inf")
             virt = bk < 0
+            parallel_slope = None
+        elif not math.isfinite(x_curr) or not math.isfinite(y_curr):
+            # Vorheriges Zwischenbild liegt im Unendlichen (paralleles Strahlenbündel).
+            # Linse L bricht paralleles Bündel der Steigung parallel_slope in ihre Brennebene (b = f).
+            gk = float("inf")
+            bk = Lf
+            x_new = Lx + bk
+            slope = parallel_slope if (parallel_slope is not None and math.isfinite(parallel_slope)) else 0.0
+            y_new = slope * Lf
+            mk = float("inf")
+            virt = bk < 0
+            parallel_slope = None
         else:
             gk = Lx - x_curr
             if abs(gk) < 1e-9:
@@ -79,6 +94,7 @@ def calculate_images(cfg: OptikConfig, x_start: float = None, y_start: float = N
                 mk = 1.0
                 y_new = y_curr
                 virt = False
+                parallel_slope = None
             else:
                 inv_b = 1.0 / Lf - 1.0 / gk
                 if abs(inv_b) < 1e-12:
@@ -87,12 +103,15 @@ def calculate_images(cfg: OptikConfig, x_start: float = None, y_start: float = N
                     y_new = float("inf")
                     mk = float("inf")
                     virt = False
+                    # Mittelpunktstrahl durch vorherige Linse bestimmt die Bündelsteigung: -y_curr / Lf
+                    parallel_slope = -y_curr / Lf
                 else:
                     bk = 1.0 / inv_b
                     x_new = Lx + bk
                     mk = bk / gk
                     y_new = -mk * y_curr
                     virt = bk < 0
+                    parallel_slope = None
 
         images.append(
             {
@@ -147,7 +166,7 @@ def _build_tikz(
             poi.append(obj.x)
             obj_images = calculate_images(cfg, x_start=obj.x, y_start=obj.G)
             for img in obj_images:
-                if img["x"] != float("inf"):
+                if math.isfinite(img["x"]):
                     poi.append(img["x"])
 
     for src in cfg.light_sources:
@@ -155,7 +174,7 @@ def _build_tikz(
         poi.append(src.x)
         src_images = calculate_images(cfg, x_start=src.x, y_start=src.y)
         for img in src_images:
-            if img["x"] != float("inf"):
+            if math.isfinite(img["x"]):
                 poi.append(img["x"])
 
     if poi:
@@ -225,7 +244,7 @@ def _build_tikz(
             
             obj_images = calculate_images(cfg, x_start=obj.x, y_start=obj.G)
             for k, img in enumerate(obj_images):
-                if img["x"] == float("inf"): continue
+                if not math.isfinite(img["x"]) or not math.isfinite(img["y"]): continue
                 is_final = k == len(obj_images) - 1
                 style = f"{obj.color}"
                 if img["virtual"]: style = f"dashed, {style}"
@@ -281,7 +300,7 @@ def _build_tikz(
             pts.append((xn, yn))
             m_new = m - yn / L.f
             img = path_images[k]
-            if img["x"] != float("inf") and img["virtual"]:
+            if math.isfinite(img["x"]) and math.isfinite(img["y"]) and img["virtual"]:
                 ext_x = xn + (img["x"] - xn) * getattr(cfg, 'virtual_ray_extension', 1.0)
                 ext_y = yn + (img["y"] - yn) * getattr(cfg, 'virtual_ray_extension', 1.0)
                 virtual_exts.append(((xn, yn), (ext_x, ext_y)))
@@ -319,7 +338,7 @@ def _build_tikz(
         images = calculate_images(cfg, x_start=obj.x, y_start=obj.G)
         if any([cfg.show_annot_g, cfg.show_annot_b, cfg.show_annot_f, cfg.show_annot_G, cfg.show_annot_B]):
             max_lh = max([L.h / 2.0 for L in lenses]) if lenses else 2.0
-            tip_max = max([max_lh + 0.1, obj.G + 0.1] + [abs(img["y"]) + 0.1 for img in images if img["x"] != float("inf")] + [0])
+            tip_max = max([max_lh + 0.1, obj.G + 0.1] + [abs(img["y"]) + 0.1 for img in images if math.isfinite(img["x"]) and math.isfinite(img["y"])] + [0])
             ann_f_y, ann_gb_y, tick = tip_max, tip_max + 0.6, 0.12
             def _tick(x, y): return rf"  \draw ({_f4(x)},{_f4(y - tick)}) -- ({_f4(x)},{_f4(y + tick)});"
             def _qty(v): return rf"\qty{{{_fmt_val(v)}}}{{cm}}"
@@ -332,17 +351,17 @@ def _build_tikz(
                     lines.append(_tick(L.x, ann_f_y)); lines.append(_tick(fp_x, ann_f_y))
                 if cfg.show_annot_g:
                     okx = obj.x if i == 0 else images[i-1]["x"]
-                    if okx != float("inf"):
+                    if math.isfinite(okx):
                         lines.append(rf"  \draw[<->] ({_f4(min(okx, L.x))},{_f4(ann_gb_y)}) -- ({_f4(max(okx, L.x))},{_f4(ann_gb_y)}) node[midway, above, font=\scriptsize] {{$g{idx} = {_qty(abs(L.x - okx))}$}};")
                         lines.append(_tick(okx, ann_gb_y)); lines.append(_tick(L.x, ann_gb_y))
-                if cfg.show_annot_b and images[i]["x"] != float("inf"):
+                if cfg.show_annot_b and math.isfinite(images[i]["x"]):
                     lines.append(rf"  \draw[<->] ({_f4(min(L.x, images[i]['x']))},{_f4(ann_gb_y + 0.6)}) -- ({_f4(max(L.x, images[i]['x']))},{_f4(ann_gb_y + 0.6)}) node[midway, above, font=\scriptsize] {{$b{idx} = {_qty(abs(images[i]['x'] - L.x))}$}};")
                     lines.append(_tick(L.x, ann_gb_y + 0.6)); lines.append(_tick(images[i]["x"], ann_gb_y + 0.6))
 
             if cfg.show_annot_G:
                 gx = obj.x - 0.45
                 lines.append(rf"  \draw[<->] ({_f4(gx)},0) -- ({_f4(gx)},{_f4(obj.G)}) node[midway, left, font=\scriptsize] {{$G = {_qty(obj.G)}$}};")
-            if cfg.show_annot_B and images and images[-1]["x"] != float("inf"):
+            if cfg.show_annot_B and images and math.isfinite(images[-1]["x"]) and math.isfinite(images[-1]["y"]):
                 bx = images[-1]["x"] + 0.45
                 lines.append(rf"  \draw[<->] ({_f4(bx)},0) -- ({_f4(bx)},{_f4(images[-1]['y'])}) node[midway, right, font=\scriptsize] {{$B = {_qty(abs(images[-1]['y']))}$}};")
 

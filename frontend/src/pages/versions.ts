@@ -20,7 +20,7 @@ export const COMPONENT_VERSIONS = {
     arbeitsblattgenerator: "5.0.7",
     flaschenzug: "5.0.8",
     zahlenstrahlgenerator: "5.0.6",
-    optikgenerator: "5.0.4",
+    optikgenerator: "5.0.5",
     bruchgenerator: "5.0.6",
     glucksradgenerator: "5.0.5",
     sitzplangenerator: "5.0.4",
