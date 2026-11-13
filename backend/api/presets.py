@@ -112,7 +112,7 @@ def _decode_thumbnail(payload: str) -> bytes:
 
 
 @router.get("/{generator}")
-async def list_presets(generator: str):
+def list_presets(generator: str):
     base_dir = _validate_generator_name(generator)
     if not base_dir.exists():
         return {}
@@ -130,7 +130,7 @@ async def list_presets(generator: str):
     return presets
 
 @router.get("/{generator}/detailed")
-async def list_presets_detailed(generator: str):
+def list_presets_detailed(generator: str):
     """Wie list_presets, aber mit Metadaten (has_thumbnail, updated_at) je Preset."""
     base_dir = _validate_generator_name(generator)
     if not base_dir.exists():
@@ -157,7 +157,7 @@ async def list_presets_detailed(generator: str):
 
 
 @router.get("/{generator}/thumbnail")
-async def get_preset_thumbnail(generator: str, name: str):
+def get_preset_thumbnail(generator: str, name: str):
     thumb = _thumbnail_path(_resolve_preset_file(generator, name))
     if not thumb.is_file():
         raise HTTPException(status_code=404, detail="Thumbnail not found")
@@ -170,7 +170,7 @@ async def get_preset_thumbnail(generator: str, name: str):
 
 
 @router.put("/{generator}/thumbnail")
-async def save_preset_thumbnail(generator: str, name: str, body: ThumbnailSaveRequest):
+def save_preset_thumbnail(generator: str, name: str, body: ThumbnailSaveRequest):
     file_path = _resolve_preset_file(generator, name)
     if not file_path.is_file():
         raise HTTPException(status_code=404, detail="Preset not found")
@@ -180,7 +180,7 @@ async def save_preset_thumbnail(generator: str, name: str, body: ThumbnailSaveRe
 
 
 @router.get("/{generator}/download-folder")
-async def download_preset_folder(generator: str, folder: str = ""):
+def download_preset_folder(generator: str, folder: str = ""):
     base_dir = _validate_generator_name(generator)
     if not base_dir.exists():
         raise HTTPException(status_code=404, detail="Generator presets directory not found")
@@ -231,7 +231,7 @@ async def download_preset_folder(generator: str, folder: str = ""):
     )
 
 @router.post("/{generator}/{name:path}")
-async def save_preset(generator: str, name: str, data: Dict[str, Any]):
+def save_preset(generator: str, name: str, data: Dict[str, Any]):
     file_path = _resolve_preset_file(generator, name)
     serialized = json.dumps(data, ensure_ascii=False, indent=2)
     if len(serialized.encode("utf-8")) > MAX_PRESET_BYTES:
@@ -243,7 +243,7 @@ async def save_preset(generator: str, name: str, data: Dict[str, Any]):
     return {"ok": True, "message": f"Preset {name} saved successfully"}
 
 @router.delete("/{generator}/{name:path}")
-async def delete_preset(generator: str, name: str):
+def delete_preset(generator: str, name: str):
     file_path = _resolve_preset_file(generator, name)
     if file_path.exists() and file_path.is_file():
         file_path.unlink()

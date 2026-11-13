@@ -18,7 +18,7 @@ router = APIRouter(prefix="/datasets", tags=["Datasets"])
 
 
 @router.get("", response_model=list[dict[str, Any]])
-async def get_datasets():
+def get_datasets():
     """Gibt eine Liste aller im Datensatz-Ordner vorhandenen CSV-Dateien zurück."""
     try:
         return list_csv_datasets()
@@ -59,7 +59,7 @@ async def upload_dataset(file: UploadFile = File(...)):
 
 
 @router.delete("/{filename}")
-async def delete_dataset(filename: str):
+def delete_dataset(filename: str):
     """Löscht eine CSV-Datei aus dem Datensatz-Verzeichnis."""
     try:
         clean_name = sanitize_csv_filename(filename)

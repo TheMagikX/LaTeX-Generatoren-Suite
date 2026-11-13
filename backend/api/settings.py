@@ -187,13 +187,13 @@ def _get_latex_status_dict() -> dict:
 
 
 @router.get("/latex")
-async def get_latex_settings():
+def get_latex_settings():
     """Gibt den aktuellen Status von commands.tex, Pakete.tex, Zusatz-Inputs und .sty-Paketen zurück."""
     return _get_latex_status_dict()
 
 
 @router.post("/latex")
-async def update_latex_settings(payload: LatexSettingsPayload):
+def update_latex_settings(payload: LatexSettingsPayload):
     """Aktualisiert commands.tex, Pakete.tex, zusätzliche Inputs und/oder .sty-Pakete."""
     settings = config.get_user_settings()
     if "latex" not in settings or not isinstance(settings["latex"], dict):
@@ -414,7 +414,7 @@ async def browse_latex_file(payload: Optional[BrowsePayload] = None):
 
 
 @router.get("/updates")
-async def get_update_status():
+def get_update_status():
     """Gibt den aktuellen Update-Status und Einstellungen zurück."""
     update_cfg = config.get_update_settings()
     return {
@@ -427,7 +427,7 @@ async def get_update_status():
 
 
 @router.post("/updates")
-async def update_settings_config(payload: UpdateSettingsPayload):
+def update_settings_config(payload: UpdateSettingsPayload):
     """Speichert die Update-Einstellungen (z. B. check_on_startup)."""
     settings = config.get_user_settings()
     updates = settings.get("updates", {})

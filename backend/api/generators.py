@@ -44,7 +44,7 @@ logger = logging.getLogger("generator_suite.generators")
 router = APIRouter(prefix="/generators", tags=["Generators"])
 
 @router.post("/statistik")
-async def generate_statistik(cfg: StatistikConfig):
+def generate_statistik(cfg: StatistikConfig):
     try:
         latex = generate_statistik_latex(cfg)
         
@@ -65,45 +65,45 @@ async def generate_statistik(cfg: StatistikConfig):
         raise HTTPException(status_code=500, detail="Fehler bei der Generierung der LaTeX-Vorlage.")
 
 @router.post("/stellenwerttafel")
-async def generate_stellenwerttafel(cfg: StellenwertConfig):
+def generate_stellenwerttafel(cfg: StellenwertConfig):
     latex = generate_stellenwerttafel_full_latex(cfg)
     return {"latex": latex}
 
 @router.post("/sitzplan")
-async def generate_sitzplan(cfg: SitzplanRequest):
+def generate_sitzplan(cfg: SitzplanRequest):
     return solve_sitzplan(cfg)
 
 @router.post("/schaltplan")
-async def generate_schaltplan(cfg: SchaltplanConfig):
+def generate_schaltplan(cfg: SchaltplanConfig):
     latex = generate_schaltplan_latex(cfg)
     return {"latex": latex}
 
 @router.post("/bruch")
-async def generate_bruch(cfg: BruchConfig):
+def generate_bruch(cfg: BruchConfig):
     return generate_bruch_latex(cfg)
 
 @router.post("/zahlenstrahl")
-async def generate_zahlenstrahl(cfg: ZahlenstrahlConfig):
+def generate_zahlenstrahl(cfg: ZahlenstrahlConfig):
     latex = generate_zahlenstrahl_latex(cfg)
     return {"latex": latex}
 
 @router.post("/lateximage")
-async def generate_lateximage(cfg: LatexImageConfig):
+def generate_lateximage(cfg: LatexImageConfig):
     latex = generate_latex_image_latex(cfg)
     return {"latex": latex}
 
 @router.post("/erwartungshorizont")
-async def generate_erwartungshorizont(cfg: ErwartungshorizontConfig):
+def generate_erwartungshorizont(cfg: ErwartungshorizontConfig):
     latex = generate_erwartungshorizont_latex(cfg)
     return {"latex": latex}
 
 @router.post("/tikzpicture")
-async def generate_tikzpicture(cfg: TikzPictureConfig):
+def generate_tikzpicture(cfg: TikzPictureConfig):
     latex = generate_tikz_picture_latex(cfg)
     return {"latex": latex}
 
 @router.post("/arbeitsblatt/generate")
-async def generate_arbeitsblatt(cfg: ArbeitsblattConfig):
+def generate_arbeitsblatt(cfg: ArbeitsblattConfig):
     vars = sanitize_worksheet_variables(cfg.variables)
     exec_error = None
     seed = cfg.random_seed
@@ -120,17 +120,17 @@ async def generate_arbeitsblatt(cfg: ArbeitsblattConfig):
     }
 
 @router.post("/koordinatensystem")
-async def generate_koordinatensystem(cfg: CoordinateSystemConfig):
+def generate_koordinatensystem(cfg: CoordinateSystemConfig):
     latex = generate_koordinatensystem_latex(cfg)
     return {"latex": latex}
 
 @router.post("/koordinatensystem3d")
-async def generate_koordinatensystem3d(cfg: CoordinateSystem3DConfig):
+def generate_koordinatensystem3d(cfg: CoordinateSystem3DConfig):
     latex = generate_koordinatensystem3d_latex(cfg)
     return {"latex": latex}
 
 @router.post("/baumdiagramm")
-async def generate_baumdiagramm(cfg: BaumdiagrammConfig):
+def generate_baumdiagramm(cfg: BaumdiagrammConfig):
     try:
         latex = generate_baumdiagramm_latex(cfg)
         return {"latex": latex}
@@ -138,12 +138,12 @@ async def generate_baumdiagramm(cfg: BaumdiagrammConfig):
         raise HTTPException(status_code=422, detail=str(e))
 
 @router.post("/glucksrad")
-async def generate_glucksrad(cfg: GlucksradConfig):
+def generate_glucksrad(cfg: GlucksradConfig):
     latex = generate_glucksrad_latex(cfg)
     return {"latex": latex}
 
 @router.post("/geometrie")
-async def generate_geometrie(cfg: GeometrieConfig):
+def generate_geometrie(cfg: GeometrieConfig):
     if cfg.shape == "Triangle":
         result, error = solve_triangle(cfg.construction)
     else:
@@ -164,7 +164,7 @@ async def generate_geometrie(cfg: GeometrieConfig):
     return {"latex": latex, "solved": solved, "error": error}
 
 @router.post("/optik")
-async def generate_optik(cfg: OptikConfig):
+def generate_optik(cfg: OptikConfig):
     """
     Berechnet das Linsensystem und gibt den LaTeX-Code sowie die
     berechneten Bildwerte (b, B, Abbildungsmaßstab, virtuell/reell)
@@ -194,12 +194,12 @@ async def generate_optik(cfg: OptikConfig):
     return {"latex": latex, "metrics": metrics}
 
 @router.post("/flaschenzug")
-async def generate_flaschenzug(cfg: FlaschenzugConfig):
+def generate_flaschenzug(cfg: FlaschenzugConfig):
     latex = generate_flaschenzug_latex(cfg)
     return {"latex": latex}
 
 @router.post("/strahlenoptik")
-async def generate_strahlenoptik(cfg: StrahlenoptikConfig):
+def generate_strahlenoptik(cfg: StrahlenoptikConfig):
     try:
         latex = generate_strahlenoptik_latex(cfg)
         return {"latex": latex}
