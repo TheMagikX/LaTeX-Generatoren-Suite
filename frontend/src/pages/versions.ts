@@ -9,11 +9,11 @@ export const LATEX_RENDERER = "5.0.8";
 export const FILE_SAVER = "5.0.1";
 
 export const COMPONENT_VERSIONS = {
-    koordinatensystem: "5.1.9",
+    koordinatensystem: "5.1.10",
     koordinatensystem_3d: "5.0.8",
-    baumdiagramm: "5.0.9",
+    baumdiagramm: "5.0.10",
     schaltplan: "5.0.3",
-    geometrie: "5.0.8",
+    geometrie: "5.0.9",
     latex: "5.0.4",
     erwartungshorizont: "5.0.5",
     tikz: "5.0.3",
@@ -22,10 +22,10 @@ export const COMPONENT_VERSIONS = {
     zahlenstrahlgenerator: "5.0.8",
     optikgenerator: "5.0.5",
     bruchgenerator: "5.0.6",
-    glucksradgenerator: "5.0.6",
+    glucksradgenerator: "5.0.7",
     sitzplangenerator: "5.0.5",
     strahlenoptik: "5.0.5",
-    stellwerttafel: "5.0.5",
-    statistik: "5.0.6",
+    stellwerttafel: "5.0.6",
+    statistik: "5.0.7",
     qrcode: "5.0.1",
 } as const;

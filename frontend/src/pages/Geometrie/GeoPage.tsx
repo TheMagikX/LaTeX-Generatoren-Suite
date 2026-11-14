@@ -6,6 +6,7 @@ import { generateGeometrie, compileLatex, extractApiErrorMessage } from '../../a
 import type { CompileResponse, GeoResponse } from '../../api/client'
 import { Input, Slider, Switch, SecHead, Field, Accordion, FontSelector, ConfirmDialog } from '../../components/ui'
 import { PresetManager } from '../../components/PresetManager'
+import { deepMergeConfig } from '../../utils/deepMergeConfig'
 import {
   Settings, Palette,
   Grid, Ruler, Folders
@@ -245,7 +246,7 @@ export default function GeoPage() {
               generator="geo"
               currentConfig={cfg}
               thumbnailSource={compileResult?.png_base64}
-              onLoad={history.commitImmediate}
+              onLoad={(loaded) => history.commitImmediate(deepMergeConfig(DEFAULT_CONFIG, loaded))}
             />
           </Accordion>
 

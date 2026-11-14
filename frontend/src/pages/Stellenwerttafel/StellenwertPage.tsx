@@ -10,6 +10,7 @@ import { Grid, Settings, Palette, Folders, Hash } from 'lucide-react'
 
 import { DEFAULT_CONFIG } from './constantsStellenwert'
 import type { StellenwertConfig } from './typesStellenwert'
+import { deepMergeConfig } from '../../utils/deepMergeConfig'
 
 import { StellenwertHeader } from './components/StellenwertHeader'
 import { StellenwertPreview } from './components/StellenwertPreview'
@@ -17,6 +18,32 @@ import { StellenwertTabSpalten } from './components/StellenwertTabSpalten'
 import { StellenwertTabWerte } from './components/StellenwertTabWerte'
 import { StellenwertTabDarstellung } from './components/StellenwertTabDarstellung'
 import { StellenwertTabErweitert } from './components/StellenwertTabErweitert'
+
+function normalizeStellenwertConfig(raw: unknown): StellenwertConfig {
+  const legacy = (typeof raw === 'object' && raw !== null ? raw : {}) as Partial<StellenwertConfig> & {
+    use_fira?: boolean
+  }
+  const { use_fira, ...rest } = legacy
+  const merged = deepMergeConfig(DEFAULT_CONFIG, {
+    ...rest,
+    font_family: rest.font_family ?? (use_fira === false ? 'Standard' : DEFAULT_CONFIG.font_family),
+  })
+
+  return {
+    ...merged,
+    rows: merged.rows.map((row, idx) => ({
+      id: row?.id || `row_${idx + 1}`,
+      label: row?.label ?? '',
+      active: row?.active ?? true,
+      is_placeholder: row?.is_placeholder ?? false,
+      // WICHTIG: values ist ein dynamischer Record und darf niemals mit DEFAULT_ROWS[0].values gemergt werden!
+      values:
+        row?.values && typeof row.values === 'object' && !Array.isArray(row.values)
+          ? { ...row.values }
+          : {},
+    })),
+  }
+}
 
 const StellenwertPage = () => {
   const [config, setConfig, history] = useGeneratorHistory<StellenwertConfig>('ks-stellenwerttafel-v2', DEFAULT_CONFIG)
@@ -113,7 +140,7 @@ const StellenwertPage = () => {
                 generator="stellenwerttafel"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={loaded => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={loaded => history.commitImmediate(normalizeStellenwertConfig(loaded))}
               />
             </TabContent>
           </Tabs>

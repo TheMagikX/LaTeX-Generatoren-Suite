@@ -11,6 +11,7 @@ import { Zap, Settings, Sliders, Layers, Terminal, Folders } from 'lucide-react'
 
 import type { Config } from './typesKoord'
 import { DEFAULT_CONFIG } from './constantsKoord'
+import { normalizeKoordConfig } from './utilsKoord'
 import { KoordHeader } from './components/KoordHeader'
 import { KoordPreview } from './components/KoordPreview'
 import { KoordTabQuick } from './components/KoordTabQuick'
@@ -135,7 +136,7 @@ const KoordPage = () => {
                   generator="koord"
                   currentConfig={config}
                   thumbnailSource={compileData?.png_base64}
-                  onLoad={(loaded) => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
+                  onLoad={(loaded) => history.commitImmediate(normalizeKoordConfig(loaded))}
                 />
               </div>
             </TabContent>

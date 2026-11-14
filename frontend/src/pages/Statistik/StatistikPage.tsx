@@ -11,46 +11,46 @@ import { Folders, BarChart2, Settings } from 'lucide-react'
 
 import type { StatistikAxisUpdater, StatistikConfig, StatistikDatasetUpdater, StatistikResult, StatistikSetter, DatasetConfig, AxisConfig } from './typesStatistik'
 import { DEFAULT_CONFIG } from './constantsStatistik'
+import { deepMergeConfig } from '../../utils/deepMergeConfig'
 import { StatistikHeader } from './components/StatistikHeader'
 import { StatistikPreview } from './components/StatistikPreview'
 import { StatistikTabDaten } from './components/StatistikTabDaten'
 import { StatistikTabStil } from './components/StatistikTabStil'
 
+const DATASET_DEFAULTS: DatasetConfig = {
+  name: '',
+  data_mode: 'Raw',
+  raw_data: [],
+  raw_data_string: '',
+  freq_data_string: '',
+  bar_labels_string: '',
+  color: 'black',
+  show_outliers: true,
+  enabled: true,
+}
+
+function normalizeStatistikConfig(raw: unknown): StatistikConfig {
+  const { axis: legacyAxis, ...rest } = (typeof raw === 'object' && raw !== null ? raw : {}) as Partial<StatistikConfig> & {
+    axis?: Partial<AxisConfig>
+  }
+  const prepared = legacyAxis
+    ? {
+        ...rest,
+        x_axis: rest.x_axis ?? legacyAxis,
+        y_axis: rest.y_axis ?? legacyAxis,
+      }
+    : rest
+
+  const merged = deepMergeConfig(DEFAULT_CONFIG, prepared)
+  return {
+    ...merged,
+    datasets: merged.datasets.map((ds) => deepMergeConfig(DATASET_DEFAULTS, ds)),
+  }
+}
+
 const StatistikPage = () => {
   const [rawConfig, setConfig, history] = useGeneratorHistory<StatistikConfig>('ks-statistik', DEFAULT_CONFIG)
-  const legacyConfig = rawConfig as Partial<StatistikConfig> & {
-    axis?: Partial<AxisConfig>
-    datasets?: Partial<DatasetConfig>[]
-  }
-  const datasetDefaults: DatasetConfig = {
-    name: '',
-    data_mode: 'Raw',
-    raw_data: [],
-    raw_data_string: '',
-    freq_data_string: '',
-    bar_labels_string: '',
-    color: 'black',
-    show_outliers: true,
-    enabled: true,
-  }
-
-  // Deep-merge with DEFAULT_CONFIG so old localStorage values missing new option
-  // blocks don't crash the UI. This includes migrating the old 'axis' field
-  // to 'x_axis' and 'y_axis'.
-  const config: StatistikConfig = {
-    ...DEFAULT_CONFIG,
-    ...rawConfig,
-    x_axis: { ...DEFAULT_CONFIG.x_axis, ...(rawConfig.x_axis ?? legacyConfig.axis ?? {}) },
-    y_axis: { ...DEFAULT_CONFIG.y_axis, ...(rawConfig.y_axis ?? legacyConfig.axis ?? {}) },
-    boxplot_opts: { ...DEFAULT_CONFIG.boxplot_opts, ...(rawConfig.boxplot_opts ?? {}) },
-    histogram_opts: { ...DEFAULT_CONFIG.histogram_opts, ...(rawConfig.histogram_opts ?? {}) },
-    barchart_opts: { ...DEFAULT_CONFIG.barchart_opts, ...(rawConfig.barchart_opts ?? {}) },
-    summenkurve_opts: { ...DEFAULT_CONFIG.summenkurve_opts, ...(rawConfig.summenkurve_opts ?? {}) },
-    violin_opts: { ...DEFAULT_CONFIG.violin_opts, ...(rawConfig.violin_opts ?? {}) },
-    width_cm: rawConfig.width_cm ?? DEFAULT_CONFIG.width_cm,
-    height_cm: rawConfig.height_cm ?? DEFAULT_CONFIG.height_cm,
-    datasets: (legacyConfig.datasets ?? DEFAULT_CONFIG.datasets).map(ds => ({ ...datasetDefaults, ...ds })),
-  }
+  const config = normalizeStatistikConfig(rawConfig)
   const [activeTab, setActiveTab] = useState('daten')
   const [previewDpi, setPreviewDpi] = useState(600)
   const [results, setResults] = useState<StatistikResult[]>([])
@@ -96,7 +96,7 @@ const StatistikPage = () => {
   const updateDataset: StatistikDatasetUpdater = (idx, field, value) => {
     setConfig(prev => {
       const prevDatasets = (prev.datasets ?? DEFAULT_CONFIG.datasets).map(ds => ({
-        ...datasetDefaults,
+        ...DATASET_DEFAULTS,
         ...ds,
       }))
       const next = [...prevDatasets]
@@ -168,7 +168,7 @@ const StatistikPage = () => {
                 generator="statistik"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={loaded => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={loaded => history.commitImmediate(normalizeStatistikConfig(loaded))}
               />
             </TabContent>
           </Tabs>

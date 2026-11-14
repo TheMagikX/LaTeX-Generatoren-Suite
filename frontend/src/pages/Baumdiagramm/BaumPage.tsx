@@ -13,12 +13,44 @@ import {
 import type { BaumConfigUpdater, BaumHighlightUpdater, BaumNodeUpdater, BaumStyleUpdater, Config, BaumNodeConfig } from './typesBaum'
 import { DEFAULT_CONFIG } from './constantsBaum'
 import { MAX_WIZARD_DEPTH, buildBernoulliNodes, buildBinomialNodes, clampProbability, clampWizardDepth, getAllNodesWithBranchIndex, getAllPaths, getNumChildren, computeLatexComplement } from './utilsBaum'
+import { deepMergeConfig } from '../../utils/deepMergeConfig'
 import { BaumHeader } from './components/BaumHeader'
 import { BaumPreview } from './components/BaumPreview'
 import { BaumTabStruktur } from './components/BaumTabStruktur'
 import { BaumTabInhalt } from './components/BaumTabInhalt'
 import { BaumTabStil } from './components/BaumTabStil'
 import { BaumTabErweitert } from './components/BaumTabErweitert'
+
+const DEFAULT_NODE: BaumNodeConfig = {
+  label: '',
+  labelHidden: false,
+  edge_label: '',
+  edgeLabelHidden: false,
+  prob_value: null,
+  node_style: null,
+  edge_style: null,
+  num_children: 2,
+}
+
+function normalizeBaumConfig(loaded: unknown): Config {
+  const merged = deepMergeConfig(DEFAULT_CONFIG, loaded)
+
+  const normalizedNodes: Config['nodes'] = {}
+  for (const [id, node] of Object.entries(merged.nodes)) {
+    normalizedNodes[id] = deepMergeConfig(DEFAULT_NODE, node)
+  }
+
+  const normalizedHighlights: Config['highlights'] = {}
+  for (const [id, hl] of Object.entries(merged.highlights)) {
+    normalizedHighlights[id] = deepMergeConfig({ enabled: false, style: null }, hl)
+  }
+
+  return {
+    ...merged,
+    nodes: normalizedNodes,
+    highlights: normalizedHighlights,
+  }
+}
 
 const BaumPage = () => {
   const [config, setConfig, history] = useGeneratorHistory<Config>('ks-baumdiagramm', DEFAULT_CONFIG)
@@ -86,16 +118,7 @@ const BaumPage = () => {
   const updateStyle: BaumStyleUpdater = (key, value) =>
     setConfig(prev => ({ ...prev, style: { ...prev.style, [key]: value } }))
 
-  const defaultNode: BaumNodeConfig = {
-    label: '',
-    labelHidden: false,
-    edge_label: '',
-    edgeLabelHidden: false,
-    prob_value: null,
-    node_style: null,
-    edge_style: null,
-    num_children: 2
-  }
+  const defaultNode = DEFAULT_NODE
 
   const updateNode: BaumNodeUpdater = (nodeId, key, value) => {
     if (nodeId === 'root') {
@@ -320,7 +343,7 @@ const BaumPage = () => {
                 generator="baum"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={(loaded) => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={(loaded) => history.commitImmediate(normalizeBaumConfig(loaded))}
               />
             </TabContent>
           </Tabs>

@@ -10,11 +10,22 @@ import { RotateCw, Type, MousePointer2, Folders } from 'lucide-react'
 
 import type { ColorSectorUpdater, GluckConfig, GluckSetter } from './typesGluck'
 import { DEFAULT_CONFIG, PALETTES } from './constantsGluck'
+import { deepMergeConfig } from '../../utils/deepMergeConfig'
 import { GluckHeader } from './components/GluckHeader'
 import { GluckPreview } from './components/GluckPreview'
 import { GluckTabSektoren } from './components/GluckTabSektoren'
 import { GluckTabBeschriftung } from './components/GluckTabBeschriftung'
 import { GluckTabPfeil } from './components/GluckTabPfeil'
+
+function normalizeGluckConfig(loaded: unknown): GluckConfig {
+  const merged = deepMergeConfig(DEFAULT_CONFIG, loaded)
+  return {
+    ...merged,
+    sectors: merged.sectors.map((sector) =>
+      deepMergeConfig({ farbe: '#E74C3C', haeufigkeit: 1, label: '' }, sector)
+    ),
+  }
+}
 
 const GluckPage = () => {
   const [config, setConfig, history] = useGeneratorHistory<GluckConfig>('ks-glucksrad', DEFAULT_CONFIG)
@@ -156,7 +167,7 @@ const GluckPage = () => {
                 generator="glucksrad"
                 currentConfig={config}
                 thumbnailSource={compileData?.png_base64}
-                onLoad={(loaded) => history.commitImmediate({ ...DEFAULT_CONFIG, ...loaded })}
+                onLoad={(loaded) => history.commitImmediate(normalizeGluckConfig(loaded))}
               />
             </TabContent>
           </Tabs>
