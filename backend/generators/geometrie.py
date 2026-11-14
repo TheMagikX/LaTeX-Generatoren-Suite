@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import math
+from core.math_utils import normalize_hex6
 from core.latex_document import (
     HEXCOL_TIKZ_KEY,
     LatexDocumentSpec,
@@ -42,6 +43,17 @@ def _format_angle_label(orig: str | None, value: float, show_orig: bool, show_va
     if not show_orig or not clean_orig:
         return f"${val_str}$"
     return f"${clean_orig} = {val_str}$"
+
+
+def _angle_color_opt(color: str | None) -> str:
+    """Formatiert eine Winkelfarbe (#RGB, #RRGGBB, Hex ohne '#' oder benannte Farbe) für TikZ \\pic."""
+    c = (color or "").strip()
+    if not c:
+        return "hexcol=F1C40F"
+    h6 = normalize_hex6(c)
+    if h6 is not None:
+        return f"hexcol={h6}"
+    return c
 
 
 def solve_quadrilateral(cfg: QuadrilateralConstructionConfig) -> tuple[dict | None, str | None]:
@@ -130,8 +142,9 @@ def solve_quadrilateral(cfg: QuadrilateralConstructionConfig) -> tuple[dict | No
             half_rad = math.radians(alpha_deg / 2)
             Bx = a * math.cos(half_rad)
             By = a * math.sin(half_rad)
-            B = (Bx, By)
-            D = (Bx, -By)
+            # CCW-Reihenfolge A -> B -> C -> D (B unten, D oben) fuer TikZ-Innenwinkel
+            B = (Bx, -By)
+            D = (Bx, By)
             inner = b**2 - (a * math.sin(half_rad))**2
             if inner < 0:
                 return None, "Seite b ist zu kurz für den gegebenen Winkel α."
@@ -332,15 +345,15 @@ def _generate_tikz_body(cfg: GeometrieConfig, result: dict) -> str:
             
             code.append("  % Winkel")
             code.append(
-                f"  \\pic [draw, hexcol={ang.colors.alpha}, fill opacity={ang.opacities.alpha}, "
+                f"  \\pic [draw, {_angle_color_opt(ang.colors.alpha)}, fill opacity={ang.opacities.alpha}, "
                 f"text opacity=1, \"{lab_a}\", angle radius={ang.radii.alpha:.0f}mm] {{angle = B--A--C}};"
             )
             code.append(
-                f"  \\pic [draw, hexcol={ang.colors.beta}, fill opacity={ang.opacities.beta}, "
+                f"  \\pic [draw, {_angle_color_opt(ang.colors.beta)}, fill opacity={ang.opacities.beta}, "
                 f"text opacity=1, \"{lab_b}\", angle radius={ang.radii.beta:.0f}mm] {{angle = C--B--A}};"
             )
             code.append(
-                f"  \\pic [draw, hexcol={ang.colors.gamma}, fill opacity={ang.opacities.gamma}, "
+                f"  \\pic [draw, {_angle_color_opt(ang.colors.gamma)}, fill opacity={ang.opacities.gamma}, "
                 f"text opacity=1, \"{lab_g}\", angle radius={ang.radii.gamma:.0f}mm] {{angle = A--C--B}};"
             )
 
@@ -554,10 +567,10 @@ def _generate_tikz_quad(cfg: GeometrieConfig, result: dict) -> str:
         lab_d = format_angle_label(ang.labels.delta, angles.get('delta', 0), ang.show_labels, ma.delta)
 
         code.append("  % Winkel")
-        code.append(f"  \\pic [draw, hexcol={ang.colors.alpha}, fill opacity={ang.opacities.alpha}, \"{lab_a}\", angle radius={ang.radii.alpha:.0f}mm] {{angle = B--A--D}};")
-        code.append(f"  \\pic [draw, hexcol={ang.colors.beta}, fill opacity={ang.opacities.beta}, \"{lab_b}\", angle radius={ang.radii.beta:.0f}mm] {{angle = C--B--A}};")
-        code.append(f"  \\pic [draw, hexcol={ang.colors.gamma}, fill opacity={ang.opacities.gamma}, \"{lab_g}\", angle radius={ang.radii.gamma:.0f}mm] {{angle = D--C--B}};")
-        code.append(f"  \\pic [draw, hexcol={ang.colors.delta}, fill opacity={ang.opacities.delta}, \"{lab_d}\", angle radius={ang.radii.delta:.0f}mm] {{angle = A--D--C}};")
+        code.append(f"  \\pic [draw, {_angle_color_opt(ang.colors.alpha)}, fill opacity={ang.opacities.alpha}, text opacity=1, \"{lab_a}\", angle radius={ang.radii.alpha:.0f}mm] {{angle = B--A--D}};")
+        code.append(f"  \\pic [draw, {_angle_color_opt(ang.colors.beta)}, fill opacity={ang.opacities.beta}, text opacity=1, \"{lab_b}\", angle radius={ang.radii.beta:.0f}mm] {{angle = C--B--A}};")
+        code.append(f"  \\pic [draw, {_angle_color_opt(ang.colors.gamma)}, fill opacity={ang.opacities.gamma}, text opacity=1, \"{lab_g}\", angle radius={ang.radii.gamma:.0f}mm] {{angle = D--C--B}};")
+        code.append(f"  \\pic [draw, {_angle_color_opt(ang.colors.delta)}, fill opacity={ang.opacities.delta}, text opacity=1, \"{lab_d}\", angle radius={ang.radii.delta:.0f}mm] {{angle = A--D--C}};")
 
     # Quadrilateral fill & stroke with optional live labels for sides
     ms = el.measurements.show_sides

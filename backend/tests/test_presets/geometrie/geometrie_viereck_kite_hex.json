@@ -1,0 +1,21 @@
+{
+  "shape": "Quadrilateral",
+  "quad_construction": {
+    "mode": "Kite",
+    "a": 4.0,
+    "b": 5.5,
+    "alpha": 70.0
+  },
+  "elements": {
+    "angles": {
+      "show_arcs": true,
+      "show_labels": true,
+      "colors": {
+        "alpha": "#F1C40F",
+        "beta": "#0af",
+        "gamma": "#2ecc71",
+        "delta": "blue"
+      }
+    }
+  }
+}

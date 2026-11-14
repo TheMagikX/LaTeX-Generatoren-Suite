@@ -1,0 +1,23 @@
+{
+  "min_val": 0.0,
+  "max_val": 5.0,
+  "step_main": 1.0,
+  "step_mid": 0.5,
+  "step_sub": 0.1,
+  "width_cm": 12.0,
+  "color_axis": "red",
+  "color_point": "#f0a",
+  "color_jump": "teal",
+  "points": [
+    { "value": 1.5, "label": "A", "type": "gefüllt", "color": "blue", "label_color": "#0a0", "visible": true }
+  ],
+  "pointers": [
+    { "value": 3.0, "label": "P", "color": "#123", "label_color": "orange", "visible": true }
+  ],
+  "jumps": [
+    { "start": 1.5, "end": 3.0, "label": "+1,5", "color": "#e11", "label_color": "purple", "style": "arc", "arrow": "->", "visible": true }
+  ],
+  "intervals": [
+    { "start": 0.0, "end": 1.5, "color": "#0af", "left_type": "geschlossen", "right_type": "offen", "visible": true }
+  ]
+}

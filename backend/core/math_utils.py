@@ -4,7 +4,39 @@
 Zentrale mathematische, Zahlformatierungs- und Farb-Helferfunktionen für LaTeX/TikZ-Generatoren.
 """
 
-from typing import Tuple
+from typing import Optional, Tuple
+
+
+def normalize_hex6(hex_color: str) -> Optional[str]:
+    """Normalisiert #RGB/#RRGGBB (mit oder ohne '#') auf 6-stelliges Großbuchstaben-Hex."""
+    h = (hex_color or "").strip().lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    if len(h) != 6:
+        return None
+    try:
+        int(h, 16)
+    except ValueError:
+        return None
+    return h.upper()
+
+
+def tikz_color_opt(
+    color: Optional[str],
+    fallback: str = "black",
+    prefix_named: str = "",
+) -> str:
+    """Formatiert eine Farbe (#RGB, #RRGGBB, hexcol=... oder benannt) als sichere TikZ-Option."""
+    c = (color or "").strip() or fallback
+    if c.startswith("#"):
+        h6 = normalize_hex6(c)
+        if h6 is not None:
+            return f"hexcol={h6}"
+        return f"{prefix_named}{fallback}" if prefix_named else fallback
+    if c.startswith("hexcol="):
+        h6 = normalize_hex6(c[7:])
+        return f"hexcol={h6}" if h6 is not None else c
+    return f"{prefix_named}{c}" if prefix_named else c
 
 
 def hex_to_rgb01(

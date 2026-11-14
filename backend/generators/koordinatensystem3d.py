@@ -23,6 +23,7 @@ from core.latex_document import (
     shared_commands_input,
     shared_package_input,
 )
+from core.math_utils import tikz_color_def, tikz_color_opt
 
 def _label_style(axis: str, cfg: CoordinateSystem3DConfig) -> str:
     """Erzeugt den pgfplots-Style-String für eine Achsenbeschriftung."""
@@ -54,12 +55,7 @@ def _format_3d_line_vector_style(color: str, width: float, style: str, arrow: st
     if arrow and arrow != "none":
         parts.append(f"-{{{arrow}}}")
     if color:
-        if color.startswith("#"):
-            parts.append(f"hexcol={color[1:].upper()}")
-        elif color.startswith("hexcol="):
-            parts.append(color)
-        else:
-            parts.append(f"color={color}")
+        parts.append(tikz_color_opt(color, fallback="black", prefix_named="color="))
     if width:
         parts.append(f"line width={width}pt")
     if style and style != "solid":
@@ -156,16 +152,14 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
         points_code.append(rf"\coordinate (P{i}) at (axis cs:{pt.x},{pt.y},{pt.z});")
         if not pt.show:
             continue
-        c = pt.color or "black"
-        pt_col = f"hexcol={c[1:].upper()}" if c.startswith("#") else c
+        pt_col = tikz_color_opt(pt.color, fallback="black")
         points_code.append(rf"\addplot3[only marks, mark={pt.mark}, {pt_col}, mark size={pt.size}pt] coordinates {{({pt.x},{pt.y},{pt.z})}};")
         clean_lbl = (pt.label or "").strip().strip("$").strip()
         if clean_lbl:
             points_code.append(rf"\node[{pt_col}, anchor={pt.anchor}, draw=none] at (axis cs:{pt.x},{pt.y},{pt.z}){{$ {clean_lbl} $}};")
 
         # Projektionen auf Grundebenen (2.1)
-        p_c = pt.proj_color or "gray!50"
-        proj_col = f"hexcol={p_c[1:].upper()}" if p_c.startswith("#") else f"color={p_c}"
+        proj_col = tikz_color_opt(pt.proj_color, fallback="gray!50", prefix_named="color=")
         proj_style = f"{proj_col}, {pt.proj_style}"
         if pt.proj_xy:
             points_code.append(rf"\addplot3[{proj_style}] coordinates {{({pt.x},{pt.y},{pt.z}) ({pt.x},{pt.y},0)}};")
@@ -207,8 +201,7 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
         if not (pt.show and pt.trail):
             continue
 
-        t_c = pt.trail_color or "gray!70"
-        trail_col = f"hexcol={t_c[1:].upper()}" if t_c.startswith("#") else f"color={t_c}"
+        trail_col = tikz_color_opt(pt.trail_color, fallback="gray!70", prefix_named="color=")
         trail_style = f"{trail_col}, line width={pt.trail_width}pt, {pt.trail_style}, opacity={pt.trail_alpha / 100.0}"
         # Drei Teilstücke: O -> (x,0,0) -> (x,y,0) -> (x,y,z)
         for p1, p2 in [("0,0,0", f"{pt.x},0,0"), (f"{pt.x},0,0", f"{pt.x},{pt.y},0"), (f"{pt.x},{pt.y},0", f"{pt.x},{pt.y},{pt.z}")]:
@@ -228,8 +221,7 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
             continue
         arrow_opt = f"-{{{v.arrow}}}" if v.arrow else ""
         node_str = rf" node[{v.label_pos}]{{{v.label}}}" if v.label else ""
-        c = v.color or "red"
-        v_col = f"hexcol={c[1:].upper()}" if c.startswith("#") else f"color={c}"
+        v_col = tikz_color_opt(v.color, fallback="red", prefix_named="color=")
         
         A = np.array([v.x1, v.y1, v.z1])
         B = np.array([v.x2, v.y2, v.z2])
@@ -269,8 +261,7 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
         A = P0 + g.tmin * R
         B = P0 + g.tmax * R
         
-        g_c = g.color or "#64748b"
-        g_col = f"hexcol={g_c[1:].upper()}" if g_c.startswith("#") else f"color={g_c}"
+        g_col = tikz_color_opt(g.color, fallback="#64748b", prefix_named="color=")
 
         if g.draw_mode == "automatisch":
             segments = split_segment(A, B, occluders, cam_dir)
@@ -321,8 +312,8 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
             continue
 
         e_c = e.color or "#2563eb"
-        e_col = f"hexcol={e_c[1:].upper()}" if e_c.startswith("#") else f"color={e_c}"
-        fill_opt = "" if e_c.startswith("#") else f", fill={e_c}"
+        e_col = tikz_color_opt(e_c, fallback="#2563eb", prefix_named="color=")
+        fill_opt = "" if e_c.strip().startswith("#") else f", fill={e_c}"
         pattern_opt = f", pattern={e.pattern}" if e.pattern.strip() else ""
         coords_str = " ".join(f"({p[0]},{p[1]},{p[2]})" for p in poly_points)
         num_vertices = len(poly_points)
@@ -351,17 +342,18 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
     for i, inter in enumerate(cfg.intersections):
         if not inter.show:
             continue
-            
+        inter_col = tikz_color_opt(inter.color, fallback="black")
+
         if inter.type == "Gerade-Gerade":
             if inter.item1_index < len(cfg.lines) and inter.item2_index < len(cfg.lines):
                 g1 = cfg.lines[inter.item1_index]
                 g2 = cfg.lines[inter.item2_index]
                 pt = calculate_line_line_intersection(g1, g2)
                 if pt is not None:
-                    intersections_code.append(rf"\addplot3[only marks, mark={inter.mark}, {inter.color}, mark size={inter.size}pt] coordinates {{({pt[0]},{pt[1]},{pt[2]})}};")
+                    intersections_code.append(rf"\addplot3[only marks, mark={inter.mark}, {inter_col}, mark size={inter.size}pt] coordinates {{({pt[0]},{pt[1]},{pt[2]})}};")
                     clean_inter_lbl = (inter.label or "").strip().strip("$").strip()
                     if clean_inter_lbl:
-                        intersections_code.append(rf"\node[{inter.color}, anchor=south, draw=none] at (axis cs:{pt[0]},{pt[1]},{pt[2]}){{$ {clean_inter_lbl} $}};")
+                        intersections_code.append(rf"\node[{inter_col}, anchor=south, draw=none] at (axis cs:{pt[0]},{pt[1]},{pt[2]}){{$ {clean_inter_lbl} $}};")
 
         elif inter.type == "Gerade-Ebene":
             if inter.item1_index < len(cfg.lines) and inter.item2_index < len(cfg.planes):
@@ -369,10 +361,10 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
                 e = cfg.planes[inter.item2_index]
                 pt = calculate_line_plane_intersection(g, e)
                 if pt is not None:
-                    intersections_code.append(rf"\addplot3[only marks, mark={inter.mark}, {inter.color}, mark size={inter.size}pt] coordinates {{({pt[0]},{pt[1]},{pt[2]})}};")
+                    intersections_code.append(rf"\addplot3[only marks, mark={inter.mark}, {inter_col}, mark size={inter.size}pt] coordinates {{({pt[0]},{pt[1]},{pt[2]})}};")
                     clean_inter_lbl = (inter.label or "").strip().strip("$").strip()
                     if clean_inter_lbl:
-                        intersections_code.append(rf"\node[{inter.color}, anchor=south, draw=none] at (axis cs:{pt[0]},{pt[1]},{pt[2]}){{$ {clean_inter_lbl} $}};")
+                        intersections_code.append(rf"\node[{inter_col}, anchor=south, draw=none] at (axis cs:{pt[0]},{pt[1]},{pt[2]}){{$ {clean_inter_lbl} $}};")
 
         elif inter.type == "Ebene-Ebene":
             if inter.item1_index < len(cfg.planes) and inter.item2_index < len(cfg.planes):
@@ -384,7 +376,7 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
                     clipped = intersect_line_with_bbox(x0[0], x0[1], x0[2], r[0], r[1], r[2], cfg.xmin, cfg.xmax, cfg.ymin, cfg.ymax, cfg.zmin, cfg.zmax)
                     if clipped:
                         p1, p2 = clipped
-                        intersections_code.append(rf"\addplot3[{inter.color}, line width={inter.width}pt, {inter.style}] coordinates {{({p1[0]},{p1[1]},{p1[2]}) ({p2[0]},{p2[1]},{p2[2]})}};")
+                        intersections_code.append(rf"\addplot3[{inter_col}, line width={inter.width}pt, {inter.style}] coordinates {{({p1[0]},{p1[1]},{p1[2]}) ({p2[0]},{p2[1]},{p2[2]})}};")
 
     # ---------- Shapes ----------
     shapes_code = []
@@ -406,18 +398,18 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
             
         coords_str = " ".join(coords)
         color_defs = []
-        s_c = s.color or "#1e293b"
+        s_c = (s.color or "#1e293b").strip()
         if s_c.startswith("#"):
-            color_defs.append(rf"\definecolor{{shapeborder{i}}}{{HTML}}{{{s_c[1:].upper()}}}")
+            color_defs.append(tikz_color_def(f"shapeborder{i}", s_c))
             faceted_col = f"shapeborder{i}"
         else:
             faceted_col = s_c
 
         fill_opt = ""
         if s.fill_color and s.fill_color != "none":
-            s_fc = s.fill_color
+            s_fc = s.fill_color.strip()
             if s_fc.startswith("#"):
-                color_defs.append(rf"\definecolor{{shapefill{i}}}{{HTML}}{{{s_fc[1:].upper()}}}")
+                color_defs.append(tikz_color_def(f"shapefill{i}", s_fc))
                 fill_col = f"shapefill{i}"
             else:
                 fill_col = s_fc

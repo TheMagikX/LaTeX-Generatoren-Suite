@@ -364,7 +364,14 @@ def test_baumdiagramm_node_limit_guard():
 
 
 def test_math_utils_helpers():
-    from core.math_utils import hex_to_rgb01, hex_to_rgb_csv, tikz_color_def, fmt_float
+    from core.math_utils import (
+        hex_to_rgb01,
+        hex_to_rgb_csv,
+        tikz_color_def,
+        fmt_float,
+        normalize_hex6,
+        tikz_color_opt,
+    )
 
     assert hex_to_rgb01("#000000") == (0.0, 0.0, 0.0)
     assert hex_to_rgb01("#fff") == (1.0, 1.0, 1.0)
@@ -372,6 +379,14 @@ def test_math_utils_helpers():
     assert hex_to_rgb_csv("#ff0000", precision=3) == "1.000,0.000,0.000"
     assert hex_to_rgb_csv("#abc") == "0,0,0"
     assert tikz_color_def("TestCol", "#00ff00") == r"\definecolor{TestCol}{rgb}{0.0000,1.0000,0.0000}"
+    assert tikz_color_def("ShortCol", "#f0a") == r"\definecolor{ShortCol}{rgb}{1.0000,0.0000,0.6667}"
+    assert normalize_hex6("#abc") == "AABBCC"
+    assert normalize_hex6("f1c40f") == "F1C40F"
+    assert normalize_hex6("red") is None
+    assert tikz_color_opt("#ef4444") == "hexcol=EF4444"
+    assert tikz_color_opt("#f00") == "hexcol=FF0000"
+    assert tikz_color_opt("red", prefix_named="color=") == "color=red"
+    assert tikz_color_opt("red") == "red"
     assert fmt_float(3.1400, 4) == "3.14"
     assert fmt_float(-0.0000001, 4) == "0"
 
@@ -432,4 +447,30 @@ def test_strahlenoptik_bezier_collinear_and_zero_direction():
     assert math.isclose(s, 2.0, abs_tol=1e-4)
     assert math.isclose(ix, 2.0, abs_tol=1e-4)
     assert math.isclose(iy, 0.0, abs_tol=1e-4)
+
+
+def test_geometrie_kite_ccw_and_angle_hex_colors():
+    from models.geometrie import GeometrieConfig, QuadrilateralConstructionConfig
+    from generators.geometrie import solve_quadrilateral, generate_geometrie_latex
+
+    res, err = solve_quadrilateral(QuadrilateralConstructionConfig(mode="Kite", a=4.0, b=5.0, alpha=70.0))
+    assert err is None
+    assert res is not None
+    # B liegt unten (-y), D liegt oben (+y) -> CCW-Reihenfolge A -> B -> C -> D
+    assert res["coords"]["B"][1] < 0.0
+    assert res["coords"]["D"][1] > 0.0
+
+    cfg = GeometrieConfig(
+        shape="Quadrilateral",
+        quad_construction=QuadrilateralConstructionConfig(mode="Kite", a=4.0, b=5.0, alpha=70.0),
+    )
+    cfg.elements.angles.colors.alpha = "#F1C40F"
+    cfg.elements.angles.colors.beta = "#0af"
+    cfg.elements.angles.colors.gamma = "red"
+    tex = generate_geometrie_latex(cfg)
+    assert "hexcol=F1C40F" in tex
+    assert "hexcol=00AAFF" in tex
+    assert "[draw, red," in tex
+    assert "text opacity=1" in tex
+    assert "#" not in tex.split(r"\begin{tikzpicture}")[1]
 

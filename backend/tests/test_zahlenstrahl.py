@@ -114,3 +114,24 @@ def test_generate_zahlenstrahl_zoom_multi_level():
     assert "scope" in tex
     assert r"\draw[zsMidTick" in tex
     assert r"\draw[zsSubTick" in tex
+
+
+def test_generate_zahlenstrahl_named_and_short_hex_colors():
+    from models.zahlenstrahl import MarkedPointConfig, JumpConfig, PointerConfig
+
+    cfg = ZahlenstrahlConfig(
+        min_val=0,
+        max_val=5,
+        color_axis="red",
+        color_point="#f0a",
+        points=[MarkedPointConfig(value=2.0, color="blue!60", label="A", label_color="#0f0")],
+        pointers=[PointerConfig(value=3.0, color="teal", label="P")],
+        jumps=[JumpConfig(start=1.0, end=4.0, color="#123", label="+3")],
+    )
+    tex = generate_zahlenstrahl_latex(cfg)
+    assert r"\colorlet{zsAxis}{red}" in tex
+    assert r"\definecolor{zsPoint}{rgb}{1.0000,0.0000,0.6667}" in tex
+    assert r"\colorlet{zsPtCol0}{blue!60}" in tex
+    assert r"\definecolor{zsPtLblCol0}{rgb}{0.0000,1.0000,0.0000}" in tex
+    assert r"\colorlet{zsPtr0}{teal}" in tex
+    assert r"\definecolor{zsJumpCol0}{rgb}{0.0667,0.1333,0.2000}" in tex

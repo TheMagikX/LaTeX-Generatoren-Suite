@@ -1,0 +1,24 @@
+{
+  "xmin": -2,
+  "xmax": 4,
+  "ymin": -2,
+  "ymax": 4,
+  "zmin": -2,
+  "zmax": 4,
+  "points": [
+    { "x": 0, "y": 0, "z": 0, "label": "A", "color": "#f00", "show": true },
+    { "x": 2, "y": 0, "z": 0, "label": "B", "color": "#0f0", "show": true },
+    { "x": 0, "y": 2, "z": 0, "label": "C", "color": "#00f", "show": true }
+  ],
+  "lines": [
+    { "x0": 0, "y0": 0, "z0": 0, "rx": 1, "ry": 1, "rz": 0, "tmin": -1, "tmax": 3, "color": "#333", "show": true },
+    { "x0": 2, "y0": 0, "z0": 0, "rx": -1, "ry": 1, "rz": 0, "tmin": -1, "tmax": 3, "color": "#0af", "show": true }
+  ],
+  "intersections": [
+    { "show": true, "type": "Gerade-Gerade", "item1_index": 0, "item2_index": 1, "color": "#ef4444", "label": "S_1", "mark": "*", "size": 3.0 },
+    { "show": true, "type": "Gerade-Gerade", "item1_index": 0, "item2_index": 1, "color": "#f00", "label": "S_2", "mark": "o", "size": 4.0 }
+  ],
+  "shapes": [
+    { "show": true, "name": "Dreieck", "point_indices": [0, 1, 2], "color": "#f00", "fill_color": "#0af", "fill_alpha": 25.0, "width": 1.2, "style": "solid", "closed": true }
+  ]
+}

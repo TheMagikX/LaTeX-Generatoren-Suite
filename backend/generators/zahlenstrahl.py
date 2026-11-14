@@ -5,6 +5,7 @@ from typing import List, Tuple, Optional, Callable
 from fractions import Fraction
 from models.zahlenstrahl import ZahlenstrahlConfig
 from core.latex_document import LatexDocumentSpec, font_input, render_latex_document
+from core.math_utils import tikz_color_def
 
 def _fmt_num(val: float) -> str:
     """Format a number cleanly for TikZ."""
@@ -127,12 +128,6 @@ def _frange(start: float, stop: float, step: float, max_ticks: int = _MAX_TICKS)
         vals.append(v)
         n += 1
     return vals
-
-def _hex_to_tikz_color(name: str, hex_color: str) -> str:
-    r"""Return a \definecolor command for xcolor."""
-    h = hex_color.lstrip("#")
-    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
-    return rf"\definecolor{{{name}}}{{RGB}}{{{r},{g},{b}}}"
 
 def _generate_zoom_lens_tikz(
     cfg: ZahlenstrahlConfig,
@@ -352,9 +347,16 @@ def generate_zahlenstrahl_latex(cfg: ZahlenstrahlConfig) -> str:
     defined_color_names: set[str] = set()
 
     def register_color(name: str, hex_val: str | None):
-        if hex_val and name not in defined_color_names:
-            defined_color_names.add(name)
-            color_defs.append(_hex_to_tikz_color(name, hex_val))
+        if not hex_val or name in defined_color_names:
+            return
+        val = hex_val.strip()
+        if not val:
+            return
+        defined_color_names.add(name)
+        if val.startswith("#"):
+            color_defs.append(tikz_color_def(name, val))
+        else:
+            color_defs.append(rf"\colorlet{{{name}}}{{{val}}}")
 
     base_colors = {
         "zsAxis":     cfg.color_axis,
