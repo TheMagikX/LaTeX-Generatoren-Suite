@@ -78,6 +78,38 @@ export const KoordCSVCard = ({
   const selectedDataset = datasets.find(d => d.filename.toLowerCase() === currentFilename.toLowerCase())
   const hasPath = Boolean(currentFilename)
   const isMissingFile = hasPath && !selectedDataset && !loadingDatasets
+  const detectedColumns = selectedDataset?.columns ?? []
+
+  const renderColumnField = (field: 'xcol' | 'ycol', value: string, placeholder: string) => {
+    if (detectedColumns.length === 0) {
+      return (
+        <Input
+          value={value}
+          onChange={e => onUpdate(field, e.target.value)}
+          className="h-9 text-xs font-mono"
+          placeholder={placeholder}
+        />
+      )
+    }
+
+    const hasUnknownValue = Boolean(value) && !detectedColumns.includes(value)
+
+    return (
+      <select
+        value={value}
+        onChange={e => onUpdate(field, e.target.value)}
+        className="w-full h-9 px-2.5 bg-panel border border-line rounded-lg text-xs font-mono text-ink focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer"
+      >
+        {!value && <option value="" disabled>Spalte wählen…</option>}
+        {hasUnknownValue && (
+          <option value={value}>{value} (nicht erkannt)</option>
+        )}
+        {detectedColumns.map(col => (
+          <option key={col} value={col}>{col}</option>
+        ))}
+      </select>
+    )
+  }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -219,34 +251,6 @@ export const KoordCSVCard = ({
                   <span>{errorMessage}</span>
                 </div>
               )}
-
-              {/* Erkannte Spalten als Schnellauswahl-Pills */}
-              {selectedDataset && selectedDataset.columns.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs text-metadata">
-                  <span className="font-medium text-ink">Erkannte Spalten:</span>
-                  {selectedDataset.columns.map(col => (
-                    <div key={col} className="inline-flex items-center gap-1 bg-raised border border-line rounded px-1.5 py-0.5 text-[11px]">
-                      <span className="font-mono text-ink font-semibold">{col}</span>
-                      <button
-                        type="button"
-                        onClick={() => onUpdate('xcol', col)}
-                        className={`px-1 rounded text-[10px] transition-colors cursor-pointer ${csv.xcol === col ? 'bg-primary text-white font-bold' : 'hover:bg-primary/20 text-ghost'}`}
-                        title={`Als X-Spalte setzen`}
-                      >
-                        X
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onUpdate('ycol', col)}
-                        className={`px-1 rounded text-[10px] transition-colors cursor-pointer ${csv.ycol === col ? 'bg-primary text-white font-bold' : 'hover:bg-primary/20 text-ghost'}`}
-                        title={`Als Y-Spalte setzen`}
-                      >
-                        Y
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </Field>
 
@@ -265,20 +269,10 @@ export const KoordCSVCard = ({
               </select>
             </Field>
             <Field label="Titel X-Spalte im Dokument">
-              <Input
-                value={csv.xcol}
-                onChange={e => onUpdate('xcol', e.target.value)}
-                className="h-9 text-xs font-mono"
-                placeholder="z. B. x oder Zeit"
-              />
+              {renderColumnField('xcol', csv.xcol, 'z. B. x oder Zeit')}
             </Field>
             <Field label="Titel Y-Spalte im Dokument">
-              <Input
-                value={csv.ycol}
-                onChange={e => onUpdate('ycol', e.target.value)}
-                className="h-9 text-xs font-mono"
-                placeholder="z. B. y oder Messwert"
-              />
+              {renderColumnField('ycol', csv.ycol, 'z. B. y oder Messwert')}
             </Field>
           </div>
 
