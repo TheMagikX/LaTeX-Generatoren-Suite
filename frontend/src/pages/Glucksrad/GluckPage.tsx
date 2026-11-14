@@ -82,12 +82,17 @@ const GluckPage = () => {
   }
 
   const totalAssigned = useMemo(() => {
-    return config.sectors.reduce((sum, s) => sum + s.haeufigkeit, 0)
+    return config.sectors.reduce(
+      (sum, s) => sum + (Number.isFinite(s.haeufigkeit) ? s.haeufigkeit : 0),
+      0
+    )
   }, [config.sectors])
 
   useEffect(() => {
-    if (config.mode === 'standard' && config.anzahl !== Math.round(totalAssigned)) {
-      setConfig(prev => ({ ...prev, anzahl: Math.round(totalAssigned) }))
+    if (!Number.isFinite(totalAssigned)) return
+    const rounded = Math.round(totalAssigned)
+    if (config.mode === 'standard' && config.anzahl !== rounded) {
+      setConfig(prev => ({ ...prev, anzahl: rounded }))
     }
   }, [totalAssigned, config.mode, config.anzahl, setConfig])
 
