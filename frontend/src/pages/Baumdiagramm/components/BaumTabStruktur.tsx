@@ -16,6 +16,7 @@ interface BaumTabStrukturProps {
   setBinomialP: (v: number) => void;
   binomialAnnotate: boolean;
   setBinomialAnnotate: (v: boolean) => void;
+  wizardNotice?: string | null;
   onApplyBernoulli: (n: number) => void;
   onApplyBinomial: (n: number, p: number, annotate: boolean) => void;
 }
@@ -31,6 +32,7 @@ export const BaumTabStruktur = ({
   setBinomialP,
   binomialAnnotate,
   setBinomialAnnotate,
+  wizardNotice,
   onApplyBernoulli,
   onApplyBinomial
 }: BaumTabStrukturProps) => {
@@ -39,6 +41,11 @@ export const BaumTabStruktur = ({
       {/* ---- Schnellkonfiguration ---- */}
       <div>
         <SecHead>Schnellkonfiguration</SecHead>
+        {wizardNotice && (
+          <div role="status" className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-ink">
+            {wizardNotice}
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
 
           {/* Bernoulli Shortcut */}
@@ -56,7 +63,7 @@ export const BaumTabStruktur = ({
             <div className="flex items-end gap-3">
               <div className="flex-1">
                 <Label className="text-metadata">Stufen (n)</Label>
-                <NumberInput min="1" max="5" value={bernoulliN} onChange={e => setBernoulliN(parseInt(e.target.value) || 2)} />
+                <NumberInput min="1" max="8" value={bernoulliN} onChange={e => setBernoulliN(parseInt(e.target.value) || 2)} />
               </div>
               <Button onClick={() => onApplyBernoulli(bernoulliN)} className="flex items-center gap-1.5 shrink-0">
                 <Zap size={14} /> Erstellen
@@ -76,7 +83,7 @@ export const BaumTabStruktur = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-metadata">Stufen (n)</Label>
-                <NumberInput min="1" max="5" value={binomialN} onChange={e => setBinomialN(parseInt(e.target.value) || 2)} />
+                <NumberInput min="1" max="8" value={binomialN} onChange={e => setBinomialN(parseInt(e.target.value) || 2)} />
               </div>
               <div>
                 <Label className="text-metadata">Wahrsch. (p)</Label>
@@ -105,7 +112,7 @@ export const BaumTabStruktur = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Slider label="Maximale Tiefe (Stufen)" min={1} max={5} value={config.max_depth} onChange={v => updateConfig('max_depth', v)} />
+        <Slider label="Maximale Tiefe (Stufen)" min={1} max={8} value={config.max_depth} onChange={v => updateConfig('max_depth', v)} />
         {config.mode === 'Symmetrisch (Standard)' && (
           <Slider label="Zweige pro Knoten" min={1} max={5} value={config.branches_global} onChange={v => updateConfig('branches_global', v)} />
         )}

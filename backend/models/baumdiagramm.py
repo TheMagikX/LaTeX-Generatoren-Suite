@@ -61,7 +61,7 @@ class TreeStyleConfig(BaseModel):
 
 class BaumdiagrammConfig(BaseGeneratorConfig):
     mode: TreeMode = TreeMode.symmetric
-    max_depth: int = Field(default=2, ge=1, le=6)
+    max_depth: int = Field(default=2, ge=1, le=8)
     branches_global: int = Field(default=2, ge=1, le=8)
     use_numeric_probs: bool = False
     

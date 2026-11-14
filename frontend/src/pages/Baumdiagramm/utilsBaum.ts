@@ -117,18 +117,27 @@ export const computeLatexComplement = (value: string): string | null => {
 // Wizard helpers
 // ---------------------------------------------------------------------------
 
+export const MAX_WIZARD_DEPTH = 8
+
+export const clampWizardDepth = (n: number): number =>
+  Number.isFinite(n) ? Math.max(1, Math.min(MAX_WIZARD_DEPTH, Math.trunc(n))) : 2
+
+export const clampProbability = (p: number): number =>
+  Number.isFinite(p) ? Math.max(0, Math.min(1, p)) : 0.5
+
 export const buildBernoulliNodes = (n: number): { nodes: Record<string, BaumNodeConfig>; results: Record<string, string> } => {
+  const safeN = clampWizardDepth(n)
   const nodes: Record<string, BaumNodeConfig> = {}
   const results: Record<string, string> = {}
   const recurse = (parentId: string, level: number, pathSoFar: string[]) => {
-    if (level > n) return
+    if (level > safeN) return
     for (let k = 0; k < 2; k++) {
       const childId = parentId === 'root' ? `${k}` : `${parentId}_${k}`
       const isT = k === 0
       const letter = isT ? 'T' : 'N'
       nodes[childId] = { label: letter, labelHidden: false, edge_label: isT ? '$p$' : '$1-p$', edgeLabelHidden: false, prob_value: null, node_style: null, edge_style: null, num_children: 2 }
       const path = [...pathSoFar, letter]
-      if (level === n) results[childId] = path.join('')
+      if (level === safeN) results[childId] = path.join('')
       else recurse(childId, level + 1, path)
     }
   }
@@ -137,52 +146,66 @@ export const buildBernoulliNodes = (n: number): { nodes: Record<string, BaumNode
 }
 
 export const buildBinomialNodes = (n: number, p: number, annotate: boolean): { nodes: Record<string, BaumNodeConfig>; results: Record<string, string> } => {
-  const q = 1 - p;
-  const nodes: Record<string, BaumNodeConfig> = {};
-  const results: Record<string, string> = {};
+  const safeN = clampWizardDepth(n)
+  const safeP = clampProbability(p)
+  const q = 1 - safeP
+  const nodes: Record<string, BaumNodeConfig> = {}
+  const results: Record<string, string> = {}
 
-  const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
+  const gcd = (a: number, b: number): number => {
+    let x = Math.abs(Math.trunc(a))
+    let y = Math.abs(Math.trunc(b))
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return 1
+    while (y !== 0) {
+      const t = y
+      y = x % y
+      x = t
+    }
+    return x || 1
+  }
 
   const toFractionLaTeX = (decimal: number): string => {
-    const precision = 1_000_000_000;
-    const num = Math.round(decimal * precision);
-    const den = precision;
-    const common = gcd(num, den);
-    return `\\frac{${num / common}}{${den / common}}`;
-  };
+    if (!Number.isFinite(decimal)) return '0'
+    const clamped = Math.max(0, Math.min(1, decimal))
+    const precision = 1_000_000_000
+    const num = Math.round(clamped * precision)
+    const den = precision
+    const common = gcd(num, den)
+    return `\\frac{${num / common}}{${den / common}}`
+  }
 
   const recurse = (parentId: string, level: number, pathSoFar: string[]) => {
-    if (level > n) return;
+    if (level > safeN) return
     for (let k = 0; k < 2; k++) {
-      const childId = parentId === 'root' ? `${k}` : `${parentId}_${k}`;
-      const isT = k === 0;
-      const letter = isT ? 'T' : 'N';
+      const childId = parentId === 'root' ? `${k}` : `${parentId}_${k}`
+      const isT = k === 0
+      const letter = isT ? 'T' : 'N'
 
       nodes[childId] = {
         label: letter,
         labelHidden: false,
         edge_label: '',
         edgeLabelHidden: false,
-        prob_value: isT ? p : q,
+        prob_value: isT ? safeP : q,
         node_style: null,
         edge_style: null,
         num_children: 2
-      };
+      }
 
-      const path = [...pathSoFar, letter];
-      if (level === n) {
-        const successes = path.filter(l => l === 'T').length;
-        const pathProb = Math.pow(p, successes) * Math.pow(q, n - successes);
+      const path = [...pathSoFar, letter]
+      if (level === safeN) {
+        const successes = path.filter(l => l === 'T').length
+        const pathProb = Math.pow(safeP, successes) * Math.pow(q, safeN - successes)
 
         // Erstellung des LaTeX-Strings
-        const pString = toFractionLaTeX(pathProb);
-        results[childId] = annotate ? `$P(${path.join('')}) = ${pString}$` : path.join('');
+        const pString = toFractionLaTeX(pathProb)
+        results[childId] = annotate ? `$P(${path.join('')}) = ${pString}$` : path.join('')
       } else {
-        recurse(childId, level + 1, path);
+        recurse(childId, level + 1, path)
       }
     }
-  };
+  }
 
-  recurse('root', 1, []);
-  return { nodes, results };
+  recurse('root', 1, [])
+  return { nodes, results }
 }

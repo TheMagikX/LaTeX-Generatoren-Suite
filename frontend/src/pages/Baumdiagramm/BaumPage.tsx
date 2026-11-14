@@ -12,7 +12,7 @@ import {
 
 import type { BaumConfigUpdater, BaumHighlightUpdater, BaumNodeUpdater, BaumStyleUpdater, Config, BaumNodeConfig } from './typesBaum'
 import { DEFAULT_CONFIG } from './constantsBaum'
-import { buildBernoulliNodes, buildBinomialNodes, getAllNodesWithBranchIndex, getAllPaths, getNumChildren, computeLatexComplement } from './utilsBaum'
+import { MAX_WIZARD_DEPTH, buildBernoulliNodes, buildBinomialNodes, clampProbability, clampWizardDepth, getAllNodesWithBranchIndex, getAllPaths, getNumChildren, computeLatexComplement } from './utilsBaum'
 import { BaumHeader } from './components/BaumHeader'
 import { BaumPreview } from './components/BaumPreview'
 import { BaumTabStruktur } from './components/BaumTabStruktur'
@@ -38,15 +38,32 @@ const BaumPage = () => {
   const [binomialN, setBinomialN] = useState(2)
   const [binomialP, setBinomialP] = useState(0.5)
   const [binomialAnnotate, setBinomialAnnotate] = useState(true)
+  const [wizardNotice, setWizardNotice] = useState<string | null>(null)
 
   const applyBernoulliPreset = (n: number) => {
-    const { nodes, results } = buildBernoulliNodes(n)
-    history.commitImmediate({ ...DEFAULT_CONFIG, mode: 'Symmetrisch (Standard)', max_depth: n, branches_global: 2, nodes, results })
+    const safeN = clampWizardDepth(n)
+    setBernoulliN(safeN)
+    setWizardNotice(
+      safeN !== n
+        ? `Stufenanzahl wurde auf den gültigen Bereich (1–${MAX_WIZARD_DEPTH}) angepasst: n = ${safeN}.`
+        : null
+    )
+    const { nodes, results } = buildBernoulliNodes(safeN)
+    history.commitImmediate({ ...DEFAULT_CONFIG, mode: 'Symmetrisch (Standard)', max_depth: safeN, branches_global: 2, nodes, results })
   }
 
   const applyBinomialPreset = (n: number, p: number, annotate: boolean) => {
-    const { nodes, results } = buildBinomialNodes(n, p, annotate)
-    history.commitImmediate({ ...DEFAULT_CONFIG, mode: 'Symmetrisch (Standard)', max_depth: n, branches_global: 2, use_numeric_probs: true, nodes, results })
+    const safeN = clampWizardDepth(n)
+    const safeP = clampProbability(p)
+    setBinomialN(safeN)
+    setBinomialP(safeP)
+    if (safeN !== n || safeP !== p) {
+      setWizardNotice(`Eingaben wurden auf den gültigen Bereich (n: 1–${MAX_WIZARD_DEPTH}, p: 0–1) angepasst: n = ${safeN}, p = ${safeP}.`)
+    } else {
+      setWizardNotice(null)
+    }
+    const { nodes, results } = buildBinomialNodes(safeN, safeP, annotate)
+    history.commitImmediate({ ...DEFAULT_CONFIG, mode: 'Symmetrisch (Standard)', max_depth: safeN, branches_global: 2, use_numeric_probs: true, nodes, results })
   }
 
   const handleCompile = async () => {
@@ -258,6 +275,7 @@ const BaumPage = () => {
                 setBinomialP={setBinomialP}
                 binomialAnnotate={binomialAnnotate}
                 setBinomialAnnotate={setBinomialAnnotate}
+                wizardNotice={wizardNotice}
                 onApplyBernoulli={applyBernoulliPreset}
                 onApplyBinomial={applyBinomialPreset}
               />
