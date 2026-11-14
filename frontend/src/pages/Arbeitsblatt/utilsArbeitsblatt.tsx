@@ -1,5 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+export const sanitizeFilename = (name: string | undefined | null, fallback = 'Unbenannt'): string => {
+  const withoutControlChars = Array.from(name ?? '')
+    .map((ch) => (ch.charCodeAt(0) < 32 ? ' ' : ch))
+    .join('')
+  const cleaned = withoutControlChars
+    .replace(/[\\/:*?"<>|]+/g, '_')
+    .replace(/\s+/g, ' ')
+    .replace(/[. ]+$/g, '')
+    .trim()
+  return cleaned || fallback
+}
+
 export const downloadFile = (base64: string, filename: string, mimeType: string) => {
   const link = document.createElement('a')
   link.href = `data:${mimeType};base64,${base64}`

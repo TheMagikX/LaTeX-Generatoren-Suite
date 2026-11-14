@@ -18,6 +18,7 @@ import {
   copyPngToClipboard,
   copySvgToClipboard,
   downloadZipArchive,
+  indexToSubtaskLetter,
 } from '../utilsErwartungshorizont'
 
 interface Props {
@@ -56,7 +57,7 @@ const ErwartungshorizontPreview: React.FC<Props> = ({
 
   const totalPages = pages.length
   const activePage = Math.min(currentPage, Math.max(0, totalPages - 1))
-  const currentLetter = String.fromCharCode(97 + activePage) // a, b, c, ...
+  const currentLetter = indexToSubtaskLetter(activePage)
 
   // Fullscreen escape key
   useEffect(() => {
@@ -260,8 +261,8 @@ const ErwartungshorizontPreview: React.FC<Props> = ({
                 className="max-w-full max-h-full object-contain drop-shadow-xl hover:scale-[1.01] transition-transform duration-300"
               />
             </div>
-          ) : compileData?.log ? (
-            <LatexErrorPanel log={compileData.log} />
+          ) : compileData && !compileData.ok ? (
+            <LatexErrorPanel log={compileData.log || 'Unbekannter LaTeX-Kompilierungsfehler.'} />
           ) : (
             <div className="flex flex-col items-center text-ghost gap-3">
               <div className="opacity-20"><ListChecks size={48} /></div>
