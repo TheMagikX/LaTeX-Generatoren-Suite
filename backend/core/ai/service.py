@@ -10,7 +10,9 @@ from core.ai.registry import registry
 from core.ai.sanitizer import (
     extract_json_from_llm_response,
     sanitize_llm_json_string,
-    recursively_fix_latex_strings
+    recursively_fix_latex_strings,
+    sanitize_user_prompt,
+    validate_no_dangerous_latex,
 )
 from core.ai import gemini_service
 
@@ -167,7 +169,8 @@ def _parse_and_sanitize_json_response(raw_text: str, generator_id: str) -> Dict[
             logger.error(f"Ungültiges JSON vom KI-Modell für '{generator_id}': {jde}\nRohtext: {raw_text[:300]}")
             raise ValueError(f"Das KI-Modell lieferte kein gültiges JSON: {jde}")
 
-    return recursively_fix_latex_strings(parsed_json)
+    fixed_json = recursively_fix_latex_strings(parsed_json)
+    return validate_no_dangerous_latex(fixed_json)
 
 
 async def generate_config_from_prompt(
@@ -183,6 +186,7 @@ async def generate_config_from_prompt(
         supported = ", ".join(registry.list_supported())
         raise ValueError(f"Generator '{generator_id}' wird nicht unterstützt. Verfügbar: {supported}")
 
+    prompt = sanitize_user_prompt(prompt)
     active_prov = provider or gemini_service.get_active_provider()
 
     # --- GEMINI CLOUD FLOW ---
@@ -273,6 +277,12 @@ async def chat_with_generator(
         supported = ", ".join(registry.list_supported())
         raise ValueError(f"Generator '{generator_id}' wird nicht unterstützt. Verfügbar: {supported}")
 
+    messages = [
+        ChatMessage(role=msg.role, content=sanitize_user_prompt(msg.content))
+        if msg.role == "user"
+        else msg
+        for msg in messages
+    ]
     active_prov = provider or gemini_service.get_active_provider()
 
     # --- GEMINI CLOUD FLOW ---
