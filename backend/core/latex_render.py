@@ -39,6 +39,12 @@ _DYNAMIC_TEX_PRIMITIVES_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Verbotene Pakete zur Shell-Ausführung oder eingebetteten Skriptausführung
+_FORBIDDEN_PACKAGES_RE = re.compile(
+    r"\\(?:usepackage|RequirePackage)\s*(?:\[[^\]]*\]\s*)?\{[^}]*\b(?:shellesc|luacode|pythontex)\b[^}]*\}",
+    re.IGNORECASE,
+)
+
 # Überwachte Dateieinbindungsbefehle (müssen in kanonischer Literaldarstellung vorliegen)
 _INCLUSION_CMD_TOKEN_RE = re.compile(
     r"\\(input|include|verbatiminput|lstinputlisting|includegraphics|"
@@ -96,13 +102,15 @@ def validate_latex_source_security(latex: str) -> Optional[str]:
     """Prüft LaTeX-Quellcode auf unsichere Dateizugriffe (Schutz insbesondere für natives Windows/MiKTeX)."""
     if not latex:
         return None
+    if "\x00" in latex:
+        return "Sicherheitsrichtlinie: Null-Bytes im LaTeX-Quellcode sind nicht erlaubt."
     active_lines = [re.sub(r"(?<!\\)((?:\\\\)*)%.*$", r"\1", line) for line in latex.splitlines()]
     cleaned = "\n".join(active_lines)
 
-    if _FORBIDDEN_TEX_PRIMITIVES_RE.search(cleaned):
+    if _FORBIDDEN_TEX_PRIMITIVES_RE.search(cleaned) or _FORBIDDEN_PACKAGES_RE.search(cleaned):
         return (
             "Sicherheitsrichtlinie: Direkte TeX-Dateizugriffs-, Engine- oder Lua-Primitiven "
-            "(\\openin, \\openout, \\read, \\write, \\write18, \\pdffiledump, \\XeTeXpdffile, \\scantokens, \\directlua) sind nicht erlaubt."
+            "(\\openin, \\openout, \\read, \\newread, \\write, \\write18, \\pdffiledump, \\XeTeXpdffile, \\scantokens, \\directlua, shellesc) sind nicht erlaubt."
         )
 
     if _DYNAMIC_TEX_PRIMITIVES_RE.search(cleaned):

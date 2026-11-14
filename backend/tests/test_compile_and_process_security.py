@@ -101,7 +101,12 @@ def test_latex_source_security_blocks_traversal_and_io_primitives():
     assert validate_latex_source_security(r"\input ../../ai_secrets.json") is not None
     assert validate_latex_source_security(r"\input /etc/passwd") is not None
     assert validate_latex_source_security(r"\newread\myread \openin\myread=ai_secrets.json") is not None
+    assert validate_latex_source_security(r"\openout\f=evil.txt") is not None
     assert validate_latex_source_security(r"\immediate\write18{whoami}") is not None
+    assert validate_latex_source_security(r"\write18{whoami}") is not None
+    assert validate_latex_source_security(r"\usepackage{shellesc}") is not None
+    assert validate_latex_source_security(r"\RequirePackage[active]{shellesc}") is not None
+    assert validate_latex_source_security("\\input{foo\x00../../secret}") is not None
     assert validate_latex_source_security(r"\directlua{os.execute('whoami')}") is not None
     assert validate_latex_source_security(r"\latelua{io.open('ai_secrets.json')}") is not None
     assert validate_latex_source_security(r"\csname openin\endcsname") is not None
@@ -192,8 +197,41 @@ def test_compile_rejects_lualatex_engine():
     assert "lualatex" in res.json()["detail"].lower()
 
 
-def test_upload_and_browse_latex_reject_unsafe_tex_files(tmp_path):
-    """Ensure /api/settings/latex/upload and /api/settings/latex/browse validate file content against validate_latex_source_security."""
+@pytest.mark.parametrize(
+    "dangerous_body",
+    [
+        r"\write18{whoami}",
+        r"\immediate\write18{id}",
+        r"\usepackage{shellesc}",
+        r"\openout\f=evil.txt",
+        r"\input{../../ai_secrets.json}",
+        "\\input{foo\x00../../secret}",
+    ],
+)
+def test_compile_endpoint_blocks_dangerous_latex_payloads(dangerous_body):
+    """Ensure POST /api/compile/ blocks dangerous TeX payloads end-to-end without invoking subprocesses."""
+    latex_doc = f"\\documentclass{{article}}\\begin{{document}}{dangerous_body}\\end{{document}}"
+    with patch("core.latex_render.subprocess.Popen") as mock_popen, \
+         patch("core.latex_render.subprocess.run") as mock_run:
+        res = client.post("/api/compile/", json={"latex": latex_doc, "dpi": 300})
+        assert res.status_code == 200
+        data = res.json()
+        assert data["ok"] is False
+        assert "Sicherheitsrichtlinie" in data["log"]
+        assert data["pdf_base64"] == ""
+        assert data["png_base64"] == ""
+        assert not mock_popen.called
+        assert not mock_run.called
+
+
+def test_upload_and_browse_latex_reject_unsafe_tex_files(tmp_path, monkeypatch):
+    """Ensure /api/settings/latex/upload and /api/settings/latex/browse validate file content and neutralize filename traversal."""
+    import config
+
+    custom_dir = tmp_path / "custom_latex"
+    custom_dir.mkdir()
+    monkeypatch.setattr(config, "CUSTOM_LATEX_DIR", custom_dir)
+
     malicious_tex = b"\\newcommand{\\evil}{\\input ../../ai_secrets.json}\n"
     res_upload = client.post(
         "/api/settings/latex/upload",
@@ -202,6 +240,26 @@ def test_upload_and_browse_latex_reject_unsafe_tex_files(tmp_path):
     )
     assert res_upload.status_code == 400
     assert "Sicherheitsrichtlinie" in res_upload.json()["detail"]
+
+    # Upload with traversal in filename + malicious payload is rejected
+    res_trav_evil = client.post(
+        "/api/settings/latex/upload",
+        files={"file": ("../../evil_trav.tex", b"\\write18{whoami}\n", "text/plain")},
+        data={"category": "commands"},
+    )
+    assert res_trav_evil.status_code == 400
+    assert not (tmp_path / "evil_trav.tex").exists()
+
+    # Upload with traversal in filename + benign payload cannot escape CUSTOM_LATEX_DIR
+    res_trav_safe = client.post(
+        "/api/settings/latex/upload",
+        files={"file": ("../../safe_trav.tex", b"\\newcommand{\\safecmd}{1}\n", "text/plain")},
+        data={"category": "commands"},
+    )
+    assert res_trav_safe.status_code in (200, 400)
+    assert not (tmp_path / "safe_trav.tex").exists()
+    if res_trav_safe.status_code == 200:
+        assert (custom_dir / "safe_trav.tex").is_file()
 
     evil_file = tmp_path / "evil_browse.tex"
     evil_file.write_text(r"\directlua{os.execute('whoami')}", encoding="utf-8")
@@ -287,13 +345,18 @@ def test_fls_recorder_guard_blocks_canary_file_compile(tmp_path, monkeypatch):
         r"\makeatletter\def\input@path{{../../}}\makeatother\input{ai_secrets.json}",
         r"\scantokens{\input{../../ai_secrets.json}}",
         r"\everyeof{\input{../../ai_secrets.json}}",
-        # Engine file-read/write primitives (RT-01)
+        # Engine file-read/write primitives & shell-escape bypasses (RT-01 / P9B-22)
         r"\pdffiledump offset 0 length 128 {../../ai_secrets.json}",
         r"\pdfmdfivesum file {../../ai_secrets.json}",
         r'\XeTeXpdffile "../../secret.pdf"',
         r'\XeTeXpicfile "C:/Windows/win.ini"',
         r"\newwrite\out\write\out{x}",
         r"\write\myout{deferred_write}",
+        r"\write18{whoami}",
+        r"\openout\f=evil.txt",
+        r"\usepackage{shellesc}",
+        r"\RequirePackage{shellesc}",
+        "\\input{foo\x00../../secret}",
         # Package inclusions (RT-01)
         r"\includesvg{../../secret.svg}",
         r"\svginput{../../secret.svg}",

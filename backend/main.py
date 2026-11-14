@@ -174,29 +174,33 @@ if dist_path.exists() and (dist_path / "index.html").is_file():
     if assets_path.exists():
         app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
 
-    resolved_dist = dist_path.resolve()
 
-    @app.get("/{full_path:path}")
-    async def serve_spa(full_path: str):
-        if full_path == "api" or full_path.startswith("api/"):
-            raise HTTPException(status_code=404, detail="API-Endpunkt nicht gefunden.")
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    if full_path == "api" or full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API-Endpunkt nicht gefunden.")
+
+    current_dist = config.FRONTEND_DIST_DIR
+    index_file = current_dist / "index.html"
+    if current_dist.exists() and index_file.is_file():
+        resolved_dist = current_dist.resolve()
         # Serve static file if exists and is safely contained within dist_path (prevents directory traversal)
         if full_path:
             try:
-                target_file = (dist_path / full_path).resolve()
+                target_file = (current_dist / full_path).resolve()
                 if target_file.is_file() and target_file.is_relative_to(resolved_dist):
                     return FileResponse(target_file)
             except (ValueError, RuntimeError):
                 pass
         # Otherwise fallback to index.html for client-side routing
-        return FileResponse(dist_path / "index.html")
-else:
-    @app.get("/")
-    async def root():
+        return FileResponse(index_file)
+
+    if not full_path:
         return {
             "name": config.APP_NAME,
             "version": config.APP_VERSION,
             "status": "running",
             "license": config.APP_LICENSE,
-            "source_code_url": config.SOURCE_CODE_URL
+            "source_code_url": config.SOURCE_CODE_URL,
         }
+    raise HTTPException(status_code=404, detail="Not Found")

@@ -339,11 +339,20 @@ def test_flaschenzug_tangent_clamping():
     from generators.flaschenzug import tangent_point_external, tangent_line_two_circles
     # If point is barely at boundary or float exceeds slightly
     tx, ty, deg = tangent_point_external(0.0, 0.0, 1.0, 0.0, 1.0000000000000002)
-    assert isinstance(tx, float)
+    assert all(isinstance(v, (int, float)) and math.isfinite(v) for v in (tx, ty, deg))
 
-    # Two circles touching or overlapping where dr/d or rs/d is approx 1
-    t1x, t1y, t2x, t2y, a1, a2 = tangent_line_two_circles(0.0, 0.0, 1.0, 2.0, 0.0, 1.0)
-    assert isinstance(t1x, float)
+    # Exact boundary d == r (r / d == 1.0)
+    tx_eq, ty_eq, deg_eq = tangent_point_external(0.0, 0.0, 1.0, 0.0, 1.0)
+    assert all(math.isfinite(v) for v in (tx_eq, ty_eq, deg_eq))
+
+    # Two circles touching or overlapping where dr/d or rs/d is approx 1 (outer and inner tangents)
+    t1x, t1y, t2x, t2y, a1, a2 = tangent_line_two_circles(0.0, 0.0, 1.0, 2.0, 0.0, 1.0, side1="cw", side2="cw")
+    assert all(isinstance(v, (int, float)) and math.isfinite(v) for v in (t1x, t1y, t2x, t2y, a1, a2))
+
+    t1x_in, t1y_in, t2x_in, t2y_in, a1_in, a2_in = tangent_line_two_circles(
+        0.0, 0.0, 1.0, 2.0, 0.0, 1.0000000000000002, side1="cw", side2="ccw"
+    )
+    assert all(isinstance(v, (int, float)) and math.isfinite(v) for v in (t1x_in, t1y_in, t2x_in, t2y_in, a1_in, a2_in))
 
 
 def test_latex_image_config_default_raw_string():

@@ -73,7 +73,7 @@ def _resolve_preset_file(generator: str, name: str) -> Path:
         raise HTTPException(status_code=400, detail="Invalid preset name")
 
     for part in parts:
-        if part == ".." or "\\" in part or _has_invalid_filename_chars(part):
+        if part.startswith(".") or "\\" in part or _has_invalid_filename_chars(part):
             raise HTTPException(status_code=400, detail="Invalid preset name")
 
     filename = parts[-1] + ".json"
@@ -191,7 +191,7 @@ def download_preset_folder(generator: str, folder: str = ""):
     
     # Check for path traversal attempt
     for part in parts:
-        if part == ".." or "\\" in part or _has_invalid_filename_chars(part):
+        if part.startswith(".") or "\\" in part or _has_invalid_filename_chars(part):
             raise HTTPException(status_code=400, detail="Invalid folder path")
     
     target_dir = base_dir.joinpath(*parts) if parts else base_dir

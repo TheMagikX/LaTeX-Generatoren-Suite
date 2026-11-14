@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 from unittest.mock import MagicMock, patch
+import pytest
 import config
 from core.latex_render import compile_latex_to_pdf_bytes
 from models.glucksrad import GlucksradConfig, ArrowStyle
@@ -112,3 +113,52 @@ def test_terminate_process_tree_calls_taskkill_or_killpg():
 
     assert mock_proc.kill.called
     assert mock_proc.communicate.called
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        r"\immediate\write18{id}",
+        r"\write18{whoami}",
+        r"\usepackage{shellesc}",
+        r"\RequirePackage{shellesc}",
+        r"\directlua{os.execute('id')}",
+        r"\openin1=/etc/passwd",
+        r"\openout1=evil.tex",
+        r"\input{/etc/passwd}",
+        r"\include{../../ai_secrets}",
+        r"\csname write18\endcsname{id}",
+        r"\@@input{../../ai_secrets.json}",
+        r"\catcode`\@=11",
+        "\\input{foo\x00../../secret.tex}",
+        "\\input{foo\x00.tex}",
+    ],
+)
+def test_latex_security_blocks_dangerous_primitives(payload):
+    """Ensure pre-compilation filter blocks dangerous TeX primitives and bypass vectors before spawning XeLaTeX."""
+    from core.latex_render import validate_latex_source_security
+
+    err = validate_latex_source_security(payload)
+    assert err is not None
+    assert "Sicherheitsrichtlinie" in err
+
+    doc = f"\\documentclass{{article}}\\begin{{document}}{payload}\\end{{document}}"
+    with patch("core.latex_render.subprocess.Popen") as mock_popen, \
+         patch("core.latex_render.subprocess.run") as mock_run:
+        res = compile_latex_to_pdf_bytes(doc)
+        assert res.ok is False
+        assert res.pdf_bytes is None
+        assert "Sicherheitsrichtlinie" in res.log
+        assert not mock_popen.called
+        assert not mock_run.called
+
+
+def test_latex_file_guard_default_mode_is_enforce(monkeypatch):
+    """Ensure get_guard_mode defaults to 'enforce' when LATEX_FILE_ACCESS_GUARD is unset or invalid."""
+    from core.latex_file_guard import get_guard_mode
+
+    monkeypatch.delenv("LATEX_FILE_ACCESS_GUARD", raising=False)
+    assert get_guard_mode() == "enforce"
+
+    monkeypatch.setenv("LATEX_FILE_ACCESS_GUARD", "invalid_value")
+    assert get_guard_mode() == "enforce"
