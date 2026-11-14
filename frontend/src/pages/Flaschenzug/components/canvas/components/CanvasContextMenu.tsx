@@ -57,6 +57,8 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
           ...r,
           path: r.path.filter(seg => seg.name !== p.name),
         })),
+        masses: p.name ? c.masses.filter(m => m.ref !== p.name) : c.masses,
+        forces: p.name ? c.forces.filter(f => f.ref_name !== p.name) : c.forces,
       }
     })
     onClose()
@@ -97,6 +99,8 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
           ...r,
           path: r.path.filter(seg => seg.name !== a.name),
         })),
+        masses: a.name ? c.masses.filter(m => m.ref !== a.name) : c.masses,
+        forces: a.name ? c.forces.filter(f => f.ref_name !== a.name) : c.forces,
       }
     })
     onClose()
