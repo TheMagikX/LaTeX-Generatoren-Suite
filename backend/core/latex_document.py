@@ -53,6 +53,99 @@ class LatexDocumentSpec:
     metadata_block: str | None = None
 
 
+_DANGEROUS_TEX_INJECTION_RE = re.compile(
+    r"\\(?:write18|immediate|input|include|openin|openout|read|catcode|"
+    r"def|edef|gdef|xdef|let|csname|expandafter|directlua|usepackage|"
+    r"documentclass|begin\s*\{document\}|end\s*\{document\})\b",
+    re.IGNORECASE,
+)
+
+_DANGEROUS_TIKZ_KEY_RE = re.compile(
+    r"(?:execute\s+at|every\s+picture\s*/\s*\.style|pgfkeys|/.code\s*=)",
+    re.IGNORECASE,
+)
+
+SAFE_XCOLOR_EXPR_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9_!.\-]*$")
+
+
+def _has_balanced_braces(text: str) -> bool:
+    """Checks whether curly braces '{' and '}' are balanced outside escaped sequences."""
+    depth = 0
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch == "\\" and i + 1 < n:
+            i += 2
+            continue
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth < 0:
+                return False
+        i += 1
+    return depth == 0
+
+
+def sanitize_tikz_options(opts: str) -> str:
+    """Validates and normalizes a TikZ option list for safe inclusion inside [...].
+
+    Allows standard TikZ options (e.g. 'scale=1.2, thick, draw=red!50, font=\\small')
+    while rejecting unbalanced braces, top-level ']'/'['/`;` breakouts, and dangerous
+    TeX primitives or TikZ code-execution keys.
+    """
+    if not opts or not isinstance(opts, str):
+        return ""
+    cleaned = " ".join(opts.replace("\r", " ").replace("\n", " ").split()).strip()
+    if not cleaned:
+        return ""
+    if _DANGEROUS_TEX_INJECTION_RE.search(cleaned) or _DANGEROUS_TIKZ_KEY_RE.search(cleaned):
+        return ""
+    if not _has_balanced_braces(cleaned):
+        return ""
+
+    brace_depth = 0
+    i = 0
+    n = len(cleaned)
+    while i < n:
+        ch = cleaned[i]
+        if ch == "\\" and i + 1 < n:
+            i += 2
+            continue
+        if ch == "{":
+            brace_depth += 1
+        elif ch == "}":
+            brace_depth -= 1
+        elif brace_depth == 0 and ch in "][;":
+            return ""
+        i += 1
+    return cleaned
+
+
+def sanitize_preamble_addition(preamble: str) -> str:
+    """Filters dangerous TeX directives out of user-supplied preamble additions.
+
+    Preserves safe styling commands such as \\definecolor, \\tikzset, \\pgfplotsset,
+    or \\usetikzlibrary while stripping file I/O, shell-escape, macro-redefinition,
+    or document-structure primitives.
+    """
+    if not preamble or not isinstance(preamble, str):
+        return ""
+    safe_lines: list[str] = []
+    for raw_line in preamble.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if _DANGEROUS_TEX_INJECTION_RE.search(line) or _DANGEROUS_TIKZ_KEY_RE.search(line):
+            continue
+        safe_lines.append(raw_line)
+    result = "\n".join(safe_lines)
+    if not _has_balanced_braces(result):
+        return ""
+    return result
+
+
 def _clean_parts(parts: Iterable[str]) -> list[str]:
     r"""Clean preamble parts and deduplicate \input{...} statements across parts."""
     seen_inputs: set[str] = set()

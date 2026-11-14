@@ -9,11 +9,51 @@ from models.statistik import (
     StatistikConfig, StatistikType, DataMode, Orientation, DatasetParams,
     BarChartOptions, BarWidthMode, SummenkurveOptions, ViolinOptions,
 )
-from core.latex_document import LatexDocumentSpec, font_input, latex_input, render_latex_document
+from core.latex_document import (
+    LatexDocumentSpec,
+    SAFE_XCOLOR_EXPR_RE,
+    font_input,
+    latex_input,
+    render_latex_document,
+    sanitize_tikz_options,
+)
 
 _MAX_FREQ_COUNT_PER_ENTRY = 10_000
 _MAX_EXPANDED_DATA_LEN = 50_000
 _MAX_HISTOGRAM_BINS = 500
+_MAX_SUMMENKURVE_POINTS = 500
+
+_ALLOWED_FONT_SIZES = frozenset({
+    "tiny", "scriptsize", "footnotesize", "small", "normalsize",
+    "large", "Large", "LARGE", "huge", "Huge",
+})
+_SAFE_TICK_LIST_RE = re.compile(r"^[0-9eE+\-.,/\s\\frac{}]+$")
+
+
+def _sanitize_font_size_cmd(font_size: str, default: str = "normalsize") -> str:
+    """Restricts font size names to standard LaTeX size commands (without leading backslash)."""
+    if not font_size or not isinstance(font_size, str):
+        return default.lstrip("\\")
+    name = font_size.strip().lstrip("\\")
+    if name in _ALLOWED_FONT_SIZES:
+        return name
+    return default.lstrip("\\")
+
+
+def _sanitize_tick_list(tick_list: str) -> str:
+    """Validates a comma-separated list of numeric/fraction ticks for TikZ/pgfplots."""
+    if not tick_list or not isinstance(tick_list, str):
+        return ""
+    cleaned = " ".join(tick_list.split()).strip()
+    if not cleaned:
+        return ""
+    if any(ch in cleaned for ch in "][;"):
+        return ""
+    if cleaned.count("{") != cleaned.count("}"):
+        return ""
+    if _SAFE_TICK_LIST_RE.match(cleaned):
+        return cleaned
+    return ""
 
 def parse_frequency_data(freq_string: str) -> List[float]:
     """Parse 'value:count' or 'value,count' pairs into an expanded list of floats."""
@@ -69,8 +109,9 @@ def calculate_params(data: List[float]) -> Optional[DatasetParams]:
     )
 
 def generate_statistik_latex(config: StatistikConfig) -> str:
+    safe_font_size = _sanitize_font_size_cmd(config.font_size, "normalsize")
     body_parts = [
-        rf"\begin{{tikzpicture}}[font=\{config.font_size}]",
+        rf"\begin{{tikzpicture}}[font=\{safe_font_size}]",
     ]
 
     if config.type == StatistikType.BOXPLOT:
@@ -116,12 +157,20 @@ def generate_statistik_latex(config: StatistikConfig) -> str:
     )
 
 def tex_color(color: str) -> str:
-    if color.startswith('#') and len(color) == 7:
-        r = int(color[1:3], 16)
-        g = int(color[3:5], 16)
-        b = int(color[5:7], 16)
-        return f"{{rgb,255:red,{r}; green,{g}; blue,{b}}}"
-    return color
+    if not color or not isinstance(color, str):
+        return "blue"
+    c = color.strip()
+    if c.startswith('#') and len(c) == 7:
+        try:
+            r = int(c[1:3], 16)
+            g = int(c[3:5], 16)
+            b = int(c[5:7], 16)
+            return f"{{rgb,255:red,{r}; green,{g}; blue,{b}}}"
+        except ValueError:
+            return "blue"
+    if SAFE_XCOLOR_EXPR_RE.match(c):
+        return c
+    return "blue"
 
 def _apply_axis_ticks(opts: List[str], axis: Any, prefix: str, is_categorical: bool = False, default_min: float = 0, default_max: float = 10):
     if not axis.majorticklabels:
@@ -130,8 +179,9 @@ def _apply_axis_ticks(opts: List[str], axis: Any, prefix: str, is_categorical: b
         opts.append(f"{prefix}tick style={{draw=none}}")
 
     if axis.tick_mode == "Manuell":
-        if axis.tick_list:
-            opts.append(f"{prefix}tick={{{axis.tick_list}}}")
+        safe_tick_list = _sanitize_tick_list(axis.tick_list) if axis.tick_list else ""
+        if safe_tick_list:
+            opts.append(f"{prefix}tick={{{safe_tick_list}}}")
     elif not is_categorical: # Automatisch numerical
         step = axis.step if axis.step > 0 else 1.0
         a_min = axis.min if axis.min is not None else default_min
@@ -147,7 +197,7 @@ def _apply_title(opts: List[str], config: StatistikConfig):
         elif config.title_opts.font_weight == "italic":
             weight_cmd = r"\itshape"
 
-        font_size_cmd = config.title_opts.font_size or r"\large"
+        font_size_cmd = f"\\{_sanitize_font_size_cmd(config.title_opts.font_size, 'large')}"
         font_spec = f"{font_size_cmd}{weight_cmd}"
 
         title_styles = [f"font={font_spec}"]
@@ -165,7 +215,9 @@ def _apply_title(opts: List[str], config: StatistikConfig):
         title_styles.append("yshift=4pt")
 
         if config.title_opts.custom_style and config.title_opts.custom_style.strip():
-            title_styles.append(config.title_opts.custom_style.strip())
+            safe_custom_style = sanitize_tikz_options(config.title_opts.custom_style)
+            if safe_custom_style:
+                title_styles.append(safe_custom_style)
 
         opts.append(f"title={{{t_text}}}")
         opts.append(f"title style={{{', '.join(title_styles)}}}")
@@ -520,10 +572,15 @@ def generate_barchart_tikz(config: StatistikConfig) -> str:
 
     def get_tex_color_name(raw_col: str) -> str:
         nonlocal color_counter
-        if not raw_col:
+        if not raw_col or not isinstance(raw_col, str):
             return "black"
-        if raw_col.startswith('#') and len(raw_col) == 7:
-            hex_clean = raw_col[1:].upper()
+        cleaned_col = raw_col.strip()
+        if cleaned_col.startswith('#') and len(cleaned_col) == 7:
+            hex_clean = cleaned_col[1:].upper()
+            try:
+                int(hex_clean, 16)
+            except ValueError:
+                return "black"
             if hex_clean in defined_colors:
                 return defined_colors[hex_clean]
             name = f"bcol{color_counter}"
@@ -531,7 +588,9 @@ def generate_barchart_tikz(config: StatistikConfig) -> str:
             color_defs.append(f"\\definecolor{{{name}}}{{HTML}}{{{hex_clean}}}")
             defined_colors[hex_clean] = name
             return name
-        return raw_col
+        if SAFE_XCOLOR_EXPR_RE.match(cleaned_col):
+            return cleaned_col
+        return "black"
 
     # Title node helper
     def build_title_code(cx: float, cy: float, w_tot: float) -> str:
@@ -543,7 +602,7 @@ def generate_barchart_tikz(config: StatistikConfig) -> str:
             weight_cmd = r"\bfseries"
         elif config.title_opts.font_weight == "italic":
             weight_cmd = r"\itshape"
-        font_size_cmd = config.title_opts.font_size or r"\large"
+        font_size_cmd = f"\\{_sanitize_font_size_cmd(config.title_opts.font_size, 'large')}"
         col_name = get_tex_color_name(config.title_opts.color or "#1e293b")
 
         align = config.title_opts.align or "center"
@@ -557,7 +616,8 @@ def generate_barchart_tikz(config: StatistikConfig) -> str:
             tx = w_tot / 2.0
             anchor = "south"
 
-        custom = f", {config.title_opts.custom_style.strip()}" if config.title_opts.custom_style and config.title_opts.custom_style.strip() else ""
+        safe_custom = sanitize_tikz_options(config.title_opts.custom_style or "")
+        custom = f", {safe_custom}" if safe_custom else ""
         return f"    \\node[above=8pt, anchor={anchor}, font={font_size_cmd}{weight_cmd}, text={col_name}, align={align}{custom}] at ({tx:.4f}cm, {cy:.4f}cm) {{{t_text}}};\n"
 
     width_mode = getattr(config.barchart_opts, "width_mode", BarWidthMode.BOXES)
@@ -869,19 +929,28 @@ def generate_summenkurve_tikz(config: StatistikConfig) -> str:
 
         sorted_arr = np.sort(np.array(data, dtype=float))
         n = len(sorted_arr)
-        cumulative = [(i + 1) / n * (100 if as_percent else 1) for i in range(n)]
+        unique_x, counts = np.unique(sorted_arr, return_counts=True)
+        cum_counts = np.cumsum(counts)
+        y_unique = cum_counts / n * (100.0 if as_percent else 1.0)
+
+        if len(unique_x) > _MAX_SUMMENKURVE_POINTS:
+            sample_idx = np.unique(
+                np.linspace(0, len(unique_x) - 1, _MAX_SUMMENKURVE_POINTS, dtype=int)
+            )
+            unique_x = unique_x[sample_idx]
+            y_unique = y_unique[sample_idx]
 
         plot_opts = [f"color={tex_color(ds.color)}", "thick"]
         if smooth:
             plot_opts.append("smooth")
-            all_x = [float(x) for x in sorted_arr]
-            all_y = list(cumulative)
+            all_x = [float(x) for x in unique_x]
+            all_y = [float(y) for y in y_unique]
         else:
             plot_opts.append("const plot mark right")
             x_step = config.x_axis.step if config.x_axis.step > 0 else 1.0
-            start_x = max(float(sorted_arr[0]) - x_step * 0.05, xmin_val)
-            all_x = [start_x] + [float(x) for x in sorted_arr]
-            all_y = [0.0] + list(cumulative)
+            start_x = max(float(unique_x[0]) - x_step * 0.05, xmin_val)
+            all_x = [start_x] + [float(x) for x in unique_x]
+            all_y = [0.0] + [float(y) for y in y_unique]
 
         coords = ' '.join(f"({x:.4f},{y:.4f})" for x, y in zip(all_x, all_y))
         latex += f"    \\addplot[{', '.join(plot_opts)}] coordinates {{{coords}}};\n"

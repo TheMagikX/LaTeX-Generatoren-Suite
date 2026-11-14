@@ -711,3 +711,129 @@ def test_koordinatensystem_between_validation_pattern_and_escaped_x():
     assert "curve99" not in latex
 
 
+def test_p4b_43_summenkurve_unique_aggregation_and_downsampling():
+    """Verifies P4B-43: Summenkurve aggregates duplicate x values and caps total coordinates."""
+    from models.statistik import StatistikConfig, DatasetConfig, StatistikType, SummenkurveOptions
+    from generators.statistik import generate_statistik_latex, _MAX_SUMMENKURVE_POINTS
+
+    # 1. Viele Duplikate: 1000 Datenpunkte mit nur 3 eindeutigen x-Werten -> 4 Koordinaten (Start + 3)
+    dup_data = [1.0] * 400 + [2.0] * 350 + [3.0] * 250
+    cfg_dup = StatistikConfig(
+        type=StatistikType.SUMMENKURVE,
+        datasets=[DatasetConfig(name="Dup", raw_data=dup_data)],
+        summenkurve_opts=SummenkurveOptions(as_percent=True, smooth=False),
+    )
+    tex_dup = generate_statistik_latex(cfg_dup)
+    addplot_line = [ln for ln in tex_dup.splitlines() if r"\addplot[" in ln][0]
+    coords_part = addplot_line.split("coordinates {", 1)[1].split("};", 1)[0].strip()
+    coords_dup = coords_part.split()
+    assert len(coords_dup) == 4
+    assert coords_dup[-1] == "(3.0000,100.0000)"
+
+    # 2. > 500 eindeutige x-Werte -> Downsampling auf max. _MAX_SUMMENKURVE_POINTS + 1
+    large_data = [float(i) for i in range(2500)]
+    cfg_large = StatistikConfig(
+        type=StatistikType.SUMMENKURVE,
+        datasets=[DatasetConfig(name="Large", raw_data=large_data)],
+        summenkurve_opts=SummenkurveOptions(as_percent=True, smooth=False),
+    )
+    tex_large = generate_statistik_latex(cfg_large)
+    addplot_large = [ln for ln in tex_large.splitlines() if r"\addplot[" in ln][0]
+    coords_large_part = addplot_large.split("coordinates {", 1)[1].split("};", 1)[0].strip()
+    coords_large = coords_large_part.split()
+    assert len(coords_large) <= _MAX_SUMMENKURVE_POINTS + 1
+
+
+def test_p4b_16_23_28_48_tikz_options_preamble_and_color_sanitization():
+    """Verifies P4B-16/23/28/48: TikZ option, preamble, and color injections are stripped while math labels stay intact."""
+    from models.schaltplan import SchaltplanConfig, CircuitNode, CircuitComponent
+    from generators.schaltplan import generate_schaltplan_latex
+    from models.flaschenzug import (
+        FlaschenzugConfig, FlaschenzugGlobalConfig, PulleyConfig, RopeConfig, RopeSegmentConfig, ForceConfig,
+    )
+    from generators.flaschenzug import generate_flaschenzug_latex
+    from models.baumdiagramm import BaumdiagrammConfig, BaumNodeConfig, TreeStyleConfig
+    from generators.baumdiagramm import generate_baumdiagramm_latex
+    from models.statistik import StatistikConfig, StatistikType, DatasetConfig, TitleConfig, AxisConfig
+    from generators.statistik import generate_statistik_latex
+
+    # P4B-16: schaltplan
+    sp_cfg = SchaltplanConfig(
+        style_tikz_opts=r"scale=1], \write18{id}",
+        preamble_add="\\definecolor{myblue}{HTML}{112233}\n\\immediate\\write18{calc}",
+        nodes=[CircuitNode(id="n1", name="A", x=0.0, y=0.0), CircuitNode(id="n2", name="B", x=2.0, y=0.0)],
+        components=[
+            CircuitComponent(
+                id="c1",
+                type_name="Widerstand (R)",
+                from_node="A",
+                to_node="B",
+                label=r"$R_1 = 220\,\Omega$",
+                style=r"thick], \input{/etc/passwd}",
+            )
+        ],
+    )
+    sp_tex = generate_schaltplan_latex(sp_cfg)
+    assert r"\write18" not in sp_tex
+    assert r"\input{/etc/passwd}" not in sp_tex
+    assert r"\definecolor{myblue}{HTML}{112233}" in sp_tex
+    assert r"$R_1 = 220\,\Omega$" in sp_tex
+
+    # P4B-23: flaschenzug
+    fz_cfg = FlaschenzugConfig(
+        global_opts=FlaschenzugGlobalConfig(tikz_opts=r"thick], \write18{id}"),
+        pulleys=[PulleyConfig(id="p1", name="R1", x=0.0, y=2.0)],
+        ropes=[
+            RopeConfig(
+                id="r1",
+                path=[RopeSegmentConfig(name="R1", side="cw")],
+                color=r"red,execute at end picture={\write18{id}}",
+            )
+        ],
+        forces=[
+            ForceConfig(
+                id="f1",
+                ref_type="pulley",
+                ref_name="R1",
+                color=r"blue}{\write18{id}",
+                label=r"$F_1$",
+            )
+        ],
+    )
+    fz_tex = generate_flaschenzug_latex(fz_cfg)
+    assert r"\write18" not in fz_tex
+    assert r"$F_1$" in fz_tex
+
+    # P4B-28: baumdiagramm
+    bd_cfg = BaumdiagrammConfig(
+        preamble_add="\\tikzset{foo/.style={thick}}\n\\catcode`\\@=11",
+        style=TreeStyleConfig(
+            global_node_style=r"draw=red, execute at end picture={\write18{id}}",
+            global_edge_style=r"thick]; \write18{id}",
+        ),
+        root_node=BaumNodeConfig(label=r"$\frac{1}{6}$"),
+    )
+    bd_tex = generate_baumdiagramm_latex(bd_cfg)
+    assert r"\write18" not in bd_tex
+    assert r"\catcode" not in bd_tex
+    assert r"\tikzset{foo/.style={thick}}" in bd_tex
+    assert r"$\frac{1}{6}$" in bd_tex
+
+    # P4B-48: statistik
+    st_cfg = StatistikConfig(
+        type=StatistikType.SAEULENDIAGRAMM,
+        datasets=[DatasetConfig(name="Test", raw_data=[1.0, 2.0, 3.0], color=r"red,execute at end picture={\write18{id}}")],
+        font_size=r"normalsize\write18{id}",
+        title_opts=TitleConfig(
+            show=True,
+            text=r"Messreihe $\alpha$",
+            font_size=r"\large\write18{id}",
+            custom_style=r"red], \write18{id}",
+        ),
+        x_axis=AxisConfig(tick_mode="Manuell", tick_list=r"1,2]; \write18{id}"),
+    )
+    st_tex = generate_statistik_latex(st_cfg)
+    assert r"\write18" not in st_tex
+    assert r"Messreihe $\alpha$" in st_tex
+
+

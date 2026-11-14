@@ -6,12 +6,31 @@ from models.flaschenzug import FlaschenzugConfig
 from core.latex_document import (
     HEXCOL_TIKZ_KEY,
     LatexDocumentSpec,
+    SAFE_XCOLOR_EXPR_RE,
     font_input,
     render_latex_document,
+    sanitize_tikz_options,
     shared_commands_input,
     shared_package_input,
     shared_tikz_input,
 )
+from core.math_utils import normalize_hex6
+
+
+def _safe_flaschenzug_color(color: str, default: str = "black") -> str:
+    """Validates a color string for use in TikZ/xcolor options."""
+    if not color or not isinstance(color, str):
+        return default
+    c = color.strip()
+    if c.startswith("#"):
+        h6 = normalize_hex6(c)
+        return f"hexcol={h6}" if h6 else default
+    if c.startswith("hexcol="):
+        h6 = normalize_hex6(c[7:])
+        return f"hexcol={h6}" if h6 else default
+    if SAFE_XCOLOR_EXPR_RE.match(c):
+        return c
+    return default
 
 def _find_element(cfg: FlaschenzugConfig, name: str) -> Tuple[Optional[str], Optional[Any]]:
     for p in cfg.pulleys:
@@ -240,16 +259,17 @@ def compute_rope_segments(cfg: FlaschenzugConfig, rope_path: List[Any]) -> List[
 def generate_rope_tikz(draw_parts, rope_style="plain", rope_color="black") -> str:
     if not draw_parts:
         return ""
+    safe_rope_color = _safe_flaschenzug_color(rope_color, "black")
     style = "seil"
-    if rope_color != "black":
-        style = f"seil, {rope_color}"
+    if safe_rope_color != "black":
+        style = f"seil, {safe_rope_color}"
     code = ""
     for part in draw_parts:
         if part["type"] == "line":
             fx, fy = part["from"]
             tx, ty = part["to"]
             if rope_style == "rope":
-                code += f"  \\draw[decorate, decoration={{rope}}, {rope_color}, line width=1.5pt] ({fx:.4f},{fy:.4f}) -- ({tx:.4f},{ty:.4f});\n"
+                code += f"  \\draw[decorate, decoration={{rope}}, {safe_rope_color}, line width=1.5pt] ({fx:.4f},{fy:.4f}) -- ({tx:.4f},{ty:.4f});\n"
             else:
                 code += f"  \\draw[{style}] ({fx:.4f},{fy:.4f}) -- ({tx:.4f},{ty:.4f});\n"
         elif part["type"] == "arc":
@@ -258,7 +278,7 @@ def generate_rope_tikz(draw_parts, rope_style="plain", rope_color="black") -> st
             s_deg = part["start_deg"]
             e_deg = part["end_deg"]
             if rope_style == "rope":
-                code += f"  \\draw[decorate, decoration={{rope}}, {rope_color}, line width=1.5pt] ({sx:.4f},{sy:.4f}) arc ({s_deg:.2f}:{e_deg:.2f}:{r});\n"
+                code += f"  \\draw[decorate, decoration={{rope}}, {safe_rope_color}, line width=1.5pt] ({sx:.4f},{sy:.4f}) arc ({s_deg:.2f}:{e_deg:.2f}:{r});\n"
             else:
                 code += f"  \\draw[{style}] ({sx:.4f},{sy:.4f}) arc ({s_deg:.2f}:{e_deg:.2f}:{r});\n"
     return code
@@ -266,7 +286,9 @@ def generate_rope_tikz(draw_parts, rope_style="plain", rope_color="black") -> st
 def generate_flaschenzug_latex(cfg: FlaschenzugConfig) -> str:
     opts = [f"scale={cfg.global_opts.style_scale}", "transform shape"]
     if cfg.global_opts.tikz_opts:
-        opts.append(cfg.global_opts.tikz_opts)
+        safe_tikz_opts = sanitize_tikz_options(cfg.global_opts.tikz_opts)
+        if safe_tikz_opts:
+            opts.append(safe_tikz_opts)
     opts_str = ", ".join(opts)
 
     code = f"\\begin{{tikzpicture}}[{opts_str}]\n"
@@ -420,8 +442,9 @@ def generate_flaschenzug_latex(cfg: FlaschenzugConfig) -> str:
 
         if pos:
             px_f, py_f = pos
+            safe_f_color = _safe_flaschenzug_color(f.color, "red")
             node_str = f" node[pos=1.1] {{{f.label}}}" if f.label else ""
-            code += f"  \\draw[-latex, {f.color}, thick] ({px_f:.4f},{py_f:.4f}) -- ++({f.angle:.1f}:{f.magnitude:.3f}){node_str};\n"
+            code += f"  \\draw[-latex, {safe_f_color}, thick] ({px_f:.4f},{py_f:.4f}) -- ++({f.angle:.1f}:{f.magnitude:.3f}){node_str};\n"
 
     code += "\\end{tikzpicture}"
 

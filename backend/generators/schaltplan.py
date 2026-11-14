@@ -5,6 +5,8 @@ from core.latex_document import (
     LatexDocumentSpec,
     font_input,
     render_latex_document,
+    sanitize_preamble_addition,
+    sanitize_tikz_options,
     shared_commands_input,
     shared_package_input,
 )
@@ -63,7 +65,9 @@ def generate_schaltplan_latex(cfg: SchaltplanConfig) -> str:
         opts.append("american")
 
     if cfg.style_tikz_opts:
-        opts.append(cfg.style_tikz_opts)
+        safe_tikz_opts = sanitize_tikz_options(cfg.style_tikz_opts)
+        if safe_tikz_opts:
+            opts.append(safe_tikz_opts)
 
     opts_str = ", ".join(opts)
     code = f"\\begin{{circuitikz}}[{opts_str}, scale={cfg.style_scale}, transform shape]\n"
@@ -101,8 +105,10 @@ def generate_schaltplan_latex(cfg: SchaltplanConfig) -> str:
         if comp.value:
             to_opts.append(f"a={{{comp.value}}}")
         if comp.style:
-            to_opts.append(comp.style)
-            
+            safe_comp_style = sanitize_tikz_options(comp.style)
+            if safe_comp_style:
+                to_opts.append(safe_comp_style)
+
         to_opts_str = ", ".join(to_opts)
         p1 = f"{x1:g},{y1:g}"
         p2 = f"{x2:g},{y2:g}"
@@ -129,7 +135,9 @@ def generate_schaltplan_latex(cfg: SchaltplanConfig) -> str:
         font_input(cfg.font_family),
     ]
     if cfg.preamble_add and cfg.preamble_add.strip():
-        preamble_parts.append(cfg.preamble_add.strip())
+        safe_preamble = sanitize_preamble_addition(cfg.preamble_add)
+        if safe_preamble.strip():
+            preamble_parts.append(safe_preamble.strip())
 
     spec = LatexDocumentSpec(
         body=code,

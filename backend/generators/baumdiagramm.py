@@ -9,8 +9,11 @@ from models.baumdiagramm import (
 )
 from core.latex_document import (
     LatexDocumentSpec,
+    SAFE_XCOLOR_EXPR_RE,
     font_input,
     render_latex_document,
+    sanitize_preamble_addition,
+    sanitize_tikz_options,
     shared_commands_input,
     shared_package_input,
 )
@@ -91,10 +94,12 @@ def calc_path_prob(cfg: BaumdiagrammConfig, path: List[str]) -> float | None:
     return result
 
 def _extract_draw_color(style: str) -> str:
-    """Extract the color value from a TikZ draw= option."""
-    m = re.search(r'draw=([^,\]]+)', style)
+    """Extract and validate the color value from a TikZ draw= option."""
+    m = re.search(r'(?:^|,)\s*draw\s*=\s*([^,\]]+)', style or "")
     if m:
-        return m.group(1).strip()
+        candidate = m.group(1).strip()
+        if SAFE_XCOLOR_EXPR_RE.match(candidate):
+            return candidate
     return "red!70!black"
 
 def _safe_node_index(node_id: str, default: int = 0) -> int:
@@ -141,8 +146,8 @@ def tikz_tree_recurse(cfg: BaumdiagrammConfig, parent_id: str, current_level: in
         
         edge_txt = get_edge_label(cfg, node_cfg, num_kids)
         
-        spec_node_style = (node_cfg.node_style or "").strip()
-        spec_edge_style = (node_cfg.edge_style or "").strip()
+        spec_node_style = sanitize_tikz_options(node_cfg.node_style or "")
+        spec_edge_style = sanitize_tikz_options(node_cfg.edge_style or "")
         node_name = "n" + child_id.replace("_", "-")
         name_part = f"name={node_name}"
         node_opts = f"[{name_part}, {spec_node_style}]" if spec_node_style else f"[{name_part}]"
@@ -163,9 +168,9 @@ def tikz_tree_recurse(cfg: BaumdiagrammConfig, parent_id: str, current_level: in
         elif cfg.style.edge_positioning == EdgePositioning.on_path:
             pos_opts = ", fill=white"
 
-        full_edge_style = f"{edge_style_safe}{pos_opts}"
+        full_edge_style = f"{edge_style_safe}{pos_opts}".lstrip(", ").strip()
         if spec_edge_style:
-            full_edge_style += f", {spec_edge_style}"
+            full_edge_style = f"{full_edge_style}, {spec_edge_style}" if full_edge_style else spec_edge_style
 
         edge_code = ""
         if edge_txt and not cfg.style.hide_edge_labels:
@@ -187,7 +192,9 @@ def tikz_tree_recurse(cfg: BaumdiagrammConfig, parent_id: str, current_level: in
                 res_name = f"res-{child_id.replace('_', '-')}"
                 res_opts_list = [f"name={res_name}"]
                 if cfg.style_results:
-                    res_opts_list.append(cfg.style_results)
+                    safe_res_style = sanitize_tikz_options(cfg.style_results)
+                    if safe_res_style:
+                        res_opts_list.append(safe_res_style)
                 res_opts = "[" + ", ".join(res_opts_list) + "]"
                 
                 res_dist = cfg.style_result_dist
@@ -241,11 +248,11 @@ def generate_baumdiagramm_latex(cfg: BaumdiagrammConfig) -> str:
             f"Das Baumdiagramm überschreitet das Sicherheitslimit von {MAX_TREE_NODES} Knoten."
         )
     root_txt = get_node_label(cfg.root_node, "Start")
-    root_style = (cfg.root_node.node_style or "").strip()
+    root_style = sanitize_tikz_options(cfg.root_node.node_style or "")
     root_opts = f"[name=nroot, {root_style}]" if root_style else "[name=nroot]"
     
-    nodes_style_safe = (cfg.style.global_node_style or "").replace("\n", " ").strip()
-    edges_style_safe = (cfg.style.global_edge_style or "").replace("\n", " ").strip()
+    nodes_style_safe = sanitize_tikz_options(cfg.style.global_node_style or "")
+    edges_style_safe = sanitize_tikz_options(cfg.style.global_edge_style or "")
     
     children_str = tikz_tree_recurse(cfg, "root", 1, cfg.max_depth, edges_style_safe)
         
@@ -272,7 +279,7 @@ def generate_baumdiagramm_latex(cfg: BaumdiagrammConfig) -> str:
     level_labels_code = ""
     if cfg.level_labels.enabled:
         ll_offset = cfg.level_labels.offset
-        ll_style = (cfg.level_labels.style or "").strip()
+        ll_style = sanitize_tikz_options(cfg.level_labels.style or "")
         ll_opts = f"[{ll_style}]" if ll_style else ""
         
         for l in range(0, cfg.max_depth + 1):
@@ -296,20 +303,21 @@ def generate_baumdiagramm_latex(cfg: BaumdiagrammConfig) -> str:
     # Highlights
     highlight_code = ""
     highlighted_nodes: Dict[str, str] = {}
-    default_hl_style = (cfg.style.highlight_style_default or "").strip()
+    default_hl_style = sanitize_tikz_options(cfg.style.highlight_style_default or "")
     hl_paths = get_all_paths(cfg, "root", 0)
     for hl_path in hl_paths:
         leaf_id = hl_path[-1]
         hl_cfg = cfg.highlights.get(leaf_id)
         if hl_cfg and hl_cfg.enabled:
-            hl_style = (hl_cfg.style or "").strip() or default_hl_style
+            hl_style = sanitize_tikz_options(hl_cfg.style or "") or default_hl_style
             node_refs = []
             for node in hl_path:
                 if node == "root":
                     node_refs.append("(nroot)")
                 else:
                     node_refs.append("(n" + node.replace("_", "-") + ")")
-            highlight_code += f"    \\draw[{hl_style}] {' -- '.join(node_refs)};\n"
+            draw_hl_opt = f"[{hl_style}]" if hl_style else ""
+            highlight_code += f"    \\draw{draw_hl_opt} {' -- '.join(node_refs)};\n"
             text_color = _extract_draw_color(hl_style)
             for i in range(len(hl_path) - 1):
                 parent_id = hl_path[i]
@@ -348,8 +356,10 @@ def generate_baumdiagramm_latex(cfg: BaumdiagrammConfig) -> str:
                 
                 # Highlight-Node über den originalen Pfad legen
                 if edge_txt and not cfg.style.hide_edge_labels:
+                    hl_edge_opts = f"{edges_style_safe}{pos_str}".lstrip(", ").strip()
+                    hl_edge_prefix = f"{hl_edge_opts}, " if hl_edge_opts else ""
                     highlight_code += (
-                        f"    \\path {p_ref} -- node[{edges_style_safe}{pos_str}, text={text_color}, draw=none] "
+                        f"    \\path {p_ref} -- node[{hl_edge_prefix}text={text_color}, draw=none] "
                         f"{{{edge_txt}}} {c_ref};\n"
                     )
             res_txt = cfg.results.get(leaf_id, "")
@@ -360,11 +370,12 @@ def generate_baumdiagramm_latex(cfg: BaumdiagrammConfig) -> str:
                 
             if res_txt:
                 res_ref = f"(res-{leaf_id.replace('_', '-')})"
-                res_opts_hl = cfg.style_results or ""
+                res_opts_hl = sanitize_tikz_options(cfg.style_results or "")
+                res_hl_prefix = f"{res_opts_hl}, " if res_opts_hl else ""
                 
                 # Overlay passgenau über den Result-Knoten legen
                 highlight_code += (
-                    f"    \\node[{res_opts_hl}, text={text_color}, draw=none, fill=none] "
+                    f"    \\node[{res_hl_prefix}text={text_color}, draw=none, fill=none] "
                     f"at {res_ref} {{{res_txt}}};\n"
                 )
             for node in hl_path:
@@ -372,6 +383,7 @@ def generate_baumdiagramm_latex(cfg: BaumdiagrammConfig) -> str:
 
     # Text-color overlays
     nodes_style_safe_hl = nodes_style_safe
+    hl_node_prefix = f"{nodes_style_safe_hl}, " if nodes_style_safe_hl else ""
     for node_id, text_color in highlighted_nodes.items():
         if node_id == "root":
             node_ref = "(nroot)"
@@ -385,14 +397,15 @@ def generate_baumdiagramm_latex(cfg: BaumdiagrammConfig) -> str:
             default_node_text = ["K", "Z"][idx_in_parent % 2]
             node_text = get_node_label(node_cfg, default_node_text)
         highlight_code += (
-            f"    \\node[{nodes_style_safe_hl}, shape={shape_opt}, text={text_color}, draw=none, fill=none]"
+            f"    \\node[{hl_node_prefix}shape={shape_opt}, text={text_color}, draw=none, fill=none]"
             f" at {node_ref} {{{node_text}}};\n"
         )
 
+    every_node_opts = f"{nodes_style_safe}, shape={shape_opt}" if nodes_style_safe else f"shape={shape_opt}"
     body = f"""
     \\begin{{tikzpicture}}[
         {grow_opt},
-        every node/.style={{{nodes_style_safe}, shape={shape_opt}}},
+        every node/.style={{{every_node_opts}}},
         {level_opts_str}
     ]
     \\node {root_opts} {{{root_txt}}}
@@ -411,7 +424,7 @@ def generate_baumdiagramm_latex(cfg: BaumdiagrammConfig) -> str:
                 shared_package_input(cfg.pakete_laden, default_pakete),
                 shared_commands_input(cfg.command_laden),
                 font_input(getattr(cfg, "font_family", "Fira")),
-                cfg.preamble_add,
+                sanitize_preamble_addition(cfg.preamble_add or ""),
             ),
         )
     )
