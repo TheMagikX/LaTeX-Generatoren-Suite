@@ -13,13 +13,7 @@ Ausgeschlossen:
 import argparse
 import io
 import json
-import os
-import re
-import shutil
-import pathlib
-import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -32,9 +26,7 @@ if str(BACKEND_DIR) not in sys.path:
 
 from PIL import Image
 
-import config
-from core.latex_file_guard import find_violations, get_guard_mode, parse_fls
-from core.latex_render import pdf_bytes_to_first_image, validate_latex_source_security
+from core.latex_render import compile_latex_to_pdf_bytes, pdf_bytes_to_first_image
 
 # Importiere Pydantic-Modelle und LaTeX-Generatoren aus dem Backend
 from models.koordinatensystem import CoordinateSystemConfig
@@ -129,72 +121,15 @@ def resize_to_thumbnail(img: Image.Image, max_w: int = MAX_WIDTH, max_h: int = M
 
 def compile_latex_for_thumbnail(latex: str, engine: str = "xelatex") -> bytes:
     """
-    Kompiliert LaTeX-Code robust für Thumbnails unter strikter Einhaltung aller Sicherheitsregeln.
-    Falls XeLaTeX wegen unkritischer Warnings (wie 'File main.out has changed') mit Returncode != 0
-    beendet, aber dennoch ein gültiges PDF erzeugt wurde (und keine Sicherheitsverletzungen vorliegen),
-    wird dieses PDF akzeptiert.
+    Kompiliert LaTeX-Code für Thumbnails über die zentrale Pipeline in `core.latex_render`,
+    sodass Pre-Compilation-Security-Filter, `TEXINPUTS`, Prozessbaum-Cleanup und `.fls`-File-Guard
+    an einer einzigen Stelle gepflegt werden.
     """
-    security_err = validate_latex_source_security(latex)
-    if security_err:
-        raise ValueError(f"Sicherheitsrichtlinie: {security_err}")
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tex_path = os.path.join(tmpdir, "main.tex")
-        with open(tex_path, "w", encoding="utf-8") as f:
-            f.write(latex)
-
-        env = os.environ.copy()
-        latex_files_path = config.LATEX_FILES_DIR.as_posix()
-        fonts_path = config.FONTS_DIR.as_posix()
-        custom_latex_path = config.CUSTOM_LATEX_DIR.as_posix()
-        sep = ";" if os.name == "nt" else ":"
-        datasets_path = config.DATASETS_DIR.as_posix()
-        env["TEXINPUTS"] = f".{sep}{latex_files_path}{sep}{custom_latex_path}{sep}{datasets_path}{sep}{fonts_path}{sep}{sep}"
-        if config.DATASETS_DIR.is_dir():
-            for csv_name in re.findall(r"\{([^{}\\\s]+\.csv)\}", latex, re.IGNORECASE):
-                src_csv = (config.DATASETS_DIR / csv_name).resolve()
-                if config.is_within_datasets_dir(src_csv) and src_csv.is_file():
-                    try:
-                        shutil.copy2(src_csv, os.path.join(tmpdir, csv_name))
-                    except Exception:
-                        pass
-        env["TTFONTS"] = f".{sep}{fonts_path}{sep}{sep}"
-        env["OPENTYPEFONTS"] = f".{sep}{fonts_path}{sep}{sep}"
-        env["OSFONTDIR"] = f".{sep}{fonts_path}{sep}{sep}"
-        env["openin_any"] = "p"
-        env["openout_any"] = "p"
-
-        cmd = [engine, "-interaction=nonstopmode", "-no-shell-escape", "-recorder", "main.tex"]
-        try:
-            proc = subprocess.run(
-                cmd,
-                cwd=tmpdir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                env=env,
-                timeout=45,
-            )
-            out = proc.stdout.decode(errors="replace")
-        except subprocess.TimeoutExpired:
-            raise RuntimeError("LaTeX-Kompilierung hat das Zeitlimit von 45 Sekunden überschritten (Timeout).")
-
-        # Sicherheitsüberprüfung der Dateizugriffe via Recorder (.fls)
-        fls_path = pathlib.Path(tmpdir) / "main.fls"
-        guard_mode = get_guard_mode()
-        if guard_mode != "off" and fls_path.is_file():
-            fls_text = fls_path.read_text(encoding="utf-8", errors="replace")
-            accesses = parse_fls(fls_text, pathlib.Path(tmpdir))
-            violations = find_violations(accesses, pathlib.Path(tmpdir), engine=engine)
-            if violations and guard_mode == "enforce":
-                first_basename = violations[0].path.name
-                raise RuntimeError(f"Sicherheitsrichtlinie: Unzulässiger Zugriff auf Datei blockiert ({first_basename}).")
-
-        pdf_path = os.path.join(tmpdir, "main.pdf")
-        if os.path.exists(pdf_path) and os.path.getsize(pdf_path) > 500:
-            return pathlib.Path(pdf_path).read_bytes()
-
-        log_tail = out[-400:].strip() if out else "Kein TeX-Log vorhanden."
+    res = compile_latex_to_pdf_bytes(latex, engine=engine)
+    if not res.ok or not res.pdf_bytes:
+        log_tail = res.log[-400:].strip() if res.log else "Kein TeX-Log vorhanden."
         raise RuntimeError(f"Kompilierung fehlgeschlagen: {log_tail}")
+    return res.pdf_bytes
 
 
 def render_preset_to_thumbnail(preset_path: Path, generator_key: str, dest_thumb_path: Path) -> None:

@@ -44,7 +44,10 @@ if command -v docker >/dev/null 2>&1; then
     if ! docker compose up -d; then
         echo -e "${YELLOW}[INFO] Behebe möglichen Namenskonflikt...${NC}"
         docker rm -f generator-suite >/dev/null 2>&1
-        docker compose up -d
+        if ! docker compose up -d; then
+            echo -e "${RED}[FEHLER] Container konnte nicht gestartet werden.${NC}"
+            exit 1
+        fi
     fi
 
     echo ""
@@ -64,13 +67,16 @@ if command -v docker >/dev/null 2>&1; then
     exit 0
 elif [ -f "backend/.venv/bin/python" ]; then
     echo -e "${GREEN}[INFO] Natives macOS-Setup erkannt. Starte Server...${NC}"
-    (cd backend && .venv/bin/uvicorn main:app --port 9000) &
+    (cd backend && .venv/bin/uvicorn main:app --host 127.0.0.1 --port 9000) &
+    PID_BE=$!
     (cd frontend && npm run dev) &
+    PID_FE=$!
+    trap 'kill "$PID_BE" "$PID_FE" 2>/dev/null || true' INT TERM EXIT
     sleep 3
     if command -v open >/dev/null 2>&1; then
         open "http://localhost:8000"
     fi
-    wait
+    wait "$PID_BE" "$PID_FE"
 else
     echo -e "${RED}[FEHLER] Docker Desktop wurde nicht gefunden.${NC}"
     echo "Bitte installiere Docker Desktop für Mac von: https://www.docker.com/products/docker-desktop/"

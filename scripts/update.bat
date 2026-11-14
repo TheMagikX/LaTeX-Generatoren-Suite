@@ -44,14 +44,14 @@ echo [2/3] Erkenne Ausfuehrungsumgebung [Docker vs. Nativ]...
 
 :: 2. Docker-Prüfung
 where docker >nul 2>nul
-if %ERRORLEVEL% equ 0 (
+if not errorlevel 1 (
     docker info >nul 2>nul
-    if %ERRORLEVEL% equ 0 (
+    if not errorlevel 1 (
         echo [INFO] Docker Desktop ist aktiv. Aktualisiere Docker-Container...
         echo.
         echo       Lade neuestes Image von Docker Hub herunter...
         docker compose pull
-        if %ERRORLEVEL% equ 0 (
+        if not errorlevel 1 (
             echo.
             echo       Starte Container mit neuem Image neu...
             docker compose up -d || (

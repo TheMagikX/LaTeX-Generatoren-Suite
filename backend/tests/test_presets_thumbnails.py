@@ -138,3 +138,33 @@ def test_download_folder_excludes_thumbnails(tmp_path):
     assert res.status_code == 200
     names = zipfile.ZipFile(io.BytesIO(res.content)).namelist()
     assert names == ["Mathe/Parabel.json"]
+
+
+def test_compile_latex_for_thumbnail_delegates_to_core_latex_render(monkeypatch):
+    import importlib.util
+    from pathlib import Path
+    from core.latex_render import LatexRenderResult
+
+    script_path = Path(__file__).resolve().parents[2] / "scripts" / "generate_preset_thumbnails.py"
+    spec = importlib.util.spec_from_file_location("generate_preset_thumbnails", script_path)
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    calls: list[tuple[str, str]] = []
+
+    def _fake_compile(latex: str, *, engine: str = "xelatex", **_kwargs):
+        calls.append((latex, engine))
+        return LatexRenderResult(ok=True, log="", pdf_bytes=b"%PDF-1.5-fake")
+
+    monkeypatch.setattr(mod, "compile_latex_to_pdf_bytes", _fake_compile)
+    out = mod.compile_latex_for_thumbnail(r"\documentclass{article}\begin{document}Hi\end{document}", engine="xelatex")
+    assert out == b"%PDF-1.5-fake"
+    assert calls == [(r"\documentclass{article}\begin{document}Hi\end{document}", "xelatex")]
+
+    def _fake_compile_fail(latex: str, *, engine: str = "xelatex", **_kwargs):
+        return LatexRenderResult(ok=False, log="! LaTeX Error: Sicherheitsrichtlinie blockiert.", pdf_bytes=None)
+
+    monkeypatch.setattr(mod, "compile_latex_to_pdf_bytes", _fake_compile_fail)
+    with pytest.raises(RuntimeError, match="Sicherheitsrichtlinie blockiert"):
+        mod.compile_latex_for_thumbnail(r"\input{/etc/passwd}")
