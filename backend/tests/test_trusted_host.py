@@ -45,9 +45,10 @@ def test_origin_guard_rejects_sec_fetch_site_cross_site():
     assert "Sec-Fetch-Site" in res.json()["detail"]
 
 
-def test_origin_guard_allows_loopback_origin_on_post():
+def test_origin_guard_allows_loopback_origin_on_post(tmp_path, monkeypatch):
     import config
 
+    monkeypatch.setattr(config, "CUSTOM_LATEX_DIR", tmp_path)
     client = TestClient(app, base_url="http://localhost")
     res = client.post(
         "/api/settings/latex/upload",
@@ -58,15 +59,11 @@ def test_origin_guard_allows_loopback_origin_on_post():
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "ok"
-
-    saved_file = config.PROJECT_ROOT / data["saved_path"]
-    if saved_file.exists():
-        saved_file.unlink()
-    client.post("/api/settings/latex", json={"custom_commands_path": None})
+    assert (tmp_path / "valid_csrf_test.tex").is_file()
 
 
 def test_origin_guard_rejects_missing_origin_and_custom_header_on_post():
-    client = TestClient(app, base_url="http://localhost", headers={})
+    client = TestClient(app, base_url="http://localhost")
     res = client.post(
         "/api/ai/stop",
         json={"mode": "unload_models"},
@@ -76,7 +73,7 @@ def test_origin_guard_rejects_missing_origin_and_custom_header_on_post():
 
 
 def test_origin_guard_rejects_null_origin_on_post():
-    client = TestClient(app, base_url="http://localhost", headers={})
+    client = TestClient(app, base_url="http://localhost")
     res = client.post(
         "/api/ai/stop",
         headers={"Origin": "null", "X-Requested-With": "GenSuite"},
@@ -87,7 +84,7 @@ def test_origin_guard_rejects_null_origin_on_post():
 
 
 def test_origin_guard_rejects_sec_fetch_site_same_site_on_post():
-    client = TestClient(app, base_url="http://localhost", headers={})
+    client = TestClient(app, base_url="http://localhost")
     res = client.post(
         "/api/ai/stop",
         headers={"Sec-Fetch-Site": "same-site", "X-Requested-With": "GenSuite"},
@@ -98,10 +95,27 @@ def test_origin_guard_rejects_sec_fetch_site_same_site_on_post():
 
 
 def test_origin_guard_allows_x_requested_with_header_without_origin():
-    client = TestClient(app, base_url="http://localhost", headers={})
+    client = TestClient(app, base_url="http://localhost")
     res = client.post(
         "/api/settings/latex",
         headers={"X-Requested-With": "GenSuite"},
         json={"custom_commands_path": None},
     )
     assert res.status_code == 200
+
+
+def test_default_testclient_has_no_injected_custom_header_and_api_client_fixture_works(api_client):
+    import config
+
+    bare_client = TestClient(app, base_url="http://localhost")
+    assert "x-requested-with" not in {k.lower() for k in bare_client.headers.keys()}
+    res_blocked = bare_client.post("/api/settings/latex", json={"custom_commands_path": None})
+    assert res_blocked.status_code == 403
+
+    res_allowed = api_client.post("/api/settings/latex", json={"custom_commands_path": None})
+    assert res_allowed.status_code == 200
+
+    assert not config.DATASETS_DIR.resolve().is_relative_to(config.USER_DATA_DIR.resolve())
+    assert (config.DATASETS_DIR / "test_messung.csv").is_file()
+    assert not config.CUSTOM_LATEX_DIR.resolve().is_relative_to(config.USER_DATA_DIR.resolve())
+

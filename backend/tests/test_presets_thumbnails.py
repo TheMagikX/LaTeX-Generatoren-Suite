@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 import config
 from main import app
 
-client = TestClient(app, base_url="http://localhost")
+client = TestClient(app, base_url="http://localhost", headers={"X-Requested-With": "GenSuite"})
 
 # Minimales gueltiges 1x1-PNG
 PNG_BYTES = base64.b64decode(

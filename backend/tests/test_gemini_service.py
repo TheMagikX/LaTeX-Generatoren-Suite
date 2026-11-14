@@ -10,7 +10,7 @@ from main import app
 from core.ai import gemini_service
 from core.ai.gemini_service import format_messages_for_gemini
 
-client = TestClient(app, base_url="http://localhost")
+client = TestClient(app, base_url="http://localhost", headers={"X-Requested-With": "GenSuite"})
 
 
 @pytest.fixture

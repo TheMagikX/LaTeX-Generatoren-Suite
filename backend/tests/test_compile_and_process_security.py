@@ -8,7 +8,7 @@ from main import app
 import api.settings as settings_api
 from core.ai import service as ai_service
 
-client = TestClient(app, base_url="http://localhost")
+client = TestClient(app, base_url="http://localhost", headers={"X-Requested-With": "GenSuite"})
 
 
 def test_compile_rejects_excessive_or_invalid_dpi():

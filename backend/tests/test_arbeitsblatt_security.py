@@ -3,7 +3,7 @@
 from fastapi.testclient import TestClient
 from main import app
 
-client = TestClient(app, base_url="http://localhost")
+client = TestClient(app, base_url="http://localhost", headers={"X-Requested-With": "GenSuite"})
 
 
 def test_arbeitsblatt_execute_endpoint_removed():

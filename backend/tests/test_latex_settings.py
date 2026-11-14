@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 import config
 from main import app
 
-client = TestClient(app, base_url="http://localhost")
+client = TestClient(app, base_url="http://localhost", headers={"X-Requested-With": "GenSuite"})
 
 
 def test_format_latex_input_path(tmp_path):
@@ -48,8 +48,9 @@ def test_post_latex_settings_blocks_external_and_non_tex_paths():
     assert res_outside.status_code == 400
 
 
-def test_upload_latex_file_commands():
+def test_upload_latex_file_commands(tmp_path, monkeypatch):
     """Test uploading a custom commands.tex file via API."""
+    monkeypatch.setattr(config, "CUSTOM_LATEX_DIR", tmp_path)
     file_content = b"% My custom commands\n\\newcommand{\\testcmd}{Hallo}"
     file_obj = io.BytesIO(file_content)
 
@@ -64,15 +65,10 @@ def test_upload_latex_file_commands():
     assert data["filename"] == "meine_befehle.tex"
     assert data["saved_path"] == "user_data/custom_latex/meine_befehle.tex"
 
-    # Check file exists on disk
-    saved_file = config.PROJECT_ROOT / data["saved_path"]
+    # Check file exists on disk in isolated CUSTOM_LATEX_DIR
+    saved_file = tmp_path / "meine_befehle.tex"
     assert saved_file.is_file()
     assert saved_file.read_bytes() == file_content
-
-    # Clean up and reset
-    if saved_file.exists():
-        saved_file.unlink()
-    client.post("/api/settings/latex", json={"custom_commands_path": None})
 
 
 def test_upload_latex_file_invalid_extension():

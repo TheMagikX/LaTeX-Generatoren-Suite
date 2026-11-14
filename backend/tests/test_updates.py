@@ -17,7 +17,7 @@ from core.update_checker import (
 )
 from main import app
 
-client = TestClient(app, base_url="http://localhost")
+client = TestClient(app, base_url="http://localhost", headers={"X-Requested-With": "GenSuite"})
 
 
 @pytest.fixture

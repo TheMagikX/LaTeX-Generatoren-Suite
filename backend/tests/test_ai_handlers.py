@@ -226,7 +226,7 @@ def test_chat_response_parsing_with_message_and_fallback():
 def test_chat_api_endpoint_validation():
     from fastapi.testclient import TestClient
     from main import app
-    client = TestClient(app, base_url="http://localhost")
+    client = TestClient(app, base_url="http://localhost", headers={"X-Requested-With": "GenSuite"})
 
     # 1. Leere Messages ablehnen
     res = client.post("/api/ai/chat", json={
