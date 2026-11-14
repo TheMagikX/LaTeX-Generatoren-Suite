@@ -1,0 +1,8 @@
+{
+  "columns": [
+    { "id": "z", "label": "Z", "color": "#dc2626", "active": false },
+    { "id": "e", "label": "E", "color": "#2563eb", "active": false }
+  ],
+  "rows": [],
+  "font_family": ""
+}

@@ -135,3 +135,24 @@ def test_generate_zahlenstrahl_named_and_short_hex_colors():
     assert r"\definecolor{zsPtLblCol0}{rgb}{0.0000,1.0000,0.0000}" in tex
     assert r"\colorlet{zsPtr0}{teal}" in tex
     assert r"\definecolor{zsJumpCol0}{rgb}{0.0667,0.1333,0.2000}" in tex
+
+
+@pytest.mark.parametrize("angle", [0, 45, 60, 89, 90, 140, 270, 300])
+def test_generate_zahlenstrahl_jump_arc_positive_radius(angle: int):
+    import re
+    from models.zahlenstrahl import JumpConfig
+
+    cfg = ZahlenstrahlConfig(
+        min_val=0,
+        max_val=5,
+        jump_out_angle=angle,
+        jumps=[
+            JumpConfig(start=1.0, end=3.0, label="+2", style="arc", visible=True),
+            JumpConfig(start=4.0, end=2.0, label="-2", style="arc", visible=True),
+        ],
+    )
+    tex = generate_zahlenstrahl_latex(cfg)
+    radii = [float(m) for m in re.findall(r"arc\s*\([^:]+:[^:]+:([^)]+)cm\)", tex)]
+    assert len(radii) == 2
+    assert all(r > 0.0 for r in radii)
+

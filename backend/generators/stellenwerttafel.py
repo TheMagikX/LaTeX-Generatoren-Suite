@@ -29,7 +29,7 @@ def get_stellenwerttafel_color_defs(cfg: StellenwertConfig) -> list[str]:
 def generate_stellenwerttafel_latex(cfg: StellenwertConfig, include_colors: bool = False) -> str:
     active_cols = [c for c in cfg.columns if c.active]
     if not active_cols:
-        return r"\node {Keine Spalten aktiv};"
+        return "\\begin{tikzpicture}\n  \\node {Keine Spalten aktiv};\n\\end{tikzpicture}"
     
     col_id_to_idx = {c.id: i for i, c in enumerate(active_cols)}
     all_rows = cfg.rows if cfg.rows else [StellenwertRow(id="default", values={c.id: 0 for c in active_cols})]

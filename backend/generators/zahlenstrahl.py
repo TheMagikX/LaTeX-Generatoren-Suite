@@ -553,17 +553,19 @@ def generate_zahlenstrahl_latex(cfg: ZahlenstrahlConfig) -> str:
 
     # 10) Jumps (Arcs)
     if cfg.jumps:
-        out_a = float(cfg.jump_out_angle)
+        out_a = float(cfg.jump_out_angle) % 360.0
+        if math.cos(math.radians(out_a)) > 0.0:
+            out_a = (180.0 - out_a) % 360.0
         if abs(out_a - 90.0) < 1.0:
-            out_a = 89.0
+            out_a = 91.0
         elif abs(out_a - 270.0) < 1.0:
             out_a = 269.0
         in_a = 180.0 - out_a
         out_a_rad = math.radians(out_a)
         in_a_rad = math.radians(in_a)
         cos_diff = math.cos(in_a_rad) - math.cos(out_a_rad)
-        if abs(cos_diff) < 1e-6:
-            cos_diff = -1e-6 if cos_diff < 0 else 1e-6
+        if cos_diff < 1e-6:
+            cos_diff = 1e-6
 
         for i, jump in enumerate(cfg.jumps):
             if not jump.visible:
@@ -592,9 +594,7 @@ def generate_zahlenstrahl_latex(cfg: ZahlenstrahlConfig) -> str:
 
             if jstyle == "arc":
                 span_cm = abs(span) * x_scale
-                radius_cm = span_cm / cos_diff
-                if abs(radius_cm) > 500.0:
-                    radius_cm = 500.0 if radius_cm > 0 else -500.0
+                radius_cm = min(500.0, span_cm / cos_diff)
                 radius_str = _fmt_num(round(radius_cm, 6))
                 apex_y = radius_cm * (1.0 - math.sin(out_a_rad))
 
