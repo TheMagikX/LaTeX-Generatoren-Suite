@@ -49,7 +49,7 @@ export async function mockBackgroundApis(page: Page): Promise<void> {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        status: 'ok',
+        status: 'success',
         current_version: '5.1.5',
         check_on_startup: false,
         last_checked: null,
@@ -81,11 +81,20 @@ export async function mockTikzCompileSuccess(
       contentType: 'application/json',
       body: JSON.stringify({
         ok: true,
+        log: '',
         engine: 'xelatex',
         png_base64: pngBase64,
+        svg_base64: '',
+        pdf_base64: '',
+        pages_png_base64: [],
+        pages_svg_base64: [],
+        pages_pdf_base64: [],
         compile_time: 0.12,
         convert_time: 0.04,
         total_backend_time: 0.16,
+        latex_size_bytes: 128,
+        pdf_size_bytes: 1024,
+        png_size_bytes: Math.floor((pngBase64.length * 3) / 4),
       }),
     })
   })
@@ -119,8 +128,20 @@ export async function mockTikzCompileError(
       contentType: 'application/json',
       body: JSON.stringify({
         ok: false,
-        engine: 'xelatex',
         log,
+        engine: 'xelatex',
+        png_base64: '',
+        svg_base64: '',
+        pdf_base64: '',
+        pages_png_base64: [],
+        pages_svg_base64: [],
+        pages_pdf_base64: [],
+        compile_time: 0.05,
+        convert_time: 0.0,
+        total_backend_time: 0.05,
+        latex_size_bytes: 128,
+        pdf_size_bytes: 0,
+        png_size_bytes: 0,
       }),
     })
   })

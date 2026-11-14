@@ -31,8 +31,9 @@ test.describe('Editor Workflow - Kern-Funktionalität', () => {
 
     await page.keyboard.press('Control+Enter')
 
-    const previewImage = page.locator('[data-testid="preview-container"], img[alt="LaTeX Vorschau"]').first()
+    const previewImage = page.getByAltText('LaTeX Vorschau')
     await expect(previewImage).toBeVisible({ timeout: 5000 })
+    await expect(previewImage).toHaveAttribute('src', /^data:image\/png;base64,/)
   })
 
   test('Persistenz bei Neuladen (localStorage)', async ({ page }) => {
