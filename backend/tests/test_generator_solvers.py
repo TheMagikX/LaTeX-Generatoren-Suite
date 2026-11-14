@@ -440,6 +440,69 @@ def test_geometry3d_helpers():
     res_pp = calculate_plane_plane_intersection(e1, e2)
     assert res_pp is not None
 
+    # P4A-02: Invertierte BBox-Grenzen müssen None liefern
+    assert intersect_line_with_bbox(0.0, 2.5, 2.5, 1.0, 0.0, 0.0, 5.0, 0.0, 0.0, 5.0, 0.0, 5.0) is None
+    assert intersect_line_with_bbox(2.5, 2.5, 2.5, 0.0, 0.0, 1.0, 0.0, 5.0, 5.0, 0.0, 0.0, 5.0) is None
+
+    # P4A-01: split_segment muss Endpunkt 1.0 (B) auch bei Schnitt nahe 1.0 behalten
+    from core.geometry3d import split_segment
+    A = np.array([0.0, 0.0, 0.0])
+    B = np.array([1.0, 0.0, 0.0])
+    occluders = [{"n": np.array([1.0, 0.0, 0.0]), "d": 1.0 - 5e-8, "poly": None}]
+    segs = split_segment(A, B, occluders, np.array([1.0, 0.0, 0.0]))
+    assert len(segs) >= 1
+    assert np.allclose(segs[0][0], A, atol=1e-9)
+    assert np.allclose(segs[-1][1], B, atol=1e-9)
+
+
+def test_koord3d_negative_intersection_indices_and_shapes():
+    from generators.koordinatensystem3d import generate_koordinatensystem3d_latex
+    from models.koordinatensystem3d import (
+        CoordinateSystem3DConfig,
+        IntersectionConfig,
+        Line3DConfig,
+        Plane3DConfig,
+        Point3DConfig,
+        Shape3DConfig,
+    )
+
+    cfg = CoordinateSystem3DConfig(
+        points=[
+            Point3DConfig(x=0.0, y=0.0, z=0.0),
+            Point3DConfig(x=2.0, y=0.0, z=0.0),
+            Point3DConfig(x=2.0, y=2.0, z=0.0),
+        ],
+        lines=[
+            Line3DConfig(x0=0.0, y0=0.0, z0=0.0, rx=1.0, ry=1.0, rz=0.0),
+            Line3DConfig(x0=0.0, y0=2.0, z0=0.0, rx=1.0, ry=-1.0, rz=0.0),
+        ],
+        planes=[
+            Plane3DConfig(mode="Koordinatenform", n1=0.0, n2=0.0, n3=1.0, d=1.0),
+            Plane3DConfig(mode="Koordinatenform", n1=0.0, n2=1.0, n3=0.0, d=1.0),
+        ],
+        intersections=[
+            IntersectionConfig(type="Gerade-Gerade", item1_index=-1, item2_index=0, label="S_neg1"),
+            IntersectionConfig(type="Gerade-Ebene", item1_index=0, item2_index=-99, label="S_neg2"),
+            IntersectionConfig(type="Ebene-Ebene", item1_index=-1, item2_index=1, color="magenta", label="S_neg3"),
+        ],
+        shapes=[
+            # 2-Punkt-Shape: darf kein patch type=polygon, vertex count=2 erzeugen
+            Shape3DConfig(point_indices=[0, 1], color="#ff0000", fill_color="#2563eb", closed=False),
+            # 3-Punkt-Shape ohne Füllung, offen
+            Shape3DConfig(point_indices=[0, 1, 2], color="#00ff00", fill_color="none", closed=False),
+            # 3-Punkt-Shape ohne Füllung, geschlossen
+            Shape3DConfig(point_indices=[0, 1, 2], color="#0000ff", fill_color="none", closed=True),
+        ],
+    )
+    tex = generate_koordinatensystem3d_latex(cfg)
+    assert "S_neg1" not in tex
+    assert "S_neg2" not in tex
+    assert "magenta" not in tex
+    assert "vertex count=2" not in tex
+    assert "coordinates {(0.0,0.0,0.0) (2.0,0.0,0.0)};" in tex
+    assert "coordinates {(0.0,0.0,0.0) (2.0,0.0,0.0) (2.0,2.0,0.0)};" in tex
+    assert "coordinates {(0.0,0.0,0.0) (2.0,0.0,0.0) (2.0,2.0,0.0) (0.0,0.0,0.0)};" in tex
+
 
 def test_strahlenoptik_bezier_collinear_and_zero_direction():
     from generators.strahlenoptik import ray_cubic_bezier_intersection

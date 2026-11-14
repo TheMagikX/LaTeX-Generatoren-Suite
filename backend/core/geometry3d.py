@@ -101,12 +101,13 @@ def split_segment(A: np.ndarray, B: np.ndarray, occluders: list, cam_dir: np.nda
                 if 1e-9 < t_s < 1 - 1e-9:
                     t_values.append(t_s)
 
-    # Sortieren und Duplikate entfernen
-    t_values = sorted(list(set(t_values)))
-    clean_t = [t_values[0]]
-    for t in t_values[1:]:
-        if t - clean_t[-1] > 1e-7:
+    # Sortieren und Duplikate entfernen, Endpunkt 1.0 stets erhalten
+    t_values = sorted(set(t_values))
+    clean_t = [0.0]
+    for t in t_values:
+        if 1e-7 < t < 1.0 - 1e-7 and t - clean_t[-1] > 1e-7:
             clean_t.append(t)
+    clean_t.append(1.0)
 
     segments = []
     for i in range(len(clean_t) - 1):
@@ -236,6 +237,8 @@ def intersect_line_with_bbox(x0, y0, z0, rx, ry, rz, xmin, xmax, ymin, ymax, zmi
     direction = np.array([rx, ry, rz], dtype=float)
 
     bounds = [(xmin, xmax), (ymin, ymax), (zmin, zmax)]
+    if any(lo > hi for lo, hi in bounds):
+        return None
 
     for i in range(3):
         if abs(direction[i]) < 1e-9:

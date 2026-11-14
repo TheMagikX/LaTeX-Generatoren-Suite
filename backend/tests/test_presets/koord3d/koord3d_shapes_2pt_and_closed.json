@@ -1,0 +1,49 @@
+{
+  "xmin": 0.0,
+  "xmax": 4.0,
+  "ymin": 0.0,
+  "ymax": 4.0,
+  "zmin": 0.0,
+  "zmax": 4.0,
+  "points": [
+    { "show": true, "x": 1.0, "y": 1.0, "z": 0.0, "label": "A" },
+    { "show": true, "x": 3.0, "y": 1.0, "z": 0.0, "label": "B" },
+    { "show": true, "x": 3.0, "y": 3.0, "z": 1.0, "label": "C" },
+    { "show": true, "x": 1.0, "y": 3.0, "z": 1.0, "label": "D" }
+  ],
+  "shapes": [
+    {
+      "show": true,
+      "name": "Zweipunkt-Strecke",
+      "point_indices": [0, 1],
+      "color": "#dc2626",
+      "fill_color": "#2563eb",
+      "fill_alpha": 30.0,
+      "width": 1.5,
+      "style": "solid",
+      "closed": false
+    },
+    {
+      "show": true,
+      "name": "Offener Linienzug",
+      "point_indices": [0, 1, 2],
+      "color": "#16a34a",
+      "fill_color": "none",
+      "fill_alpha": 0.0,
+      "width": 1.2,
+      "style": "dashed",
+      "closed": false
+    },
+    {
+      "show": true,
+      "name": "Geschlossener Linienzug",
+      "point_indices": [1, 2, 3],
+      "color": "#2563eb",
+      "fill_color": "none",
+      "fill_alpha": 0.0,
+      "width": 1.2,
+      "style": "solid",
+      "closed": true
+    }
+  ]
+}

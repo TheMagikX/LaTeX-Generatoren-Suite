@@ -345,7 +345,7 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
         inter_col = tikz_color_opt(inter.color, fallback="black")
 
         if inter.type == "Gerade-Gerade":
-            if inter.item1_index < len(cfg.lines) and inter.item2_index < len(cfg.lines):
+            if 0 <= inter.item1_index < len(cfg.lines) and 0 <= inter.item2_index < len(cfg.lines):
                 g1 = cfg.lines[inter.item1_index]
                 g2 = cfg.lines[inter.item2_index]
                 pt = calculate_line_line_intersection(g1, g2)
@@ -356,7 +356,7 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
                         intersections_code.append(rf"\node[{inter_col}, anchor=south, draw=none] at (axis cs:{pt[0]},{pt[1]},{pt[2]}){{$ {clean_inter_lbl} $}};")
 
         elif inter.type == "Gerade-Ebene":
-            if inter.item1_index < len(cfg.lines) and inter.item2_index < len(cfg.planes):
+            if 0 <= inter.item1_index < len(cfg.lines) and 0 <= inter.item2_index < len(cfg.planes):
                 g = cfg.lines[inter.item1_index]
                 e = cfg.planes[inter.item2_index]
                 pt = calculate_line_plane_intersection(g, e)
@@ -367,7 +367,7 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
                         intersections_code.append(rf"\node[{inter_col}, anchor=south, draw=none] at (axis cs:{pt[0]},{pt[1]},{pt[2]}){{$ {clean_inter_lbl} $}};")
 
         elif inter.type == "Ebene-Ebene":
-            if inter.item1_index < len(cfg.planes) and inter.item2_index < len(cfg.planes):
+            if 0 <= inter.item1_index < len(cfg.planes) and 0 <= inter.item2_index < len(cfg.planes):
                 e1 = cfg.planes[inter.item1_index]
                 e2 = cfg.planes[inter.item2_index]
                 res = calculate_plane_plane_intersection(e1, e2)
@@ -384,18 +384,17 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
     for i, s in enumerate(cfg.shapes):
         if not s.show or not s.point_indices:
             continue
-        
+
         valid_indices = [idx for idx in s.point_indices if 0 <= idx < len(cfg.points)]
         if len(valid_indices) < 2:
             continue
-            
+
         coords = []
         for idx in valid_indices:
             pt = cfg.points[idx]
             coords.append(f"({pt.x},{pt.y},{pt.z})")
 
         vertex_count = len(coords)
-            
         coords_str = " ".join(coords)
         color_defs = []
         s_c = (s.color or "#1e293b").strip()
@@ -405,15 +404,26 @@ def generate_koordinatensystem3d_latex(cfg: CoordinateSystem3DConfig) -> str:
         else:
             faceted_col = s_c
 
-        fill_opt = ""
-        if s.fill_color and s.fill_color != "none":
-            s_fc = s.fill_color.strip()
-            if s_fc.startswith("#"):
-                color_defs.append(tikz_color_def(f"shapefill{i}", s_fc))
-                fill_col = f"shapefill{i}"
-            else:
-                fill_col = s_fc
-            fill_opt = f", fill={fill_col}, fill opacity={s.fill_alpha / 100.0}"
+        has_fill = bool(s.fill_color and s.fill_color != "none")
+        if vertex_count == 2 or not has_fill:
+            shape_color_defs.extend(color_defs)
+            line_coords = (
+                f"{coords_str} {coords[0]}"
+                if vertex_count >= 3 and s.closed
+                else coords_str
+            )
+            shapes_code.append(
+                rf"\addplot3[color={faceted_col}, line width={s.width}pt, {s.style}] coordinates {{{line_coords}}};"
+            )
+            continue
+
+        s_fc = s.fill_color.strip()
+        if s_fc.startswith("#"):
+            color_defs.append(tikz_color_def(f"shapefill{i}", s_fc))
+            fill_col = f"shapefill{i}"
+        else:
+            fill_col = s_fc
+        fill_opt = f", fill={fill_col}, fill opacity={s.fill_alpha / 100.0}"
 
         draw_opt = f"faceted color={faceted_col}, line width={s.width}pt, {s.style}"
         shape_color_defs.extend(color_defs)
