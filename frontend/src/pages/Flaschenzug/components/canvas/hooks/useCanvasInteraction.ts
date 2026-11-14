@@ -54,40 +54,36 @@ export function useCanvasInteraction({ cfg, setCfg, svgRef }: CanvasInteractionO
       const cursorY = pointerCanvas.y
 
       const zoomFactor = e.deltaY < 0 ? 1.15 : 1 / 1.15
+      const nextZoom = Math.min(4.0, Math.max(0.4, zoomLevel * zoomFactor))
+      if (Math.abs(nextZoom - zoomLevel) < 0.001) return
 
-      setZoomLevel(prevZoom => {
-        const nextZoom = Math.min(4.0, Math.max(0.4, prevZoom * zoomFactor))
-        if (Math.abs(nextZoom - prevZoom) < 0.001) return prevZoom
+      const oldScale = getCanvasScale(bounds, zoomLevel)
+      const newScale = getCanvasScale(bounds, nextZoom)
 
-        const oldScale = getCanvasScale(bounds, prevZoom)
-        const newScale = getCanvasScale(bounds, nextZoom)
+      const baseMidX = (bounds.minX + bounds.maxX) / 2
+      const baseMidY = (bounds.minY + bounds.maxY) / 2
 
-        const baseMidX = (bounds.minX + bounds.maxX) / 2
-        const baseMidY = (bounds.minY + bounds.maxY) / 2
+      const worldCursorX = baseMidX + (cursorX - CANVAS_WIDTH / 2) / oldScale
+      const worldCursorY = baseMidY - (cursorY - CANVAS_HEIGHT / 2) / oldScale
 
-        const worldCursorX = baseMidX + (cursorX - CANVAS_WIDTH / 2) / oldScale
-        const worldCursorY = baseMidY - (cursorY - CANVAS_HEIGHT / 2) / oldScale
+      const newMidX = worldCursorX - (cursorX - CANVAS_WIDTH / 2) / newScale
+      const newMidY = worldCursorY + (cursorY - CANVAS_HEIGHT / 2) / newScale
 
-        const newMidX = worldCursorX - (cursorX - CANVAS_WIDTH / 2) / newScale
-        const newMidY = worldCursorY + (cursorY - CANVAS_HEIGHT / 2) / newScale
+      const currentPanX = panOffset.x
+      const currentPanY = panOffset.y
+      const initialBaseMidX = baseMidX - currentPanX
+      const initialBaseMidY = baseMidY - currentPanY
 
-        const currentPanX = panOffset.x
-        const currentPanY = panOffset.y
-        const initialBaseMidX = baseMidX - currentPanX
-        const initialBaseMidY = baseMidY - currentPanY
-
-        setPanOffset({
-          x: newMidX - initialBaseMidX,
-          y: newMidY - initialBaseMidY,
-        })
-
-        return nextZoom
+      setZoomLevel(nextZoom)
+      setPanOffset({
+        x: newMidX - initialBaseMidX,
+        y: newMidY - initialBaseMidY,
       })
     }
 
     svgEl.addEventListener('wheel', handleWheel, { passive: false })
     return () => svgEl.removeEventListener('wheel', handleWheel)
-  }, [bounds, panOffset, svgRef])
+  }, [bounds, panOffset, svgRef, zoomLevel])
 
   const getCanvasPoint = (event: React.PointerEvent<SVGSVGElement>) =>
     getPointerCanvasPoint(event.clientX, event.clientY, event.currentTarget)
