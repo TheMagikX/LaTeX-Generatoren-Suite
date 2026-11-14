@@ -3,9 +3,9 @@
 import React from 'react'
 import { Copy, FlipHorizontal, FlipVertical, Settings, Plus } from 'lucide-react'
 import { Accordion, Collapsible, Field, Input, NumberInput } from '../../../components/ui'
-import type { FlaschenzugConfig, PulleyLabelPos } from '../typesFlasche'
+import type { FlaschenzugConfig, PulleyConfig, PulleyLabelPos } from '../typesFlasche'
 import { PULLEY_LABEL_POSITIONS } from '../constantsFlasche'
-import { genId, getNextName } from '../utilsFlasche'
+import { genId, getNextName, updateListItem } from '../utilsFlasche'
 
 interface Props {
   cfg: FlaschenzugConfig
@@ -13,6 +13,59 @@ interface Props {
 }
 
 export const FlascheTabRollen: React.FC<Props> = ({ cfg, setCfg }) => {
+  const updatePulley = (idx: number, patch: Partial<PulleyConfig>) => {
+    setCfg(c => ({
+      ...c,
+      pulleys: updateListItem(c.pulleys, idx, patch),
+    }))
+  }
+
+  const renamePulley = (idx: number, nextName: string) => {
+    setCfg(c => {
+      const target = c.pulleys[idx]
+      if (!target) return c
+      const oldName = target.name
+      if (oldName === nextName) return c
+      const shouldCascade = Boolean(oldName.trim()) && !c.pulleys.some((p, i) => i !== idx && p.name === oldName)
+      return {
+        ...c,
+        pulleys: updateListItem(c.pulleys, idx, { name: nextName }),
+        ropes: shouldCascade
+          ? c.ropes.map(rope => ({
+              ...rope,
+              path: rope.path.map(seg => (seg.name === oldName ? { ...seg, name: nextName } : seg)),
+            }))
+          : c.ropes,
+        masses: shouldCascade
+          ? c.masses.map(m => (m.ref === oldName ? { ...m, ref: nextName } : m))
+          : c.masses,
+        forces: shouldCascade
+          ? c.forces.map(f => (f.ref_name === oldName ? { ...f, ref_name: nextName } : f))
+          : c.forces,
+      }
+    })
+  }
+
+  const removePulley = (pulley: PulleyConfig) => {
+    setCfg(c => {
+      const oldName = pulley.name
+      const hasRemainingSameName = c.pulleys.some(p => p.id !== pulley.id && p.name === oldName)
+      const shouldCleanRefs = Boolean(oldName.trim()) && !hasRemainingSameName
+      return {
+        ...c,
+        pulleys: c.pulleys.filter(x => x.id !== pulley.id),
+        ropes: shouldCleanRefs
+          ? c.ropes.map(rope => ({
+              ...rope,
+              path: rope.path.filter(seg => seg.name !== oldName),
+            }))
+          : c.ropes,
+        masses: shouldCleanRefs ? c.masses.filter(m => m.ref !== oldName) : c.masses,
+        forces: shouldCleanRefs ? c.forces.filter(f => f.ref_name !== oldName) : c.forces,
+      }
+    })
+  }
+
   const duplicatePulley = (idx: number) => {
     setCfg(c => {
       const source = c.pulleys[idx]
@@ -44,7 +97,7 @@ export const FlascheTabRollen: React.FC<Props> = ({ cfg, setCfg }) => {
           <Collapsible
             key={p.id}
             title={p.label ? `${p.name} (${p.label})` : p.name}
-            onRemove={() => setCfg(c => ({ ...c, pulleys: c.pulleys.filter(x => x.id !== p.id) }))}
+            onRemove={() => removePulley(p)}
           >
             <div className="mb-3 flex gap-2">
               <button
@@ -76,24 +129,15 @@ export const FlascheTabRollen: React.FC<Props> = ({ cfg, setCfg }) => {
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-2">
                 <Field label="Name">
-                  <Input value={p.name} onChange={e => {
-                    const newP = [...cfg.pulleys]; newP[idx].name = e.target.value;
-                    setCfg(c => ({ ...c, pulleys: newP }))
-                  }} />
+                  <Input value={p.name} onChange={e => renamePulley(idx, e.target.value)} />
                 </Field>
                 <Field label="Label">
-                  <Input value={p.label} onChange={e => {
-                    const newP = [...cfg.pulleys]; newP[idx].label = e.target.value;
-                    setCfg(c => ({ ...c, pulleys: newP }))
-                  }} />
+                  <Input value={p.label} onChange={e => updatePulley(idx, { label: e.target.value })} />
                 </Field>
                 <Field label="Label-Position">
                   <select
                     value={p.label_pos}
-                    onChange={e => {
-                      const newP = [...cfg.pulleys]; newP[idx].label_pos = e.target.value as PulleyLabelPos;
-                      setCfg(c => ({ ...c, pulleys: newP }))
-                    }}
+                    onChange={e => updatePulley(idx, { label_pos: e.target.value as PulleyLabelPos })}
                     className="w-full bg-panel/50 border border-rim text-ink text-sm rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     {PULLEY_LABEL_POSITIONS.map(pos => (
@@ -107,31 +151,23 @@ export const FlascheTabRollen: React.FC<Props> = ({ cfg, setCfg }) => {
 
               <div className="grid grid-cols-3 gap-2">
                 <Field label="X">
-                  <NumberInput step="0.5" value={p.x} onChange={e => {
-                    const newP = [...cfg.pulleys]; newP[idx].x = parseFloat(e.target.value) || 0;
-                    setCfg(c => ({ ...c, pulleys: newP }))
-                  }} />
+                  <NumberInput step="0.5" value={p.x} onChange={e => updatePulley(idx, { x: parseFloat(e.target.value) || 0 })} />
                 </Field>
                 <Field label="Y">
-                  <NumberInput step="0.5" value={p.y} onChange={e => {
-                    const newP = [...cfg.pulleys]; newP[idx].y = parseFloat(e.target.value) || 0;
-                    setCfg(c => ({ ...c, pulleys: newP }))
-                  }} />
+                  <NumberInput step="0.5" value={p.y} onChange={e => updatePulley(idx, { y: parseFloat(e.target.value) || 0 })} />
                 </Field>
                 <Field label="Radius">
-                  <NumberInput step="0.1" value={p.radius} onChange={e => {
-                    const newP = [...cfg.pulleys]; newP[idx].radius = parseFloat(e.target.value) || 0;
-                    setCfg(c => ({ ...c, pulleys: newP }))
-                  }} />
+                  <NumberInput step="0.1" value={p.radius} onChange={e => updatePulley(idx, { radius: parseFloat(e.target.value) || 0 })} />
                 </Field>
               </div>
 
               <div className="grid grid-cols-3 gap-2 items-end">
                 <Field label="Halterung">
-                  <select value={p.mount} onChange={e => {
-                    const newP = [...cfg.pulleys]; newP[idx].mount = e.target.value as 'Keine' | 'Einseitig' | 'Zweiseitig';
-                    setCfg(c => ({ ...c, pulleys: newP }))
-                  }} className="w-full bg-panel/50 border border-rim text-ink text-sm rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                  <select
+                    value={p.mount}
+                    onChange={e => updatePulley(idx, { mount: e.target.value as 'Keine' | 'Einseitig' | 'Zweiseitig' })}
+                    className="w-full bg-panel/50 border border-rim text-ink text-sm rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
                     <option>Keine</option>
                     <option>Einseitig</option>
                     <option>Zweiseitig</option>
@@ -140,16 +176,10 @@ export const FlascheTabRollen: React.FC<Props> = ({ cfg, setCfg }) => {
                 {(p.mount !== "Keine") && (
                   <>
                     <Field label="H-Winkel">
-                      <NumberInput value={p.mount_angle} onChange={e => {
-                        const newP = [...cfg.pulleys]; newP[idx].mount_angle = parseFloat(e.target.value) || 0;
-                        setCfg(c => ({ ...c, pulleys: newP }))
-                      }} />
+                      <NumberInput value={p.mount_angle} onChange={e => updatePulley(idx, { mount_angle: parseFloat(e.target.value) || 0 })} />
                     </Field>
                     <Field label="H-Länge">
-                      <NumberInput step="0.1" value={p.mount_length} onChange={e => {
-                        const newP = [...cfg.pulleys]; newP[idx].mount_length = parseFloat(e.target.value) || 0;
-                        setCfg(c => ({ ...c, pulleys: newP }))
-                      }} />
+                      <NumberInput step="0.1" value={p.mount_length} onChange={e => updatePulley(idx, { mount_length: parseFloat(e.target.value) || 0 })} />
                     </Field>
                   </>
                 )}
