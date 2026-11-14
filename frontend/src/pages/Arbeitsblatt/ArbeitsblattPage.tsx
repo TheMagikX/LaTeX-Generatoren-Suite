@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import useGeneratorHistory from '../../hooks/useGeneratorHistory'
 import { useMutation } from '@tanstack/react-query'
-import { generateArbeitsblatt, compileLatex, executeArbeitsblattCode } from '../../api/client'
+import { generateArbeitsblatt, compileLatex, executeArbeitsblattCode, extractApiErrorMessage } from '../../api/client'
 import type { ArbeitsblattGenerateResponse, CompileResponse } from '../../api/client'
 import { DEFAULT_CONFIG } from './constantsArbeitsblatt'
 import type { ArbeitsblattConfig } from './typesArbeitsblatt'
@@ -45,19 +45,38 @@ export default function ArbeitsblattPage() {
   // 1. Mutation for generating LaTeX
   const generateMutation = useMutation({
     mutationFn: ({ vars, runConfig = config }: GenerateMutationArgs) => generateArbeitsblatt({ ...runConfig, variables: vars }),
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       setGenData(data)
       if (data.seed !== undefined && data.seed !== null) {
         updateConfig('random_seed', String(data.seed))
       }
       if (data.latex_tasks) {
         setIsCompilingTasks(true)
-        compileLatex(data.latex_tasks, dpi, true).then(r => { setCompileTasks(r); setIsCompilingTasks(false) })
+        compileLatex(data.latex_tasks, dpi, true)
+          .then(r => { setCompileTasks(r) })
+          .catch((err: unknown) => {
+            const msg = extractApiErrorMessage(err, 'Fehler bei der Kompilierung des Aufgabenblatts')
+            setCompileTasks({ ok: false, log: msg })
+          })
+          .finally(() => { setIsCompilingTasks(false) })
       }
       if (data.latex_solutions) {
         setIsCompilingSols(true)
-        compileLatex(data.latex_solutions, dpi, true).then(r => { setCompileSols(r); setIsCompilingSols(false) })
+        compileLatex(data.latex_solutions, dpi, true)
+          .then(r => { setCompileSols(r) })
+          .catch((err: unknown) => {
+            const msg = extractApiErrorMessage(err, 'Fehler bei der Kompilierung der Lösungen')
+            setCompileSols({ ok: false, log: msg })
+          })
+          .finally(() => { setIsCompilingSols(false) })
       }
+    },
+    onError: (err: unknown) => {
+      const msg = extractApiErrorMessage(err, 'Fehler bei der Code-Generierung')
+      setCompileTasks({ ok: false, log: msg })
+      setCompileSols({ ok: false, log: msg })
+      setIsCompilingTasks(false)
+      setIsCompilingSols(false)
     }
   })
 
