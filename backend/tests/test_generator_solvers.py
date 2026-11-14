@@ -521,6 +521,127 @@ def test_strahlenoptik_bezier_collinear_and_zero_direction():
     assert math.isclose(iy, 0.0, abs_tol=1e-4)
 
 
+def test_strahlenoptik_normal_orientation_consistency():
+    from generators.strahlenoptik import (
+        ray_segment_intersection,
+        ray_circular_arc_intersection,
+        ray_cubic_bezier_intersection,
+    )
+
+    # Alle Schnittfunktionen müssen für ein Segment von unten nach oben (0,-1)->(0,1)
+    # einheitlich die rechte Normale (+1, 0) liefern.
+    hit_line = ray_segment_intersection((-1.0, 0.0), (1.0, 0.0), (0.0, -1.0), (0.0, 1.0))
+    assert hit_line is not None
+    assert math.isclose(hit_line[3], 1.0, abs_tol=1e-6)
+    assert math.isclose(hit_line[4], 0.0, abs_tol=1e-6)
+
+    hit_bezier = ray_cubic_bezier_intersection(
+        (-1.0, 0.0), (1.0, 0.0), (0.0, -1.0), (0.0, -0.33), (0.0, 0.33), (0.0, 1.0)
+    )
+    assert hit_bezier is not None
+    assert math.isclose(hit_bezier[3], 1.0, abs_tol=1e-6)
+    assert math.isclose(hit_bezier[4], 0.0, abs_tol=1e-6)
+
+    # Kreisbogen von (0, -1) nach (0, 1) mit bend=-30° (beult nach rechts aus, Zentrum links)
+    # Rechte Normale am Scheitelpunkt zeigt nach rechts (+1, 0)
+    hit_arc = ray_circular_arc_intersection(
+        (-1.0, 0.0), (1.0, 0.0), (-1.7320508, 0.0), 2.0, -30.0, 60.0, bend=-30.0
+    )
+    assert hit_arc is not None
+    assert math.isclose(hit_arc[3], 1.0, abs_tol=1e-4)
+    assert math.isclose(hit_arc[4], 0.0, abs_tol=1e-4)
+
+
+def test_strahlenoptik_refraction_entering_exiting_curved_and_linear():
+    from models.strahlenoptik import StrahlenoptikConfig, LightSource, RefractionArea, PathNode
+    from generators.strahlenoptik import trace_rays
+
+    # 1. Gemischter CCW-Pfad: gekrümmter Eintritt (arc) + linearer Austritt (line)
+    cfg_arc_ccw = StrahlenoptikConfig(
+        light_sources=[LightSource(x=-4.0, y=1.0, angle=0.0)],
+        refraction_areas=[
+            RefractionArea(
+                mode="path",
+                refractive_index=1.5,
+                nodes=[
+                    PathNode(x=0.0, y=-2.0, connection="line"),
+                    PathNode(x=0.0, y=2.0, connection="arc", bend=-45.0),
+                ],
+            )
+        ],
+        show_shadow_zones=False,
+    )
+    rays_arc_ccw = trace_rays(cfg_arc_ccw)
+    events_arc_ccw = rays_arc_ccw[0]["refraction_events"]
+    assert len(events_arc_ccw) == 2
+    assert math.isclose(events_arc_ccw[0]["n1"], 1.0, abs_tol=1e-6)
+    assert math.isclose(events_arc_ccw[0]["n2"], 1.5, abs_tol=1e-6)
+    assert math.isclose(events_arc_ccw[1]["n1"], 1.5, abs_tol=1e-6)
+    assert math.isclose(events_arc_ccw[1]["n2"], 1.0, abs_tol=1e-6)
+
+    # 2. Derselbe Pfad im CW-Umlaufsinn (Prüfung von normal_mult = -1.0)
+    cfg_arc_cw = StrahlenoptikConfig(
+        light_sources=[LightSource(x=-4.0, y=1.0, angle=0.0)],
+        refraction_areas=[
+            RefractionArea(
+                mode="path",
+                refractive_index=1.5,
+                nodes=[
+                    PathNode(x=0.0, y=2.0, connection="line"),
+                    PathNode(x=0.0, y=-2.0, connection="arc", bend=45.0),
+                ],
+            )
+        ],
+        show_shadow_zones=False,
+    )
+    rays_arc_cw = trace_rays(cfg_arc_cw)
+    events_arc_cw = rays_arc_cw[0]["refraction_events"]
+    assert len(events_arc_cw) == 2
+    assert math.isclose(events_arc_cw[0]["n1"], 1.0, abs_tol=1e-6)
+    assert math.isclose(events_arc_cw[0]["n2"], 1.5, abs_tol=1e-6)
+    assert math.isclose(events_arc_cw[1]["n1"], 1.5, abs_tol=1e-6)
+    assert math.isclose(events_arc_cw[1]["n2"], 1.0, abs_tol=1e-6)
+
+    # 3. Bezier-Fläche: linearer Eintritt + gekrümmter Austritt (bezier)
+    cfg_bezier = StrahlenoptikConfig(
+        light_sources=[LightSource(x=-4.0, y=1.0, angle=0.0)],
+        refraction_areas=[
+            RefractionArea(
+                mode="path",
+                refractive_index=1.5,
+                nodes=[
+                    PathNode(x=0.0, y=-2.0, connection="line"),
+                    PathNode(x=0.0, y=2.0, connection="bezier", out_angle=-45.0, in_angle=-135.0),
+                ],
+            )
+        ],
+        show_shadow_zones=False,
+    )
+    rays_bezier = trace_rays(cfg_bezier)
+    events_bezier = rays_bezier[0]["refraction_events"]
+    assert len(events_bezier) == 2
+    assert math.isclose(events_bezier[0]["n1"], 1.0, abs_tol=1e-6)
+    assert math.isclose(events_bezier[0]["n2"], 1.5, abs_tol=1e-6)
+    assert math.isclose(events_bezier[1]["n1"], 1.5, abs_tol=1e-6)
+    assert math.isclose(events_bezier[1]["n2"], 1.0, abs_tol=1e-6)
+
+    # 4. Rectangle-Modus
+    cfg_rect = StrahlenoptikConfig(
+        light_sources=[LightSource(x=-3.0, y=1.0, angle=-10.0)],
+        refraction_areas=[
+            RefractionArea(mode="rectangle", x_min=-1.0, x_max=1.0, y_min=-2.0, y_max=2.0, refractive_index=1.5)
+        ],
+        show_shadow_zones=False,
+    )
+    rays_rect = trace_rays(cfg_rect)
+    events_rect = rays_rect[0]["refraction_events"]
+    assert len(events_rect) == 2
+    assert math.isclose(events_rect[0]["n1"], 1.0, abs_tol=1e-6)
+    assert math.isclose(events_rect[0]["n2"], 1.5, abs_tol=1e-6)
+    assert math.isclose(events_rect[1]["n1"], 1.5, abs_tol=1e-6)
+    assert math.isclose(events_rect[1]["n2"], 1.0, abs_tol=1e-6)
+
+
 def test_geometrie_kite_ccw_and_angle_hex_colors():
     from models.geometrie import GeometrieConfig, QuadrilateralConstructionConfig
     from generators.geometrie import solve_quadrilateral, generate_geometrie_latex

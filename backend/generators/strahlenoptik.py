@@ -105,7 +105,8 @@ def ray_segment_intersection(
 ) -> Optional[Tuple[float, float, float, float, float]]:
     """
     Returns (t, ix, iy, nx, ny) if ray O+t*D intersects segment AB with t > 0
-    and parameter s in [0,1]. (nx, ny) is the surface normal (to the left of AB).
+    and parameter s in [0,1]. (nx, ny) is the surface normal (to the right of AB,
+    i.e. outward for CCW paths).
     """
     ox, oy = O
     dx, dy = D
@@ -120,9 +121,9 @@ def ray_segment_intersection(
     s = ((ax - ox) * dy - (ay - oy) * dx) / denom
 
     if t > EPS and -EPS <= s <= 1.0 + EPS:
-        # Normal perpendicular to segment AB (to the left)
-        nx = -(by - ay)
-        ny = (bx - ax)
+        # Normal perpendicular to segment AB (to the right, outward for CCW paths)
+        nx = by - ay
+        ny = -(bx - ax)
         nx, ny = _norm(nx, ny)
         return (t, ox + t * dx, oy + t * dy, nx, ny)
     return None
@@ -535,11 +536,11 @@ def _trace_single_ray(
         path.append(best_hit_pt)
 
         if best_seg['is_refracting']:
-            N = best_hit_normal # Use the normal from intersection logic
+            N = best_hit_normal # Use the outward normal from intersection logic
             n_inside = best_seg['n_inside']
 
-            # Entering when ray direction aligns with inward normal (dot > 0)
-            entering = (D[0] * N[0] + D[1] * N[1]) > 0
+            # Entering when ray direction opposes outward normal (dot < 0)
+            entering = (D[0] * N[0] + D[1] * N[1]) < 0
             n1 = current_n
             n2 = n_inside if entering else 1.0
 

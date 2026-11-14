@@ -1,0 +1,52 @@
+{
+  "light_sources": [
+    {
+      "x": -4.0,
+      "y": 1.0,
+      "angle": 0.0,
+      "spread": 0.0,
+      "num_rays": 1,
+      "extended_width": 0.0,
+      "ray_color": "orange",
+      "label": "$L$",
+      "show_light_zone": false,
+      "light_zone_opacity": 0.2,
+      "source_size": 3.0,
+      "ray_line_width": 0.8
+    }
+  ],
+  "barriers": [],
+  "refraction_areas": [
+    {
+      "mode": "path",
+      "nodes": [
+        { "x": 0.0, "y": -2.0, "connection": "line", "bend": 0.0, "out_angle": 0.0, "in_angle": 0.0 },
+        { "x": 0.0, "y": 2.0, "connection": "arc", "bend": -45.0, "out_angle": 0.0, "in_angle": 0.0 }
+      ],
+      "refractive_index": 1.5,
+      "fill_color": "cyan",
+      "fill_opacity": 0.2,
+      "border_color": "cyan!60!black",
+      "border_width": 0.8,
+      "label": "Glas"
+    }
+  ],
+  "refraction_annotations": {
+    "show_normals": true,
+    "show_angle_arcs": true,
+    "show_angle_labels": true
+  },
+  "max_reflections": 3,
+  "show_shadow_zones": false,
+  "canvas_x_min": -6.0,
+  "canvas_x_max": 6.0,
+  "canvas_y_min": -4.0,
+  "canvas_y_max": 4.0,
+  "show_grid": false,
+  "grid_step": 1.0,
+  "show_axes": true,
+  "ray_line_width": 0.8,
+  "ray_arrow": true,
+  "font_family": "Latin Modern",
+  "show_partial_reflection": false
+}
