@@ -217,7 +217,7 @@ def get_tex_distribution_roots(engine: str = "xelatex") -> tuple[pathlib.Path, .
             if "miktex" in parts_lower:
                 idx = parts_lower.index("miktex")
                 if idx >= 1:
-                    _add(pathlib.Path(*bin_path.parts[:idx]))
+                    _add(pathlib.Path(*bin_path.parts[: idx + 1]))
             elif "bin" in parts_lower:
                 idx = parts_lower.index("bin")
                 if idx >= 1:

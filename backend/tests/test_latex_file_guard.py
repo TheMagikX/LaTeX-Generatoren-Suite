@@ -187,3 +187,37 @@ def test_roots_detection_survives_missing_tools(monkeypatch):
         assert isinstance(roots, tuple)
     finally:
         get_tex_distribution_roots.cache_clear()
+
+
+def test_miktex_fallback_root_does_not_allow_parent_directory(tmp_path, monkeypatch):
+    program_files = tmp_path / "Program Files"
+    miktex_root = program_files / "MiKTeX"
+    fake_bin = miktex_root / "miktex" / "bin" / "x64" / "xelatex.exe"
+    other_app_secret = (program_files / "OtherApp" / "secret.txt").resolve(strict=False)
+    miktex_tex_file = (miktex_root / "tex" / "latex" / "base" / "article.cls").resolve(strict=False)
+
+    work_dir = tmp_path / "job"
+    work_dir.mkdir()
+
+    def _fake_which(name: str) -> str | None:
+        if name == "xelatex":
+            return str(fake_bin)
+        return None
+
+    get_tex_distribution_roots.cache_clear()
+    try:
+        monkeypatch.setattr(latex_file_guard.shutil, "which", _fake_which)
+        roots = get_tex_distribution_roots("xelatex")
+
+        assert miktex_root.resolve(strict=False) in roots
+        assert program_files.resolve(strict=False) not in roots
+
+        accesses = [
+            FlsAccess(kind="INPUT", path=miktex_tex_file),
+            FlsAccess(kind="INPUT", path=other_app_secret),
+        ]
+        violations = find_violations(accesses, work_dir, engine="xelatex")
+        assert len(violations) == 1
+        assert violations[0].path == other_app_secret
+    finally:
+        get_tex_distribution_roots.cache_clear()
