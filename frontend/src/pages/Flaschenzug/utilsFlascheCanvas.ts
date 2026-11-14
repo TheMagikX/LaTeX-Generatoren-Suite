@@ -336,9 +336,9 @@ export const computeRopeCanvasPath = (
       const endWorld = cp.exit
       const centerWorld = { x: cp.x, y: cp.y }
 
-      const startCanvas = worldToCanvas(startWorld, bounds)
-      const endCanvas = worldToCanvas(endWorld, bounds)
-      const centerCanvas = worldToCanvas(centerWorld, bounds)
+      const startCanvas = worldToCanvas(startWorld, bounds, zoomLevel)
+      const endCanvas = worldToCanvas(endWorld, bounds, zoomLevel)
+      const centerCanvas = worldToCanvas(centerWorld, bounds, zoomLevel)
       const radiusPx = Math.max(1, cp.r * scale)
 
       const side = cp.side === 'none' ? 'cw' : cp.side
@@ -375,8 +375,8 @@ export const computeRopeCanvasPath = (
       const fromPtWorld = cp.exit ?? { x: cp.x, y: cp.y }
       const toPtWorld = contactPoints[i + 1].entry ?? { x: contactPoints[i + 1].x, y: contactPoints[i + 1].y }
 
-      const p1Canvas = worldToCanvas(fromPtWorld, bounds)
-      const p2Canvas = worldToCanvas(toPtWorld, bounds)
+      const p1Canvas = worldToCanvas(fromPtWorld, bounds, zoomLevel)
+      const p2Canvas = worldToCanvas(toPtWorld, bounds, zoomLevel)
 
       const pathD = `M ${p1Canvas.x.toFixed(2)} ${p1Canvas.y.toFixed(2)} L ${p2Canvas.x.toFixed(2)} ${p2Canvas.y.toFixed(2)}`
 
