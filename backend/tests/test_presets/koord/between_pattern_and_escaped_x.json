@@ -1,0 +1,47 @@
+{
+  "xmin": -3.0,
+  "xmax": 3.0,
+  "ymin": -1.0,
+  "ymax": 5.0,
+  "plots": [
+    {
+      "show": true,
+      "func": "\\x^2",
+      "color": "blue",
+      "slopes": [
+        {
+          "show": true,
+          "x0": 0.5,
+          "dx": 1.0
+        }
+      ],
+      "betweens": [
+        {
+          "show": true,
+          "other_index": 1,
+          "a": -1.0,
+          "b": 2.0,
+          "fill": "blue!25",
+          "pattern": "north east lines",
+          "alpha": 0.5,
+          "draw": "none"
+        },
+        {
+          "show": true,
+          "other_index": 2,
+          "fill": "red!25"
+        }
+      ]
+    },
+    {
+      "show": true,
+      "func": "x + 1",
+      "color": "red"
+    },
+    {
+      "show": false,
+      "func": "2*x",
+      "color": "gray"
+    }
+  ]
+}

@@ -212,7 +212,7 @@ def generate_koordinatensystem_latex(cfg: CoordinateSystemConfig) -> str:
         any_slope_active = any(s.show for s in p.slopes)
         any_tangent_active = any(t.show for t in p.tangents)
         if any_slope_active or any_tangent_active:
-            func_body = re.sub(r'\bx\b', r'\\x', p.func)
+            func_body = re.sub(r'(?<!\\)\bx\b', r'\\x', p.func)
             declared_functions.append(f"func_{i}(\\x)={func_body};")
 
     declare_opts = f"declare function={{{' '.join(declared_functions)}}}" if declared_functions else ""
@@ -398,11 +398,20 @@ def generate_koordinatensystem_latex(cfg: CoordinateSystemConfig) -> str:
         for j, b in enumerate(p.betweens):
             if not b.show:
                 continue
-            
+            if not (0 <= b.other_index < len(cfg.plots)):
+                continue
+            other_plot = cfg.plots[b.other_index]
+            if not (other_plot.show and other_plot.func):
+                continue
+
             val_a = b.a if b.a is not None else px_min
             val_b = b.b if b.b is not None else px_max
+            pat_str = f", pattern={b.pattern}" if b.pattern != "none" else ""
 
-            shade_between_cmds.append(rf"\addplot[fill={b.fill}, draw={b.draw}, fill opacity={b.alpha}, forget plot] fill between[of={curve_name} and curve{b.other_index}, soft clip={{domain={val_a}:{val_b}}}];")
+            shade_between_cmds.append(
+                rf"\addplot[fill={b.fill}{pat_str}, draw={b.draw}, fill opacity={b.alpha}, forget plot] "
+                rf"fill between[of={curve_name} and curve{b.other_index}, soft clip={{domain={val_a}:{val_b}}}];"
+            )
 
         # Slopes (Steigungsdreiecke)
         for j, sl in enumerate(p.slopes):

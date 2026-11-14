@@ -474,3 +474,47 @@ def test_geometrie_kite_ccw_and_angle_hex_colors():
     assert "text opacity=1" in tex
     assert "#" not in tex.split(r"\begin{tikzpicture}")[1]
 
+
+def test_koordinatensystem_between_validation_pattern_and_escaped_x():
+    from models.koordinatensystem import CoordinateSystemConfig, PlotConfig, BetweenConfig, SlopeConfig
+    from generators.koordinatensystem import generate_koordinatensystem_latex
+
+    cfg = CoordinateSystemConfig(
+        xmin=-3.0,
+        xmax=3.0,
+        ymin=-2.0,
+        ymax=6.0,
+        plots=[
+            PlotConfig(
+                show=True,
+                func=r"\x^2 + x",
+                slopes=[SlopeConfig(show=True, x0=0.0, dx=1.0)],
+                betweens=[
+                    # Gültige Zielkurve (Index 1) mit Pattern
+                    BetweenConfig(show=True, other_index=1, pattern="north east lines"),
+                    # Ausgeblendete Zielkurve (Index 2) -> muss übersprungen werden
+                    BetweenConfig(show=True, other_index=2),
+                    # Ungültige Indizes -> müssen übersprungen werden
+                    BetweenConfig(show=True, other_index=-1),
+                    BetweenConfig(show=True, other_index=99),
+                ],
+            ),
+            PlotConfig(show=True, func="x + 1"),
+            PlotConfig(show=False, func="2*x"),
+        ],
+    )
+
+    latex = generate_koordinatensystem_latex(cfg)
+
+    # P4A-09: Bereits vorhandenes \x darf nicht zu \\x verdoppelt werden
+    assert r"func_0(\x)=\x^2 + \x;" in latex
+    assert r"\\x" not in latex
+
+    # P4A-08: Pattern wird übernommen und ungültige/ausgeblendete Zielkurven nicht referenziert
+    assert "pattern=north east lines" in latex
+    assert "fill between[of=curve0 and curve1" in latex
+    assert "curve2" not in latex
+    assert "curve-1" not in latex
+    assert "curve99" not in latex
+
+
