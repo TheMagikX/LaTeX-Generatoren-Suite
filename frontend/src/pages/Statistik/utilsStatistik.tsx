@@ -1,9 +1,12 @@
 import type { StatistikConfig } from './typesStatistik'
 
 export const parseRawData = (value: string): number[] => {
-  return value.split(/[,\s\n]+/)
-    .map((v: string) => parseFloat(v.replace(',', '.')))
-    .filter((v: number) => !isNaN(v))
+  return value
+    .split(/[;\s\n]+|,(?!\d)/)
+    .map((v: string) => v.trim())
+    .filter(Boolean)
+    .map((v: string) => Number(v.replace(',', '.')))
+    .filter(Number.isFinite)
 }
 
 export const extractBarchartCategories = (ds: {
@@ -33,12 +36,12 @@ export const extractBarchartCategories = (ds: {
   // Raw mode
   if (ds.raw_data_string && ds.raw_data_string.trim()) {
     const tokens = ds.raw_data_string
-      .split(/[,;\n\s]+/)
+      .split(/[;\s\n]+|,(?!\d)/)
       .map(t => t.trim())
       .filter(Boolean)
 
     if (tokens.length > 0) {
-      const allNumbers = tokens.every(t => !isNaN(Number(t.replace(',', '.'))))
+      const allNumbers = tokens.every(t => Number.isFinite(Number(t.replace(',', '.'))))
       if (allNumbers) {
         const uniqueNums = Array.from(new Set(tokens.map(t => Number(t.replace(',', '.'))))).sort((a, b) => a - b)
         return uniqueNums.map(n => String(n).replace('.', ','))
@@ -75,42 +78,48 @@ export const computeAutoYRange = (config: StatistikConfig): { min: number; max: 
           const sep = line.includes(':') ? ':' : ','
           const parts = line.split(sep)
           if (parts.length >= 2) {
-            const val = parseFloat(parts[1].trim().replace(',', '.'))
-            if (!isNaN(val)) allVals.push(val)
+            const rawVal = parts[1].trim()
+            if (rawVal) {
+              const val = Number(rawVal.replace(',', '.'))
+              if (Number.isFinite(val)) allVals.push(val)
+            }
           }
         }
       } else if (ds.raw_data_string) {
-        const tokens = ds.raw_data_string.split(/[,;\n\s]+/).map(t => t.trim()).filter(Boolean)
+        const tokens = ds.raw_data_string.split(/[;\s\n]+|,(?!\d)/).map(t => t.trim()).filter(Boolean)
         const counts: Record<string, number> = {}
         for (const t of tokens) {
           counts[t] = (counts[t] || 0) + 1
         }
         allVals.push(...Object.values(counts))
       } else if (ds.raw_data) {
-        allVals.push(...ds.raw_data)
+        allVals.push(...ds.raw_data.filter(Number.isFinite))
       }
     }
     const maxVal = allVals.length > 0 ? Math.max(...allVals) : 5
-    const step = config.y_axis.step > 0 ? config.y_axis.step : 1
-    const ymin = config.y_axis.min ?? 0
+    const step = Number.isFinite(config.y_axis.step) && config.y_axis.step > 0 ? config.y_axis.step : 1
+    const ymin = typeof config.y_axis.min === 'number' && Number.isFinite(config.y_axis.min) ? config.y_axis.min : 0
     const stepsNeeded = Math.ceil((maxVal - ymin) / step) + 1
     const autoMax = ymin + Math.max(1, stepsNeeded) * step
     return { min: ymin, max: autoMax }
   }
 
   if (config.type === 'Histogramm') {
-    const binWidth = config.histogram_opts.bin_width > 0 ? config.histogram_opts.bin_width : 1
+    const binWidth = Number.isFinite(config.histogram_opts.bin_width) && config.histogram_opts.bin_width > 0
+      ? config.histogram_opts.bin_width
+      : 1
     const allVals: number[] = []
     for (const ds of config.datasets) {
-      if (ds.raw_data && ds.raw_data.length > 0) {
-        allVals.push(...ds.raw_data)
+      const finiteRaw = ds.raw_data?.filter(Number.isFinite) ?? []
+      if (finiteRaw.length > 0) {
+        allVals.push(...finiteRaw)
       } else if (ds.raw_data_string) {
         allVals.push(...parseRawData(ds.raw_data_string))
       }
     }
     if (allVals.length > 0) {
-      const minX = config.x_axis.min ?? 0
-      const maxX = config.x_axis.max ?? 10
+      const minX = typeof config.x_axis.min === 'number' && Number.isFinite(config.x_axis.min) ? config.x_axis.min : 0
+      const maxX = typeof config.x_axis.max === 'number' && Number.isFinite(config.x_axis.max) ? config.x_axis.max : 10
       const binCounts: Record<number, number> = {}
       for (const v of allVals) {
         if (v >= minX && v <= maxX) {
@@ -138,8 +147,9 @@ export const computeAutoYRange = (config: StatistikConfig): { min: number; max: 
     }
     const allVals: number[] = []
     for (const ds of config.datasets) {
-      if (ds.raw_data && ds.raw_data.length > 0) {
-        allVals.push(...ds.raw_data)
+      const finiteRaw = ds.raw_data?.filter(Number.isFinite) ?? []
+      if (finiteRaw.length > 0) {
+        allVals.push(...finiteRaw)
       } else if (ds.raw_data_string) {
         allVals.push(...parseRawData(ds.raw_data_string))
       }
