@@ -3,8 +3,8 @@
 import React from 'react'
 import { Copy, FlipHorizontal, FlipVertical, Settings, Plus } from 'lucide-react'
 import { Accordion, Collapsible, Field, Input, NumberInput } from '../../../components/ui'
-import type { FlaschenzugConfig } from '../typesFlasche'
-import { genId, getNextName } from '../utilsFlasche'
+import type { AnchorConfig, FlaschenzugConfig } from '../typesFlasche'
+import { genId, getNextName, updateListItem } from '../utilsFlasche'
 
 interface Props {
   cfg: FlaschenzugConfig
@@ -12,6 +12,59 @@ interface Props {
 }
 
 export const FlascheTabAnker: React.FC<Props> = ({ cfg, setCfg }) => {
+  const updateAnchor = (idx: number, patch: Partial<AnchorConfig>) => {
+    setCfg(c => ({
+      ...c,
+      anchors: updateListItem(c.anchors, idx, patch),
+    }))
+  }
+
+  const renameAnchor = (idx: number, nextName: string) => {
+    setCfg(c => {
+      const target = c.anchors[idx]
+      if (!target) return c
+      const oldName = target.name
+      if (oldName === nextName) return c
+      const shouldCascade = Boolean(oldName.trim()) && !c.anchors.some((a, i) => i !== idx && a.name === oldName)
+      return {
+        ...c,
+        anchors: updateListItem(c.anchors, idx, { name: nextName }),
+        ropes: shouldCascade
+          ? c.ropes.map(rope => ({
+              ...rope,
+              path: rope.path.map(seg => (seg.name === oldName ? { ...seg, name: nextName } : seg)),
+            }))
+          : c.ropes,
+        masses: shouldCascade
+          ? c.masses.map(m => (m.ref === oldName ? { ...m, ref: nextName } : m))
+          : c.masses,
+        forces: shouldCascade
+          ? c.forces.map(f => (f.ref_name === oldName ? { ...f, ref_name: nextName } : f))
+          : c.forces,
+      }
+    })
+  }
+
+  const removeAnchor = (anchor: AnchorConfig) => {
+    setCfg(c => {
+      const oldName = anchor.name
+      const hasRemainingSameName = c.anchors.some(a => a.id !== anchor.id && a.name === oldName)
+      const shouldCleanRefs = Boolean(oldName.trim()) && !hasRemainingSameName
+      return {
+        ...c,
+        anchors: c.anchors.filter(x => x.id !== anchor.id),
+        ropes: shouldCleanRefs
+          ? c.ropes.map(rope => ({
+              ...rope,
+              path: rope.path.filter(seg => seg.name !== oldName),
+            }))
+          : c.ropes,
+        masses: shouldCleanRefs ? c.masses.filter(m => m.ref !== oldName) : c.masses,
+        forces: shouldCleanRefs ? c.forces.filter(f => f.ref_name !== oldName) : c.forces,
+      }
+    })
+  }
+
   const duplicateAnchor = (idx: number) => {
     setCfg(c => {
       const source = c.anchors[idx]
@@ -43,7 +96,7 @@ export const FlascheTabAnker: React.FC<Props> = ({ cfg, setCfg }) => {
           <Collapsible
             key={a.id}
             title={a.label ? `${a.name} (${a.label})` : a.name}
-            onRemove={() => setCfg(c => ({ ...c, anchors: c.anchors.filter(x => x.id !== a.id) }))}
+            onRemove={() => removeAnchor(a)}
           >
             <div className="mb-3 flex gap-2">
               <button
@@ -74,44 +127,30 @@ export const FlascheTabAnker: React.FC<Props> = ({ cfg, setCfg }) => {
 
             <div className="grid grid-cols-2 gap-3">
               <Field label="Name">
-                <Input value={a.name} onChange={e => {
-                  const arr = [...cfg.anchors]; arr[idx].name = e.target.value;
-                  setCfg(c => ({ ...c, anchors: arr }))
-                }} />
+                <Input value={a.name} onChange={e => renameAnchor(idx, e.target.value)} />
               </Field>
               <Field label="Label">
-                <Input value={a.label} onChange={e => {
-                  const arr = [...cfg.anchors]; arr[idx].label = e.target.value;
-                  setCfg(c => ({ ...c, anchors: arr }))
-                }} />
+                <Input value={a.label} onChange={e => updateAnchor(idx, { label: e.target.value })} />
               </Field>
               <Field label="X">
-                <NumberInput step="0.5" value={a.x} onChange={e => {
-                  const arr = [...cfg.anchors]; arr[idx].x = parseFloat(e.target.value) || 0;
-                  setCfg(c => ({ ...c, anchors: arr }))
-                }} />
+                <NumberInput step="0.5" value={a.x} onChange={e => updateAnchor(idx, { x: parseFloat(e.target.value) || 0 })} />
               </Field>
               <Field label="Y">
-                <NumberInput step="0.5" value={a.y} onChange={e => {
-                  const arr = [...cfg.anchors]; arr[idx].y = parseFloat(e.target.value) || 0;
-                  setCfg(c => ({ ...c, anchors: arr }))
-                }} />
+                <NumberInput step="0.5" value={a.y} onChange={e => updateAnchor(idx, { y: parseFloat(e.target.value) || 0 })} />
               </Field>
               <Field label="Form">
-                <select value={a.shape} onChange={e => {
-                  const arr = [...cfg.anchors]; arr[idx].shape = e.target.value as 'Kreis' | 'Rechteck' | 'Keine';
-                  setCfg(c => ({ ...c, anchors: arr }))
-                }} className="w-full bg-panel/50 border border-rim text-ink text-sm rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                <select
+                  value={a.shape}
+                  onChange={e => updateAnchor(idx, { shape: e.target.value as 'Kreis' | 'Rechteck' | 'Keine' })}
+                  className="w-full bg-panel/50 border border-rim text-ink text-sm rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                >
                   <option>Kreis</option>
                   <option>Rechteck</option>
                   <option>Keine</option>
                 </select>
               </Field>
               <Field label="Größe (pt)">
-                <NumberInput step="0.5" value={a.size} onChange={e => {
-                  const arr = [...cfg.anchors]; arr[idx].size = parseFloat(e.target.value) || 0;
-                  setCfg(c => ({ ...c, anchors: arr }))
-                }} />
+                <NumberInput step="0.5" value={a.size} onChange={e => updateAnchor(idx, { size: parseFloat(e.target.value) || 0 })} />
               </Field>
             </div>
           </Collapsible>

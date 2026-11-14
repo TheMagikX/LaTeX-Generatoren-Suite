@@ -3,8 +3,8 @@
 import React from 'react'
 import { Copy, FlipHorizontal, Settings, Plus } from 'lucide-react'
 import { Accordion, Collapsible, Field, Input, NumberInput, SecHead } from '../../../components/ui'
-import type { FlaschenzugConfig } from '../typesFlasche'
-import { genId, getNextName } from '../utilsFlasche'
+import type { FlaschenzugConfig, ManualMountConfig, MassConfig } from '../typesFlasche'
+import { genId, getNextName, updateListItem } from '../utilsFlasche'
 
 interface Props {
   cfg: FlaschenzugConfig
@@ -12,6 +12,20 @@ interface Props {
 }
 
 export const FlascheTabMassen: React.FC<Props> = ({ cfg, setCfg }) => {
+  const updateMass = (idx: number, patch: Partial<MassConfig>) => {
+    setCfg(c => ({
+      ...c,
+      masses: updateListItem(c.masses, idx, patch),
+    }))
+  }
+
+  const updateManualMount = (idx: number, patch: Partial<ManualMountConfig>) => {
+    setCfg(c => ({
+      ...c,
+      manual_mounts: updateListItem(c.manual_mounts, idx, patch),
+    }))
+  }
+
   const duplicateMass = (idx: number) => {
     setCfg(c => {
       const source = c.masses[idx]
@@ -79,9 +93,12 @@ export const FlascheTabMassen: React.FC<Props> = ({ cfg, setCfg }) => {
                   <select
                     value={m.ref}
                     onChange={e => {
-                      const arr = [...cfg.masses]
-                      arr[idx].ref = e.target.value
-                      setCfg(c => ({ ...c, masses: arr }))
+                      const nextRef = e.target.value
+                      const targetIsAnchor = cfg.anchors.some(a => a.name === nextRef)
+                      updateMass(idx, {
+                        ref: nextRef,
+                        ...(targetIsAnchor ? { relation: 'Mitte' } : {}),
+                      })
                     }}
                     className="w-full h-8 bg-panel/50 border border-rim text-ink text-sm rounded px-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   >
@@ -112,9 +129,7 @@ export const FlascheTabMassen: React.FC<Props> = ({ cfg, setCfg }) => {
                 <Field label="Label">
                   <Input
                     value={m.label}
-                    onChange={e => {
-                      const arr = [...cfg.masses]; arr[idx].label = e.target.value; setCfg(c => ({ ...c, masses: arr }))
-                    }}
+                    onChange={e => updateMass(idx, { label: e.target.value })}
                     placeholder="z. B. $m = \SI{2}{\kilo\gram}$"
                     className="h-8 text-sm"
                   />
@@ -123,9 +138,7 @@ export const FlascheTabMassen: React.FC<Props> = ({ cfg, setCfg }) => {
                   <NumberInput
                     step="0.1"
                     value={m.length}
-                    onChange={e => {
-                      const arr = [...cfg.masses]; arr[idx].length = parseFloat(e.target.value) || 0; setCfg(c => ({ ...c, masses: arr }))
-                    }}
+                    onChange={e => updateMass(idx, { length: parseFloat(e.target.value) || 0 })}
                     className="h-8 text-sm"
                   />
                 </Field>
@@ -133,9 +146,7 @@ export const FlascheTabMassen: React.FC<Props> = ({ cfg, setCfg }) => {
                   <select
                     value={isAnchor ? 'Mitte' : m.relation}
                     disabled={isAnchor}
-                    onChange={e => {
-                      const arr = [...cfg.masses]; arr[idx].relation = e.target.value; setCfg(c => ({ ...c, masses: arr }))
-                    }}
+                    onChange={e => updateMass(idx, { relation: e.target.value })}
                     className="w-full h-8 bg-panel/50 border border-rim text-ink text-sm rounded px-2 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                   >
                     <option value="Mitte">Mitte (Achse)</option>
@@ -148,9 +159,7 @@ export const FlascheTabMassen: React.FC<Props> = ({ cfg, setCfg }) => {
                     step="0.1"
                     min="0.1"
                     value={m.width ?? 0.8}
-                    onChange={e => {
-                      const arr = [...cfg.masses]; arr[idx].width = parseFloat(e.target.value) || 0.8; setCfg(c => ({ ...c, masses: arr }))
-                    }}
+                    onChange={e => updateMass(idx, { width: parseFloat(e.target.value) || 0.8 })}
                     className="h-8 text-sm"
                   />
                 </Field>
@@ -159,9 +168,7 @@ export const FlascheTabMassen: React.FC<Props> = ({ cfg, setCfg }) => {
                     step="0.1"
                     min="0.1"
                     value={m.height ?? 0.6}
-                    onChange={e => {
-                      const arr = [...cfg.masses]; arr[idx].height = parseFloat(e.target.value) || 0.6; setCfg(c => ({ ...c, masses: arr }))
-                    }}
+                    onChange={e => updateMass(idx, { height: parseFloat(e.target.value) || 0.6 })}
                     className="h-8 text-sm"
                   />
                 </Field>
@@ -188,19 +195,21 @@ export const FlascheTabMassen: React.FC<Props> = ({ cfg, setCfg }) => {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <Field label="Typ">
-                  <select value={hm.type} onChange={e => {
-                    const arr = [...cfg.manual_mounts]; arr[idx].type = e.target.value; setCfg(c => ({ ...c, manual_mounts: arr }))
-                  }} className="w-full h-8 bg-panel/50 border border-rim text-ink text-sm rounded px-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                  <select
+                    value={hm.type}
+                    onChange={e => updateManualMount(idx, { type: e.target.value })}
+                    className="w-full h-8 bg-panel/50 border border-rim text-ink text-sm rounded px-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
                     <option>Einseitig</option>
                     <option>Zweiseitig</option>
                   </select>
                 </Field>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                <Field label="X1"><NumberInput step="0.5" value={hm.x1} onChange={e => { const arr = [...cfg.manual_mounts]; arr[idx].x1 = parseFloat(e.target.value) || 0; setCfg(c => ({ ...c, manual_mounts: arr })) }} className="h-8 text-xs" /></Field>
-                <Field label="Y1"><NumberInput step="0.5" value={hm.y1} onChange={e => { const arr = [...cfg.manual_mounts]; arr[idx].y1 = parseFloat(e.target.value) || 0; setCfg(c => ({ ...c, manual_mounts: arr })) }} className="h-8 text-xs" /></Field>
-                <Field label="X2"><NumberInput step="0.5" value={hm.x2} onChange={e => { const arr = [...cfg.manual_mounts]; arr[idx].x2 = parseFloat(e.target.value) || 0; setCfg(c => ({ ...c, manual_mounts: arr })) }} className="h-8 text-xs" /></Field>
-                <Field label="Y2"><NumberInput step="0.5" value={hm.y2} onChange={e => { const arr = [...cfg.manual_mounts]; arr[idx].y2 = parseFloat(e.target.value) || 0; setCfg(c => ({ ...c, manual_mounts: arr })) }} className="h-8 text-xs" /></Field>
+                <Field label="X1"><NumberInput step="0.5" value={hm.x1} onChange={e => updateManualMount(idx, { x1: parseFloat(e.target.value) || 0 })} className="h-8 text-xs" /></Field>
+                <Field label="Y1"><NumberInput step="0.5" value={hm.y1} onChange={e => updateManualMount(idx, { y1: parseFloat(e.target.value) || 0 })} className="h-8 text-xs" /></Field>
+                <Field label="X2"><NumberInput step="0.5" value={hm.x2} onChange={e => updateManualMount(idx, { x2: parseFloat(e.target.value) || 0 })} className="h-8 text-xs" /></Field>
+                <Field label="Y2"><NumberInput step="0.5" value={hm.y2} onChange={e => updateManualMount(idx, { y2: parseFloat(e.target.value) || 0 })} className="h-8 text-xs" /></Field>
               </div>
             </div>
           </Collapsible>
