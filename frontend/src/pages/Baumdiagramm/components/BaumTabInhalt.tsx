@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { GitGraph, Layers, Star, Info, RotateCcw, CopyPlus, Table, Eye, EyeOff } from 'lucide-react'
 import { Input, Label, NumberInput, Collapsible } from '../../../components/ui'
-import type { BaumConfigUpdater, BaumHighlightUpdater, BaumNodeConfig, BaumNodeUpdater, Config } from '../typesBaum'
+import type { BaumConfigUpdater, BaumHighlightUpdater, BaumNodeConfig, BaumNodeUpdater, Config, ProbFormat } from '../typesBaum'
 import { DEFAULT_CONFIG } from '../constantsBaum'
-import { getNumChildren, parseLatexProb, getAllPaths, calcPathProb, formatProb } from '../utilsBaum'
-import { SecHead, Chk } from './BaumControls'
+import { getNumChildren, parseLatexProb, getAllPaths, calcPathProb, formatProbDisplay } from '../utilsBaum'
+import { SecHead, Chk, SelectField } from './BaumControls'
 import { BaumPfadTabelle } from './BaumPfadTabelle'
 
 interface BaumTabInhaltProps {
@@ -314,6 +314,39 @@ export const BaumTabInhalt = ({
                   <Chk checked={autoComplement} onChange={setAutoComplement} label="Auto-1-p" help="Bei 2 Ästen: füllt den Komplementwert (1−p) im Geschwisterast automatisch aus" />
                   <Chk checked={showIndivStyles} onChange={setShowIndivStyles} label="Indiv. Styles" />
                   <Chk checked={config.use_numeric_probs} onChange={v => updateConfig('use_numeric_probs', v)} label="Numerisch" />
+                  {(config.use_numeric_probs || config.show_path_prob_in_result || config.show_path_prob_display) && (
+                    <div className="flex flex-wrap items-end gap-2 pl-2 border-l border-line">
+                      <div className="w-36">
+                        <SelectField<ProbFormat>
+                          label="Format"
+                          value={config.prob_format ?? 'fraction'}
+                          onChange={v => updateConfig('prob_format', v)}
+                          options={[
+                            { value: 'fraction', label: 'Bruch (a/b)' },
+                            { value: 'decimal', label: 'Dezimal (0,25)' },
+                            { value: 'percent', label: 'Prozent (%)' },
+                          ]}
+                        />
+                      </div>
+                      {(config.prob_format ?? 'fraction') !== 'fraction' && (
+                        <div className="space-y-1">
+                          <Label className="text-[10px] uppercase text-muted">Nachkommastellen</Label>
+                          <NumberInput
+                            min={0}
+                            max={6}
+                            step={1}
+                            value={config.prob_decimals ?? 2}
+                            onChange={e => {
+                              const parsed = parseInt(e.target.value, 10)
+                              const clamped = Number.isNaN(parsed) ? 2 : Math.max(0, Math.min(6, Math.trunc(parsed)))
+                              updateConfig('prob_decimals', clamped)
+                            }}
+                            className="w-16 h-8 bg-panel/50 border-line"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -466,7 +499,7 @@ export const BaumTabInhalt = ({
                         <span className="text-[9px] uppercase font-bold text-muted bg-panel px-1.5 rounded border border-line">Pfad {allPaths.indexOf(path) + 1}</span>
                         {config.show_path_prob_display && pVal !== null && (
                           <span className="text-[9px] font-mono text-primary font-bold">
-                            P = {formatProb(pVal)}
+                            P = {formatProbDisplay(pVal, config.prob_format ?? 'fraction', config.prob_decimals ?? 2, false)}
                           </span>
                         )}
                       </div>

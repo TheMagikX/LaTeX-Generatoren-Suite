@@ -837,3 +837,35 @@ def test_p4b_16_23_28_48_tikz_options_preamble_and_color_sanitization():
     assert r"Messreihe $\alpha$" in st_tex
 
 
+def test_baumdiagramm_prob_format():
+    from models.baumdiagramm import BaumdiagrammConfig, BaumNodeConfig, ProbFormat
+    from generators.baumdiagramm import prob_to_latex, generate_baumdiagramm_latex
+
+    assert r"\dfrac{1}{4}" in prob_to_latex(0.25, prob_format=ProbFormat.fraction)
+    assert "0{,}25" in prob_to_latex(0.25, prob_format=ProbFormat.decimal, decimals=2)
+    res_half_dec = prob_to_latex(0.5, prob_format=ProbFormat.decimal, decimals=2)
+    assert "0{,}5" in res_half_dec
+    assert "0{,}50" not in res_half_dec
+    assert r"12{,}5\,\%" in prob_to_latex(0.125, prob_format=ProbFormat.percent, decimals=1)
+    assert prob_to_latex(0.0, prob_format=ProbFormat.decimal, decimals=0) == r"\tiny $0$"
+    assert prob_to_latex(float("nan"), prob_format=ProbFormat.percent) == "?"
+
+    cfg = BaumdiagrammConfig(
+        use_numeric_probs=True,
+        show_path_prob_in_result=True,
+        prob_format=ProbFormat.decimal,
+        prob_decimals=2,
+        nodes={
+            "0": BaumNodeConfig(label="A", prob_value=0.25, num_children=2),
+            "1": BaumNodeConfig(label="B", prob_value=0.75, num_children=2),
+            "0_0": BaumNodeConfig(label="A", prob_value=0.5, num_children=0),
+            "0_1": BaumNodeConfig(label="B", prob_value=0.5, num_children=0),
+            "1_0": BaumNodeConfig(label="A", prob_value=0.5, num_children=0),
+            "1_1": BaumNodeConfig(label="B", prob_value=0.5, num_children=0),
+        },
+        results={"0_0": "AA", "0_1": "AB", "1_0": "BA", "1_1": "BB"},
+    )
+    tex = generate_baumdiagramm_latex(cfg)
+    assert "{,}" in tex
+
+

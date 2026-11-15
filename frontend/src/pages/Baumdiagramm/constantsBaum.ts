@@ -7,6 +7,8 @@ export const DEFAULT_CONFIG: Config = {
   max_depth: 2,
   branches_global: 2,
   use_numeric_probs: false,
+  prob_format: 'fraction',
+  prob_decimals: 2,
   root_node: {
     label: 'Start',
     labelHidden: false,

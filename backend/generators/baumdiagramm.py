@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import math
 import re
 from typing import List, Optional, Dict
 from fractions import Fraction as _Fraction
 from models.baumdiagramm import (
     BaumdiagrammConfig, BaumNodeConfig, TreeMode, 
-    GrowDirection, NodeShape, EdgePositioning
+    GrowDirection, NodeShape, EdgePositioning, ProbFormat
 )
 from core.latex_document import (
     LatexDocumentSpec,
@@ -18,14 +19,33 @@ from core.latex_document import (
     shared_package_input,
 )
 
-def prob_to_latex(p: float, size_cmd: str = r"\tiny") -> str:
-    """Convert a float probability to a LaTeX fraction string, e.g. 0.25 → '\\tiny $\\dfrac{1}{4}$'."""
+def _format_german_number(val: float, decimals: int) -> str:
+    s = f"{val:.{decimals}f}"
+    if "." in s:
+        s = s.rstrip("0").rstrip(".")
+    return s.replace(".", "{,}")
+
+
+def prob_to_latex(
+    p: float,
+    size_cmd: str = r"\tiny",
+    prob_format: ProbFormat = ProbFormat.fraction,
+    decimals: int = 2,
+) -> str:
+    """Convert a float probability to a formatted LaTeX string (fraction, decimal, or percent)."""
+    if math.isnan(p) or math.isinf(p):
+        return "?"
     try:
-        frac = _Fraction(p).limit_denominator(100)
-        if frac.denominator == 1:
-            inner = str(frac.numerator)
+        if prob_format == ProbFormat.decimal:
+            inner = _format_german_number(p, decimals)
+        elif prob_format == ProbFormat.percent:
+            inner = f"{_format_german_number(p * 100.0, decimals)}\\,\\%"
         else:
-            inner = f"\\dfrac{{{frac.numerator}}}{{{frac.denominator}}}"
+            frac = _Fraction(p).limit_denominator(100)
+            if frac.denominator == 1:
+                inner = str(frac.numerator)
+            else:
+                inner = f"\\dfrac{{{frac.numerator}}}{{{frac.denominator}}}"
         return f"{size_cmd} ${inner}$" if size_cmd else f"${inner}$"
     except Exception:
         return "?"
@@ -120,7 +140,7 @@ def get_edge_label(cfg: BaumdiagrammConfig, node_cfg: BaumNodeConfig, num_kids: 
         _pv = node_cfg.prob_value
         if _pv is None:
             _pv = round(1.0 / max(num_kids, 1), 6)
-        return prob_to_latex(float(_pv))
+        return prob_to_latex(float(_pv), prob_format=cfg.prob_format, decimals=cfg.prob_decimals)
 
     default_prob = f"\\tiny $\\dfrac{{1}}{{{num_kids}}}$"
     return node_cfg.edge_label if node_cfg.edge_label else default_prob
@@ -184,7 +204,11 @@ def tikz_tree_recurse(cfg: BaumdiagrammConfig, parent_id: str, current_level: in
             result_txt = cfg.results.get(child_id, "")
             if cfg.show_path_prob_in_result:
                 _path_prob = calc_path_prob(cfg, child_path)
-                _prob_tex = prob_to_latex(_path_prob) if _path_prob is not None else "?"
+                _prob_tex = (
+                    prob_to_latex(_path_prob, prob_format=cfg.prob_format, decimals=cfg.prob_decimals)
+                    if _path_prob is not None
+                    else "?"
+                )
                 result_txt = f"{result_txt} {_prob_tex}".strip() if result_txt else _prob_tex
             
             if result_txt:
@@ -365,7 +389,11 @@ def generate_baumdiagramm_latex(cfg: BaumdiagrammConfig) -> str:
             res_txt = cfg.results.get(leaf_id, "")
             if cfg.show_path_prob_in_result:
                 _path_prob = calc_path_prob(cfg, hl_path)
-                _prob_tex = prob_to_latex(_path_prob) if _path_prob is not None else "?"
+                _prob_tex = (
+                    prob_to_latex(_path_prob, prob_format=cfg.prob_format, decimals=cfg.prob_decimals)
+                    if _path_prob is not None
+                    else "?"
+                )
                 res_txt = f"{res_txt} {_prob_tex}".strip() if res_txt else _prob_tex
                 
             if res_txt:

@@ -26,6 +26,11 @@ class TreeMode(str, Enum):
     symmetric = "Symmetrisch (Standard)"
     flexible = "Flexibel (Individuell)"
 
+class ProbFormat(str, Enum):
+    fraction = "fraction"
+    decimal = "decimal"
+    percent = "percent"
+
 class BaumNodeConfig(BaseModel):
     label: str = ""
     labelHidden: bool = False
@@ -64,6 +69,8 @@ class BaumdiagrammConfig(BaseGeneratorConfig):
     max_depth: int = Field(default=2, ge=1, le=8)
     branches_global: int = Field(default=2, ge=1, le=8)
     use_numeric_probs: bool = False
+    prob_format: ProbFormat = ProbFormat.fraction
+    prob_decimals: int = Field(default=2, ge=0, le=6)
     
     root_node: BaumNodeConfig = BaumNodeConfig(label="Start", num_children=2)
     nodes: Dict[str, BaumNodeConfig] = {}

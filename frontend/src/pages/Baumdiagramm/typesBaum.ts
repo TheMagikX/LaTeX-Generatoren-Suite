@@ -37,11 +37,15 @@ export interface TreeStyleConfig {
   highlight_style_default: string;
 }
 
+export type ProbFormat = 'fraction' | 'decimal' | 'percent';
+
 export interface Config {
   mode: 'Symmetrisch (Standard)' | 'Flexibel (Individuell)';
   max_depth: number;
   branches_global: number;
   use_numeric_probs: boolean;
+  prob_format: ProbFormat;
+  prob_decimals: number;
   root_node: BaumNodeConfig;
   nodes: Record<string, BaumNodeConfig>;
   level_labels: LevelLabelConfig;

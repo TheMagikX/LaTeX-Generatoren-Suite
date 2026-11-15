@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import type { Config, BaumNodeConfig } from './typesBaum'
+import type { Config, BaumNodeConfig, ProbFormat } from './typesBaum'
 
 // ---------------------------------------------------------------------------
 // Pure helper functions
@@ -97,6 +97,37 @@ export const formatProb = (p: number): string => {
     if (Math.abs(p - n / d) < eps) return `${n}/${d}`
   }
   return p.toFixed(4).replace(/\.?0+$/, '')
+}
+
+const formatGermanDecimal = (val: number, decimals: number, forLatex: boolean): string => {
+  const d = Number.isFinite(decimals) ? Math.max(0, Math.min(6, Math.trunc(decimals))) : 2
+  let s = val.toFixed(d)
+  if (s.includes('.')) {
+    s = s.replace(/0+$/, '').replace(/\.$/, '')
+  }
+  return s.replace('.', forLatex ? '{,}' : ',')
+}
+
+export const formatProbDisplay = (
+  p: number,
+  format: ProbFormat = 'fraction',
+  decimals: number = 2,
+  forLatex: boolean = false
+): string => {
+  if (!Number.isFinite(p)) return '?'
+  if (format === 'decimal') {
+    return formatGermanDecimal(p, decimals, forLatex)
+  }
+  if (format === 'percent') {
+    const num = formatGermanDecimal(p * 100, decimals, forLatex)
+    return forLatex ? `${num}\\,\\%` : `${num}%`
+  }
+  const f = formatProb(p)
+  if (forLatex && f.includes('/')) {
+    const [n, d] = f.split('/')
+    return `\\frac{${n}}{${d}}`
+  }
+  return f
 }
 
 // Returns the LaTeX complement "1 - value" for a 2-branch sibling auto-fill.

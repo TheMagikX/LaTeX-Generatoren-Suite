@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { Copy, Check, Table } from 'lucide-react'
-import type { Config } from '../typesBaum'
-import { getAllPaths, calcPathProb, formatProb } from '../utilsBaum'
+import type { Config, ProbFormat } from '../typesBaum'
+import { getAllPaths, calcPathProb, formatProbDisplay } from '../utilsBaum'
 
 interface BaumPfadTabelleProps {
   config: Config
@@ -19,18 +19,14 @@ function sanitizeLatexMathCell(s: string): string {
   return s.replace(/(?<!\\)([&%#])/g, '\\$1')
 }
 
-const probToLatex = (p: number): string => {
-  const f = formatProb(p)
-  if (f.includes('/')) {
-    const [n, d] = f.split('/')
-    return `\\frac{${n}}{${d}}`
-  }
-  return f
-}
+const probToLatex = (p: number, format: ProbFormat, decimals: number): string =>
+  formatProbDisplay(p, format, decimals, true)
 
 export const BaumPfadTabelle = ({ config }: BaumPfadTabelleProps) => {
   const [copied, setCopied] = useState(false)
   const [showLatex, setShowLatex] = useState(false)
+  const probFormat: ProbFormat = config.prob_format ?? 'fraction'
+  const probDecimals = config.prob_decimals ?? 2
 
   const allPaths = getAllPaths(config, 'root', 0)
 
@@ -44,7 +40,7 @@ export const BaumPfadTabelle = ({ config }: BaumPfadTabelleProps) => {
     if (!nodeCfg) return '?'
     if (config.use_numeric_probs) {
       const p = nodeCfg.prob_value
-      return p !== null ? formatProb(p) : '?'
+      return p !== null ? formatProbDisplay(p, probFormat, probDecimals, false) : '?'
     }
     return stripMath(nodeCfg.edge_label)
       .replace(/\\[dt]?frac\{(\d+)\}\{(\d+)\}/g, '$1/$2') || '?'
@@ -55,7 +51,7 @@ export const BaumPfadTabelle = ({ config }: BaumPfadTabelleProps) => {
     if (!nodeCfg) return '?'
     if (config.use_numeric_probs) {
       const p = nodeCfg.prob_value
-      return p !== null ? probToLatex(p) : '?'
+      return p !== null ? probToLatex(p, probFormat, probDecimals) : '?'
     }
     return stripMath(nodeCfg.edge_label) || '?'
   }
@@ -72,14 +68,14 @@ export const BaumPfadTabelle = ({ config }: BaumPfadTabelleProps) => {
       const pathStr = path.map(id => sanitizeLatexMathCell(stripMath(getNodeLabel(id)))).join(' \\rightarrow ')
       const edgeStr = path.slice(1).map(id => sanitizeLatexMathCell(getEdgeLabelLatex(id))).join(' \\cdot ')
       const pVal = calcPathProb(config, path)
-      const pStr = pVal !== null ? probToLatex(pVal) : '?'
+      const pStr = pVal !== null ? probToLatex(pVal, probFormat, probDecimals) : '?'
       const leafId = path[path.length - 1]
       const resRaw = stripMath(config.results[leafId] || '')
       const result = resRaw ? escapeLatexText(resRaw) : '{---}'
       return `  ${i + 1} & $${pathStr}$ & $${edgeStr}$ & $${pStr}$ & ${result} \\\\`
     }).join('\n')
 
-    const sigmaStr = probToLatex(totalRounded)
+    const sigmaStr = probToLatex(totalRounded, probFormat, probDecimals)
 
     return [
       '\\begin{tabular}{rlllc}',
@@ -108,7 +104,7 @@ export const BaumPfadTabelle = ({ config }: BaumPfadTabelleProps) => {
           <p className="text-[10px] text-muted mt-0.5">
             {allPaths.length} Pfade · Σ ={' '}
             <span className={totalOk ? 'text-green-400' : 'text-warning'}>
-              {formatProb(totalRounded)}
+              {formatProbDisplay(totalRounded, probFormat, probDecimals, false)}
             </span>
           </p>
         </div>
@@ -155,7 +151,7 @@ export const BaumPfadTabelle = ({ config }: BaumPfadTabelleProps) => {
                     <td className="px-3 py-2 text-ink font-medium">{pathStr}</td>
                     <td className="px-3 py-2 text-muted font-mono">{edgeStr}</td>
                     <td className="px-3 py-2 text-primary font-mono font-bold">
-                      {pVal !== null ? formatProb(pVal) : '?'}
+                      {pVal !== null ? formatProbDisplay(pVal, probFormat, probDecimals, false) : '?'}
                     </td>
                     <td className="px-3 py-2 text-ghost text-[10px]">{result || '—'}</td>
                   </tr>
@@ -168,7 +164,7 @@ export const BaumPfadTabelle = ({ config }: BaumPfadTabelleProps) => {
                   Summe aller Pfade
                 </td>
                 <td className={`px-3 py-2 font-mono font-bold ${totalOk ? 'text-green-400' : 'text-warning'}`}>
-                  {formatProb(totalRounded)}
+                  {formatProbDisplay(totalRounded, probFormat, probDecimals, false)}
                 </td>
                 <td />
               </tr>
