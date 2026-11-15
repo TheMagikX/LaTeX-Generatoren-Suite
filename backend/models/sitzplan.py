@@ -44,6 +44,7 @@ class SitzplanRequest(BaseModel):
     mutual_factor: int = 2
     dislike_distance: int = 1  # min Manhattan distance between disliked students (1 = not adjacent)
     hard_rules: HardRuleConfig
+    manual_assignment: Optional[Dict[str, int]] = None
 
 class SitzplanResponse(BaseModel):
     assignment: Dict[str, int]  # name -> seat_id

@@ -22,6 +22,23 @@ def rc_to_id(r: int, c: int, cols: int) -> int:
     return r * cols + c
 
 def solve_sitzplan(req: SitzplanRequest) -> SitzplanResponse:
+    if req.manual_assignment is not None:
+        layout = req.layout
+        if layout.matrix:
+            allowed_coords = {(r, c) for r in range(layout.rows) for c in range(len(layout.matrix[r])) if layout.matrix[r][c] == 1}
+        else:
+            blocked = set(tuple(p) for p in layout.blocked_seats)
+            allowed_coords = {(r, c) for r in range(layout.rows) for c in range(layout.cols) if (r, c) not in blocked}
+        allowed_seat_ids = {rc_to_id(r, c, layout.cols) for (r, c) in allowed_coords}
+        valid_names = {s.name for s in req.students}
+        clean_assignment: Dict[str, int] = {}
+        occupied_seats: Set[int] = set()
+        for name, seat_id in req.manual_assignment.items():
+            if name in valid_names and seat_id in allowed_seat_ids and seat_id not in occupied_seats:
+                clean_assignment[name] = seat_id
+                occupied_seats.add(seat_id)
+        return compute_reports(req, clean_assignment, solver_used="manual")
+
     solver_used = "greedy"
     if ORTOOLS_OK:
         try:
@@ -485,6 +502,33 @@ def compute_reports(req: SitzplanRequest, assignment: Dict[str, int], solver_use
         else:
             partner_status = f"✅ ({len(partners)} Partner)"
 
+        hard_rule_violations: List[str] = []
+        if p is not None:
+            rp, cp_coord = id_to_rc(p, cols)
+            for a_name, b_name in req.hard_rules.not_same_row:
+                other = b_name if s.name == a_name else (a_name if s.name == b_name else None)
+                if other is not None and other in assignment:
+                    q = assignment[other]
+                    if id_to_rc(q, cols)[0] == rp:
+                        hard_rule_violations.append(f"Gleiche Reihe mit {other}")
+            for a_name, b_name in req.hard_rules.not_same_col:
+                other = b_name if s.name == a_name else (a_name if s.name == b_name else None)
+                if other is not None and other in assignment:
+                    q = assignment[other]
+                    if id_to_rc(q, cols)[1] == cp_coord:
+                        hard_rule_violations.append(f"Gleiche Spalte mit {other}")
+            for rule in req.hard_rules.min_distance:
+                if len(rule["names"]) == 2 and s.name in rule["names"]:
+                    other = rule["names"][1] if rule["names"][0] == s.name else rule["names"][0]
+                    if other in assignment:
+                        q = assignment[other]
+                        rq, cq_coord = id_to_rc(q, cols)
+                        if abs(rp - rq) + abs(cp_coord - cq_coord) < rule["k"]:
+                            hard_rule_violations.append(f"Abstand < {rule['k']} zu {other}")
+
+        hard_rule_violations = sorted(set(hard_rule_violations))
+        violates_hard_rule = len(hard_rule_violations) > 0
+
         records.append({
             "Schüler": s.name,
             "PlatzID": p,
@@ -494,6 +538,7 @@ def compute_reports(req: SitzplanRequest, assignment: Dict[str, int], solver_use
             "Neben erfüllt": f"{len(ok_list)}/{len(wanted_list)}",
             "Nicht erfüllte Wünsche": ", ".join(unmet_list) if unmet_list else "—",
             "Abneigungen eingehalten": "✅" if not violates_dislike else "❌",
+            "Regelverstöße": ", ".join(hard_rule_violations) if hard_rule_violations else "✅",
             "Partner": partner_status,
         })
         
@@ -507,6 +552,8 @@ def compute_reports(req: SitzplanRequest, assignment: Dict[str, int], solver_use
             "partners": partners,
             "is_alone": is_alone,
             "violates_no_alone": violates_no_alone,
+            "violates_hard_rule": violates_hard_rule,
+            "hard_rule_violations": hard_rule_violations,
         }
         
     return SitzplanResponse(

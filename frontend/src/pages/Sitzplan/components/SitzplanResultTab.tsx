@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Play, Download, Users } from 'lucide-react'
 import Papa from 'papaparse'
 import { Label, Button, SecHead } from '../../../components/ui'
@@ -10,6 +10,7 @@ interface SitzplanResultTabProps {
   result: SitzplanResponse | null
   isLoading: boolean
   handleCalculate: () => void
+  onSwapAssignment: (newAssignment: Record<string, number>) => void
   layout: LayoutConfig
   studentsCount: number
 }
@@ -18,9 +19,42 @@ const SitzplanResultTab: React.FC<SitzplanResultTabProps> = ({
   result,
   isLoading,
   handleCalculate,
+  onSwapAssignment,
   layout,
   studentsCount
 }) => {
+  const [selectedSeatId, setSelectedSeatId] = useState<number | null>(null)
+
+  const executeSwap = (sourceSid: number, targetSid: number) => {
+    if (!result) return
+    if (sourceSid === targetSid) {
+      setSelectedSeatId(null)
+      return
+    }
+    const sourceName = Object.keys(result.assignment).find(k => result.assignment[k] === sourceSid)
+    if (!sourceName) return
+    const targetName = Object.keys(result.assignment).find(k => result.assignment[k] === targetSid)
+
+    const nextAssignment = { ...result.assignment }
+    nextAssignment[sourceName] = targetSid
+    if (targetName) {
+      nextAssignment[targetName] = sourceSid
+    }
+    setSelectedSeatId(null)
+    onSwapAssignment(nextAssignment)
+  }
+
+  const handleSeatClick = (sid: number, isAllowed: boolean, occupantName?: string) => {
+    if (!isAllowed || isLoading) return
+    if (selectedSeatId === null) {
+      if (!occupantName) return
+      setSelectedSeatId(sid)
+    } else if (selectedSeatId === sid) {
+      setSelectedSeatId(null)
+    } else {
+      executeSwap(selectedSeatId, sid)
+    }
+  }
   const downloadCsv = () => {
     if (!result) return
     const rows = []
@@ -67,6 +101,11 @@ const SitzplanResultTab: React.FC<SitzplanResultTabProps> = ({
     )
   }
 
+  const selectedStudentName =
+    selectedSeatId !== null
+      ? Object.keys(result.assignment).find(k => result.assignment[k] === selectedSeatId)
+      : undefined
+
   return (
     <div className="space-y-10">
       <div className="space-y-4">
@@ -78,6 +117,11 @@ const SitzplanResultTab: React.FC<SitzplanResultTabProps> = ({
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
                 OR-Tools (Optimal)
               </span>
+            ) : result.solver_used === 'manual' ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption bg-sky-500/15 border border-sky-500/30 text-sky-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 inline-block" />
+                Manuell angepasst
+              </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption bg-amber-500/15 border border-amber-500/30 text-amber-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
@@ -85,8 +129,39 @@ const SitzplanResultTab: React.FC<SitzplanResultTabProps> = ({
               </span>
             )}
           </div>
-          <Button onClick={handleCalculate} disabled={isLoading} className="text-caption py-1 bg-raised hover:bg-overlay">Neu berechnen</Button>
+          <Button
+            onClick={() => {
+              setSelectedSeatId(null)
+              handleCalculate()
+            }}
+            disabled={isLoading}
+            className="text-caption py-1 bg-raised hover:bg-overlay"
+          >
+            Neu berechnen
+          </Button>
         </div>
+
+        {selectedSeatId !== null && selectedStudentName ? (
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-sky-500/10 border border-sky-500/30 text-xs text-sky-300">
+            <span>
+              🔄 Tauschmodus: Wähle einen Zielplatz für „{selectedStudentName}“ (oder klicke denselben Platz zum Abbrechen).
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedSeatId(null)}
+              className="ml-3 shrink-0 px-2 py-0.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 font-medium transition-colors"
+            >
+              Auswahl aufheben
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-raised/50 border border-line text-xs text-muted">
+            <span>
+              💡 Tipp: Klicke einen besetzten Platz an (oder ziehe ihn per Drag &amp; Drop), um Plätze manuell zu tauschen.
+            </span>
+          </div>
+        )}
+
         <div className="bg-canvas p-8 rounded-2xl border border-line overflow-auto flex justify-center shadow-inner">
           <div className="inline-grid gap-3" style={{
             gridTemplateColumns: `repeat(${layout.cols}, minmax(60px, 1fr))`
@@ -101,14 +176,59 @@ const SitzplanResultTab: React.FC<SitzplanResultTabProps> = ({
                 if (val === 1) {
                   color = 'bg-raised border-rim text-muted'
                   if (rep) {
-                    if (rep.violates_dislike || rep.violates_no_alone) color = 'bg-red-500/20 border-red-500/50 text-red-400'
+                    if (rep.violates_dislike || rep.violates_no_alone || rep.violates_hard_rule) color = 'bg-red-500/20 border-red-500/50 text-red-400'
                     else if (rep.front_wish && rep.front_ok) color = 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
                     else if (rep.neighbors_ok.length > 0) color = 'bg-amber-500/20 border-amber-500/50 text-amber-400'
                   }
                 }
 
+                const interactionClasses = val === 1
+                  ? 'cursor-pointer hover:brightness-110 select-none'
+                  : 'cursor-not-allowed select-none'
+                const selectedClasses = selectedSeatId === sid ? 'ring-2 ring-sky-400 scale-105 shadow-md' : ''
+
+                let seatTitle: string | undefined = name
+                if (name && rep) {
+                  const reasons: string[] = []
+                  if (rep.violates_dislike) reasons.push('Abneigung verletzt')
+                  if (rep.violates_no_alone) reasons.push('Sitzt alleine')
+                  if (rep.hard_rule_violations && rep.hard_rule_violations.length > 0) {
+                    reasons.push(...rep.hard_rule_violations)
+                  }
+                  if (reasons.length > 0) {
+                    seatTitle = `${name}: ${reasons.join(', ')}`
+                  }
+                }
+
                 return (
-                  <div key={sid} className={`w-16 h-12 rounded-xl flex flex-col items-center justify-center transition-all border-2 text-[9px] font-bold ${color}`}>
+                  <div
+                    key={sid}
+                    title={seatTitle}
+                    onClick={() => handleSeatClick(sid, val === 1, name)}
+                    draggable={val === 1 && Boolean(name) && !isLoading}
+                    onDragStart={(e) => {
+                      if (val !== 1 || !name || isLoading) return
+                      e.dataTransfer.setData('text/plain', String(sid))
+                      e.dataTransfer.effectAllowed = 'move'
+                      setSelectedSeatId(sid)
+                    }}
+                    onDragOver={(e) => {
+                      if (val === 1 && !isLoading) {
+                        e.preventDefault()
+                        e.dataTransfer.dropEffect = 'move'
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      if (val !== 1 || isLoading) return
+                      const raw = e.dataTransfer.getData('text/plain')
+                      const sourceSid = raw !== '' ? Number(raw) : selectedSeatId
+                      if (sourceSid !== null && !Number.isNaN(sourceSid)) {
+                        executeSwap(sourceSid, sid)
+                      }
+                    }}
+                    className={`w-16 h-12 rounded-xl flex flex-col items-center justify-center transition-all border-2 text-[9px] font-bold ${color} ${interactionClasses} ${selectedClasses}`}
+                  >
                     {name ? (
                       <>
                         <span className="truncate w-full text-center px-1 uppercase tracking-tighter">{name}</span>
@@ -143,7 +263,7 @@ const SitzplanResultTab: React.FC<SitzplanResultTabProps> = ({
                 <th className="py-3 px-4 text-caption">Partner (Nicht allein)</th>
                 <th className="py-3 px-4 text-caption">Front</th>
                 <th className="py-3 px-4 text-caption">Wünsche</th>
-                <th className="py-3 px-4 text-caption">Abneigungen</th>
+                <th className="py-3 px-4 text-caption">Abneigungen &amp; Regeln</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
@@ -165,7 +285,14 @@ const SitzplanResultTab: React.FC<SitzplanResultTabProps> = ({
                       )}
                     </div>
                   </td>
-                  <td className="py-3 px-4">{r["Abneigungen eingehalten"]}</td>
+                  <td className="py-3 px-4">
+                    <div className="flex flex-col gap-0.5">
+                      <span>{r["Abneigungen eingehalten"]}</span>
+                      {r["Regelverstöße"] && r["Regelverstöße"] !== '✅' && (
+                        <span className="text-metadata text-red-400 font-medium">{r["Regelverstöße"]}</span>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -46,6 +46,7 @@ export interface SitzplanRequest {
   mutual_factor: number
   dislike_distance: number
   hard_rules: HardRules
+  manual_assignment?: Record<string, number>
 }
 
 export interface StudentReport {
@@ -57,6 +58,8 @@ export interface StudentReport {
   partners?: string[]
   is_alone?: boolean
   violates_no_alone?: boolean
+  violates_hard_rule?: boolean
+  hard_rule_violations?: string[]
 }
 
 export interface SitzplanReportRow {
@@ -67,6 +70,7 @@ export interface SitzplanReportRow {
   'Neben erfüllt': string
   'Nicht erfüllte Wünsche': string
   'Abneigungen eingehalten': string
+  'Regelverstöße'?: string
   'Partner'?: string
 }
 
@@ -74,5 +78,5 @@ export interface SitzplanResponse {
   assignment: Record<string, number>
   report: SitzplanReportRow[]
   per_student_report: Record<string, StudentReport>
-  solver_used: 'ortools' | 'greedy'
+  solver_used: 'ortools' | 'greedy' | 'manual'
 }

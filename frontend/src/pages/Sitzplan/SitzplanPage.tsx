@@ -28,28 +28,46 @@ const SitzplanPage: React.FC = () => {
     setConfig(prev => ({ ...prev, ...updates }))
   }
 
+  const buildRequestPayload = () => ({
+    students: config.students,
+    layout: {
+      ...config.layout,
+      blocked_seats: [] // Backend handles this if needed
+    },
+    w_front: config.wFront,
+    w_neighbor: config.wNeighbor,
+    include_vertical: config.includeVertical,
+    include_diagonal: config.includeDiagonal,
+    mutual_factor: config.mutualFactor,
+    dislike_distance: config.dislikeDistance,
+    hard_rules: config.hardRules
+  })
+
   const handleCalculate = async () => {
     setIsLoading(true)
     try {
-      const resp = await solveSitzplan({
-        students: config.students,
-        layout: {
-          ...config.layout,
-          blocked_seats: [] // Backend handles this if needed
-        },
-        w_front: config.wFront,
-        w_neighbor: config.wNeighbor,
-        include_vertical: config.includeVertical,
-        include_diagonal: config.includeDiagonal,
-        mutual_factor: config.mutualFactor,
-        dislike_distance: config.dislikeDistance,
-        hard_rules: config.hardRules
-      })
+      const resp = await solveSitzplan(buildRequestPayload())
       setResult(resp)
       setActiveTab('result')
     } catch (err) {
       console.error(err)
       alert("Fehler bei der Berechnung.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSwapAssignment = async (newAssignment: Record<string, number>) => {
+    setIsLoading(true)
+    try {
+      const resp = await solveSitzplan({
+        ...buildRequestPayload(),
+        manual_assignment: newAssignment
+      })
+      setResult(resp)
+    } catch (err) {
+      console.error(err)
+      alert("Fehler beim Aktualisieren des Sitzplans.")
     } finally {
       setIsLoading(false)
     }
@@ -130,6 +148,7 @@ const SitzplanPage: React.FC = () => {
                   result={result}
                   isLoading={isLoading}
                   handleCalculate={handleCalculate}
+                  onSwapAssignment={handleSwapAssignment}
                   layout={config.layout}
                   studentsCount={config.students.length}
                 />

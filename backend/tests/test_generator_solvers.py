@@ -404,6 +404,55 @@ def test_sitzplan_solve_greedy_deterministic():
         assert 0 <= int(seat) < 9
 
 
+def test_sitzplan_manual_assignment_and_hard_rule_report():
+    from models.sitzplan import MinDistanceRule
+
+    # 3x3 layout:
+    # Row 0: 0, 1, 2
+    # Row 1: 3, 4, 5
+    # Row 2: 6, 7, 8
+    req = SitzplanRequest(
+        students=[
+            StudentConfig(name="Anna"),
+            StudentConfig(name="Ben"),
+            StudentConfig(name="Clara"),
+            StudentConfig(name="David"),
+        ],
+        layout=LayoutConfig(rows=3, cols=3, blocked_seats=[(0, 1)], front_rows=1),
+        hard_rules=HardRuleConfig(
+            not_same_row=[("Anna", "Clara")],
+            min_distance=[MinDistanceRule(names=["Ben", "Clara"], k=2)],
+        ),
+        manual_assignment={"Anna": 6, "Ben": 7, "Clara": 8, "David": 0},
+    )
+
+    res = solve_sitzplan(req)
+    assert res.solver_used == "manual"
+    assert res.assignment == {"Anna": 6, "Ben": 7, "Clara": 8, "David": 0}
+
+    # Anna (6 -> r=2,c=0) and Clara (8 -> r=2,c=2) are in the same row
+    assert res.per_student_report["Anna"]["violates_hard_rule"] is True
+    assert "Gleiche Reihe mit Clara" in res.per_student_report["Anna"]["hard_rule_violations"]
+    assert res.per_student_report["Clara"]["violates_hard_rule"] is True
+    assert "Gleiche Reihe mit Anna" in res.per_student_report["Clara"]["hard_rule_violations"]
+
+    # Ben (7 -> r=2,c=1) and Clara (8 -> r=2,c=2) have Manhattan distance 1 < 2
+    assert res.per_student_report["Ben"]["violates_hard_rule"] is True
+    assert "Abstand < 2 zu Clara" in res.per_student_report["Ben"]["hard_rule_violations"]
+    assert "Abstand < 2 zu Ben" in res.per_student_report["Clara"]["hard_rule_violations"]
+
+    # David (0 -> r=0,c=0) has no violations
+    assert res.per_student_report["David"]["violates_hard_rule"] is False
+    assert res.per_student_report["David"]["hard_rule_violations"] == []
+
+    # Check report table records contain Regelverstöße
+    david_row = next(r for r in res.report if r["Schüler"] == "David")
+    assert david_row["Regelverstöße"] == "✅"
+    anna_row = next(r for r in res.report if r["Schüler"] == "Anna")
+    assert "Gleiche Reihe mit Clara" in anna_row["Regelverstöße"]
+
+
+
 def test_flaschenzug_tangent_clamping():
     from generators.flaschenzug import tangent_point_external, tangent_line_two_circles
     # If point is barely at boundary or float exceeds slightly
