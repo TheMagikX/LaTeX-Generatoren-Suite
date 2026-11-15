@@ -13,7 +13,7 @@ export const DEFAULT_HELPER: HelperLine = {
 
 export const DEFAULT_CONFIG: Config = {
   shape: 'Triangle',
-  construction: { mode: 'SSS', rotation: 0, a: 4.0, b: 3.5, c: 5.0, alpha: 40, beta: 60, step: 0 },
+  construction: { mode: 'SSS', right_mode: 'catheti', rotation: 0, a: 4.0, b: 3.5, c: 5.0, alpha: 40, beta: 60, step: 0 },
   quad_construction: { mode: 'Rectangle', a: 5.0, b: 3.0, c: 4.0, alpha: 70, height: 3.0, offset_c: 1.0, p_ax: 0, p_ay: 0, p_bx: 5, p_by: 0, p_cx: 6, p_cy: 3, p_dx: 1, p_dy: 3 },
   elements: {
     points: { show: true, labels: { A: String.raw`$A$`, B: String.raw`$B$`, C: String.raw`$C$`, D: String.raw`$D$` } },
@@ -49,7 +49,7 @@ export const DEFAULT_CONFIG: Config = {
       mb: { ...DEFAULT_HELPER, label: String.raw`$m_b$` },
       mc: { ...DEFAULT_HELPER, label: String.raw`$m_c$` },
     },
-    others: { circumcircle: false, incircle: false, grid: false },
+    others: { circumcircle: false, incircle: false, grid: false, thales_circle: false, pythagoras_squares: false, trig_labels: 'none' },
   },
   style: {
     fill_color: String.raw`{rgb,255:red,230; green,126; blue,34}`,

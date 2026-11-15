@@ -286,6 +286,46 @@ def solve_triangle(cfg: TriangleConstructionConfig) -> tuple[dict | None, str | 
                 "perimeter": round(a + b + c, 4),
             }, None
 
+        elif mode == "Right":
+            right_mode = cfg.right_mode
+            if right_mode == "catheti":
+                a, b = cfg.a, cfg.b
+                if a <= 0 or b <= 0:
+                    return None, "Katheten a und b müssen größer als 0 sein."
+                c = math.sqrt(a**2 + b**2)
+                alpha_deg = math.degrees(math.atan2(a, b))
+            elif right_mode == "cathetus_hypotenuse":
+                a, c = cfg.a, cfg.c
+                if a <= 0 or c <= 0:
+                    return None, "Seiten a und c müssen größer als 0 sein."
+                if a >= c:
+                    return None, "Kathete a muss kürzer als die Hypotenuse c sein."
+                b = math.sqrt(c**2 - a**2)
+                alpha_deg = math.degrees(math.asin(a / c))
+            elif right_mode == "thales":
+                c, alpha_deg = cfg.c, cfg.alpha
+                if c <= 0:
+                    return None, "Hypotenuse c muss größer als 0 sein."
+                if alpha_deg <= 0 or alpha_deg >= 90:
+                    return None, "Im rechtwinkligen Dreieck muss 0° < α < 90° gelten."
+                alpha_rad = math.radians(alpha_deg)
+                a = c * math.sin(alpha_rad)
+                b = c * math.cos(alpha_rad)
+            else:
+                return None, "Unbekannter Untermodus für rechtwinkliges Dreieck."
+
+            beta_deg = 90.0 - alpha_deg
+            gamma_deg = 90.0
+            B = (c, 0.0)
+            C = (b**2 / c, (a * b) / c)
+            return {
+                "coords": {"A": A, "B": B, "C": C},
+                "sides": {"a": a, "b": b, "c": c},
+                "angles": {"alpha": alpha_deg, "beta": beta_deg, "gamma": gamma_deg},
+                "area": round(0.5 * a * b, 4),
+                "perimeter": round(a + b + c, 4),
+            }, None
+
     except Exception as e:
         return None, str(e)
 
@@ -356,14 +396,33 @@ def _generate_tikz_body(cfg: GeometrieConfig, result: dict) -> str:
                 f"  \\pic [draw, {_angle_color_opt(ang.colors.gamma)}, fill opacity={ang.opacities.gamma}, "
                 f"text opacity=1, \"{lab_g}\", angle radius={ang.radii.gamma:.0f}mm] {{angle = A--C--B}};"
             )
+            if mode == "Right":
+                code.append("  \\pic [draw, angle radius=4mm] {right angle = B--C--A};")
 
         # Triangle fill & stroke with optional live labels for sides
         ms = el.measurements.show_sides
-        l_a = rf"$a = {a_len:.1f}\text{{ cm}}$" if ms.a else ""
-        l_b = rf"$b = {b_len:.1f}\text{{ cm}}$" if ms.b else ""
-        l_c = rf"$c = {c_len:.1f}\text{{ cm}}$" if ms.c else ""
-        
-        if ms.a or ms.b or ms.c:
+        trig = el.others.trig_labels
+
+        def _format_side_label(name: str, length: float, show_val: bool, role: str) -> str:
+            if trig != "none" and show_val:
+                return rf"\text{{{role}}} (${name} = {length:.1f}\text{{ cm}}$)"
+            if trig != "none":
+                return rf"\text{{{role}}}"
+            if show_val:
+                return rf"${name} = {length:.1f}\text{{ cm}}$"
+            return ""
+
+        roles = {"a": "", "b": "", "c": ""}
+        if trig == "alpha":
+            roles = {"a": "Gegenkathete", "b": "Ankathete", "c": "Hypotenuse"}
+        elif trig == "beta":
+            roles = {"a": "Ankathete", "b": "Gegenkathete", "c": "Hypotenuse"}
+
+        l_a = _format_side_label("a", a_len, ms.a, roles["a"])
+        l_b = _format_side_label("b", b_len, ms.b, roles["b"])
+        l_c = _format_side_label("c", c_len, ms.c, roles["c"])
+
+        if ms.a or ms.b or ms.c or trig != "none":
             code.append(
                 f"  \\draw[{st.line_width}, draw={st.stroke_color}, fill={st.fill_color}, fill opacity={st.fill_opacity}] "
                 f"(B) -- node[auto] {{{l_a}}} (C) -- node[auto] {{{l_b}}} (A) -- node[auto] {{{l_c}}} (B) -- cycle;"
@@ -467,6 +526,33 @@ def _generate_tikz_body(cfg: GeometrieConfig, result: dict) -> str:
                 code.append(f"  \\draw[dashed, color=red] ({Ux:.3f},{Uy:.3f}) circle ({R:.3f});")
                 code.append(f"  \\fill[red] ({Ux:.3f},{Uy:.3f}) circle (1pt);")
 
+        if el.others.thales_circle:
+            Mx, My = (Ax + Bx) / 2.0, (Ay + By) / 2.0
+            r_thales = c_len / 2.0
+            code.append("  % Thaleskreis")
+            code.append(f"  \\draw[dashed, color=teal!80!black, semithick] (B) arc (0:180:{r_thales:.3f});")
+            code.append(f"  \\fill[teal!80!black] ({Mx:.3f},{My:.3f}) circle (1.5pt) node[below, font=\\footnotesize] {{$M$}};")
+
+        if el.others.pythagoras_squares:
+            ms_sides = el.measurements.show_sides
+            code.append("  % Pythagoras-Quadrate")
+            squares_spec = [
+                ("a", Bx, By, Cx, Cy, a_len, ms_sides.a, "blue!70!black", "blue!10"),
+                ("b", Cx, Cy, Ax, Ay, b_len, ms_sides.b, "blue!70!black", "blue!10"),
+                ("c", Ax, Ay, Bx, By, c_len, ms_sides.c, "red!70!black", "red!10"),
+            ]
+            for s_name, px, py, qx, qy, s_val, show_val, stroke_c, fill_c in squares_spec:
+                nx, ny = (qy - py), (px - qx)
+                q2x, q2y = qx + nx, qy + ny
+                p2x, p2y = px + nx, py + ny
+                zx, zy = (px + qx + nx) / 2.0, (py + qy + ny) / 2.0
+                sq_lbl = rf"${s_name}^2 = {s_val**2:.1f}\text{{ cm}}^2$" if show_val else rf"${s_name}^2$"
+                code.append(
+                    f"  \\draw[draw={stroke_c}, fill={fill_c}, fill opacity=0.4] "
+                    f"({px:.3f},{py:.3f}) -- ({qx:.3f},{qy:.3f}) -- ({q2x:.3f},{q2y:.3f}) -- ({p2x:.3f},{p2y:.3f}) -- cycle;"
+                )
+                code.append(f"  \\node[font=\\footnotesize, text={stroke_c}] at ({zx:.3f},{zy:.3f}) {{{sq_lbl}}};")
+
         # Points
         if el.points.show:
             L = el.points.labels
@@ -524,6 +610,30 @@ def _generate_tikz_body(cfg: GeometrieConfig, result: dict) -> str:
                 code.append("  % Schritt 4: Schnittpunkt C und fertiges Dreieck")
                 code.append(f"  \\draw[{st.line_width}, draw={st.stroke_color}, fill={st.fill_color}, fill opacity={st.fill_opacity}] (A) -- (B) -- (C) -- cycle;")
                 code.append(f"  \\fill (C) circle (1.5pt) node[above] {{{L.C}}};")
+
+        elif mode == "Right":
+            if step >= 2:
+                code.append("  % Schritt 2: Thaleskreis über c")
+                code.append(f"  \\draw[dashed, gray] (B) arc (0:180:{c_len / 2.0:.3f});")
+            if step >= 3:
+                if cfg.construction.right_mode == "thales":
+                    code.append(f"  % Schritt 3: Winkel alpha ({alpha_deg:.1f} Grad)")
+                    code.append(f"  \\draw[dashed, gray] (A) -- +({alpha_deg:.3f}:{b_len + 0.5:.3f});")
+                else:
+                    code.append("  % Schritt 3: Kreisbogen um B mit Radius a")
+                    ang_BC_val = math.degrees(math.atan2(Cy - By, Cx - Bx))
+                    code.append(
+                        f"  \\draw[dashed, gray] (B) ++({ang_BC_val - 20}:{a_len:.3f}) "
+                        f"arc ({ang_BC_val - 20}:{ang_BC_val + 20}:{a_len:.3f});"
+                    )
+            if step >= 4:
+                code.append("  % Schritt 4: Schnittpunkt C und fertiges Dreieck")
+                code.append(
+                    f"  \\draw[{st.line_width}, draw={st.stroke_color}, fill={st.fill_color}, "
+                    f"fill opacity={st.fill_opacity}] (A) -- (B) -- (C) -- cycle;"
+                )
+                code.append(f"  \\fill (C) circle (1.5pt) node[above] {{{L.C}}};")
+                code.append("  \\pic [draw, angle radius=4mm] {right angle = B--C--A};")
 
     if rot != 0:
         code.append("\\end{scope}")

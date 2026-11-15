@@ -6,7 +6,8 @@ from models.base import BaseGeneratorConfig
 
 
 class TriangleConstructionConfig(BaseModel):
-    mode: Literal["SSS", "SWS", "WSW"] = "SSS"
+    mode: Literal["SSS", "SWS", "WSW", "Right"] = "SSS"
+    right_mode: Literal["catheti", "cathetus_hypotenuse", "thales"] = "catheti"
     rotation: float = 0.0
     a: float = 4.0
     b: float = 3.5
@@ -121,6 +122,9 @@ class OthersConfig(BaseModel):
     circumcircle: bool = False
     incircle: bool = False
     grid: bool = False
+    thales_circle: bool = False
+    pythagoras_squares: bool = False
+    trig_labels: Literal["none", "alpha", "beta"] = "none"
 
 
 class TriangleElementConfig(BaseModel):

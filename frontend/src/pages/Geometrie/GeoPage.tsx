@@ -165,6 +165,22 @@ export default function GeoPage() {
                   ))}
                 </div>
               </div>
+              {cfg.shape === 'Triangle' && (
+                <>
+                  <div className="w-full h-px bg-raised/80" />
+                  <Field label="Trigonometrie-Beschriftung (Gegen-/Ankathete, Hypotenuse)">
+                    <select
+                      value={cfg.elements.others.trig_labels ?? 'none'}
+                      onChange={e => updEl({ others: { ...cfg.elements.others, trig_labels: e.target.value as Config['elements']['others']['trig_labels'] } })}
+                      className="w-full px-3 py-2.5 bg-panel/50 border border-rim/50 rounded-lg text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                    >
+                      <option value="none">Keine (Standard)</option>
+                      <option value="alpha">Bezugswinkel α (bei A)</option>
+                      <option value="beta">Bezugswinkel β (bei B)</option>
+                    </select>
+                  </Field>
+                </>
+              )}
             </div>
           </Accordion>
 
@@ -178,6 +194,8 @@ export default function GeoPage() {
               <div className="space-y-4">
                 <Switch label="Umkreis anzeigen" checked={cfg.elements.others.circumcircle} onChange={(v: boolean) => updEl({ others: { ...cfg.elements.others, circumcircle: v } })} />
                 <Switch label="Inkreis anzeigen" checked={cfg.elements.others.incircle} onChange={(v: boolean) => updEl({ others: { ...cfg.elements.others, incircle: v } })} />
+                <Switch label="Thaleskreis über Seite c (AB)" checked={cfg.elements.others.thales_circle ?? false} onChange={(v: boolean) => updEl({ others: { ...cfg.elements.others, thales_circle: v } })} description="Halbkreis mit Mittelpunkt M über der Grundseite AB" />
+                <Switch label="Pythagoras-Quadrate (a², b², c²)" checked={cfg.elements.others.pythagoras_squares ?? false} onChange={(v: boolean) => updEl({ others: { ...cfg.elements.others, pythagoras_squares: v } })} description="Zeichnet die Katheten- und Hypotenusenquadrate nach außen" />
                 <div className="my-2" />
                 <Switch label="Koordinatengitter im Hintergrund" checked={cfg.elements.others.grid} onChange={(v: boolean) => updEl({ others: { ...cfg.elements.others, grid: v } })} description="Zeichnet ein feines Hilfsraster" />
               </div>

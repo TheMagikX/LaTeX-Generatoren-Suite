@@ -12,7 +12,8 @@ export interface HelperLine {
 export interface Config {
   shape: 'Triangle' | 'Quadrilateral'
   construction: {
-    mode: 'SSS' | 'SWS' | 'WSW'
+    mode: 'SSS' | 'SWS' | 'WSW' | 'Right'
+    right_mode: 'catheti' | 'cathetus_hypotenuse' | 'thales'
     rotation: number
     a: number
     b: number
@@ -55,7 +56,14 @@ export interface Config {
     medians: { sa: HelperLine; sb: HelperLine; sc: HelperLine }
     angle_bisectors: { wa: HelperLine; wb: HelperLine; wc: HelperLine }
     perpendicular_bisectors: { ma: HelperLine; mb: HelperLine; mc: HelperLine }
-    others: { circumcircle: boolean; incircle: boolean; grid: boolean }
+    others: {
+      circumcircle: boolean
+      incircle: boolean
+      grid: boolean
+      thales_circle: boolean
+      pythagoras_squares: boolean
+      trig_labels: 'none' | 'alpha' | 'beta'
+    }
   }
   style: {
     fill_color: string

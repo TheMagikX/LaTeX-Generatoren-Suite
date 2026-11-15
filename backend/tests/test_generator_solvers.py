@@ -3,8 +3,14 @@
 import pytest
 import math
 
-from models.geometrie import TriangleConstructionConfig, QuadrilateralConstructionConfig
-from generators.geometrie import solve_triangle, solve_quadrilateral
+from models.geometrie import (
+    TriangleConstructionConfig,
+    QuadrilateralConstructionConfig,
+    GeometrieConfig,
+    TriangleElementConfig,
+    OthersConfig,
+)
+from generators.geometrie import solve_triangle, solve_quadrilateral, generate_geometrie_latex
 from models.optik import OptikConfig, OptikObject, LensConfig
 from generators.optik import calculate_images
 from models.statistik import DatasetConfig, DataMode, StatistikConfig, StatistikType, AxisConfig, HistogramOptions
@@ -58,6 +64,69 @@ def test_solve_triangle_sws():
     assert math.isclose(res["sides"]["a"], 4.0, abs_tol=1e-2)
     assert math.isclose(res["angles"]["beta"], 60.0, abs_tol=1e-2)
     assert math.isclose(res["angles"]["gamma"], 60.0, abs_tol=1e-2)
+
+
+def test_solve_triangle_right_modes_and_visuals():
+    # 1. right_mode="catheti": a=3, b=4 -> c=5, gamma=90, area=6, C=(3.2, 2.4), dist(C, M)=2.5
+    cfg1 = TriangleConstructionConfig(mode="Right", right_mode="catheti", a=3.0, b=4.0)
+    res1, err1 = solve_triangle(cfg1)
+    assert err1 is None
+    assert res1 is not None
+    assert math.isclose(res1["sides"]["c"], 5.0, abs_tol=1e-4)
+    assert math.isclose(res1["angles"]["gamma"], 90.0, abs_tol=1e-4)
+    assert math.isclose(res1["area"], 6.0, abs_tol=1e-4)
+    cx, cy = res1["coords"]["C"]
+    assert math.isclose(cx, 3.2, abs_tol=1e-4)
+    assert math.isclose(cy, 2.4, abs_tol=1e-4)
+    assert math.isclose(math.hypot(cx - 2.5, cy - 0.0), 2.5, abs_tol=1e-4)
+
+    # 2. right_mode="cathetus_hypotenuse": a=3, c=5 -> b=4, gamma=90; invalid a=6, c=5
+    cfg2 = TriangleConstructionConfig(mode="Right", right_mode="cathetus_hypotenuse", a=3.0, c=5.0)
+    res2, err2 = solve_triangle(cfg2)
+    assert err2 is None
+    assert res2 is not None
+    assert math.isclose(res2["sides"]["b"], 4.0, abs_tol=1e-4)
+    assert math.isclose(res2["angles"]["gamma"], 90.0, abs_tol=1e-4)
+
+    cfg2_bad = TriangleConstructionConfig(mode="Right", right_mode="cathetus_hypotenuse", a=6.0, c=5.0)
+    res2_bad, err2_bad = solve_triangle(cfg2_bad)
+    assert res2_bad is None
+    assert err2_bad is not None
+
+    # 3. right_mode="thales": c=5, alpha=30 -> a=2.5, b=5*cos(30°), beta=60, gamma=90; invalid alpha=95
+    cfg3 = TriangleConstructionConfig(mode="Right", right_mode="thales", c=5.0, alpha=30.0)
+    res3, err3 = solve_triangle(cfg3)
+    assert err3 is None
+    assert res3 is not None
+    assert math.isclose(res3["sides"]["a"], 2.5, abs_tol=1e-4)
+    assert math.isclose(res3["sides"]["b"], 5.0 * math.cos(math.radians(30.0)), abs_tol=1e-4)
+    assert math.isclose(res3["angles"]["beta"], 60.0, abs_tol=1e-4)
+    assert math.isclose(res3["angles"]["gamma"], 90.0, abs_tol=1e-4)
+
+    cfg3_bad = TriangleConstructionConfig(mode="Right", right_mode="thales", c=5.0, alpha=95.0)
+    res3_bad, err3_bad = solve_triangle(cfg3_bad)
+    assert res3_bad is None
+    assert err3_bad is not None
+
+    # 4. generate_geometrie_latex with thales_circle, pythagoras_squares, trig_labels="alpha"
+    full_cfg = GeometrieConfig(
+        shape="Triangle",
+        construction=cfg1,
+        elements=TriangleElementConfig(
+            others=OthersConfig(
+                thales_circle=True,
+                pythagoras_squares=True,
+                trig_labels="alpha",
+            )
+        ),
+    )
+    latex_code = generate_geometrie_latex(full_cfg)
+    assert "% Thaleskreis" in latex_code
+    assert "% Pythagoras-Quadrate" in latex_code
+    assert "$a^2" in latex_code
+    assert "$c^2" in latex_code
+    assert "Gegenkathete" in latex_code
+    assert "Hypotenuse" in latex_code
 
 
 def test_solve_quadrilateral_parallelogram():

@@ -22,7 +22,7 @@ const calculateTriangleHeights = (cfg: Config): TriangleHeights => {
   const { mode } = cfg.construction
   let a = cfg.construction.a
   let b = cfg.construction.b
-  const c = cfg.construction.c
+  let c = cfg.construction.c
   let area: number
 
   if (mode === 'SSS') {
@@ -34,6 +34,22 @@ const calculateTriangleHeights = (cfg: Config): TriangleHeights => {
     if (b <= 0 || c <= 0 || cfg.construction.alpha <= 0 || cfg.construction.alpha >= 180) return {}
     a = Math.sqrt(b ** 2 + c ** 2 - 2 * b * c * Math.cos(alphaRad))
     area = 0.5 * b * c * Math.sin(alphaRad)
+  } else if (mode === 'Right') {
+    const rightMode = cfg.construction.right_mode ?? 'catheti'
+    if (rightMode === 'catheti') {
+      if (a <= 0 || b <= 0) return {}
+      c = Math.sqrt(a ** 2 + b ** 2)
+    } else if (rightMode === 'cathetus_hypotenuse') {
+      if (a <= 0 || c <= 0 || a >= c) return {}
+      b = Math.sqrt(c ** 2 - a ** 2)
+    } else {
+      const alpha = cfg.construction.alpha
+      if (c <= 0 || alpha <= 0 || alpha >= 90) return {}
+      const alphaRad = alpha * Math.PI / 180
+      a = c * Math.sin(alphaRad)
+      b = c * Math.cos(alphaRad)
+    }
+    area = 0.5 * a * b
   } else {
     const alpha = cfg.construction.alpha
     const beta = cfg.construction.beta

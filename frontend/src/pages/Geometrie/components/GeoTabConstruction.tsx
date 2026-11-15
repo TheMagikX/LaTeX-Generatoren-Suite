@@ -17,7 +17,7 @@ export const GeoTabConstruction = ({ cfg, updC, updQ }: GeoTabConstructionProps)
         <>
           <SecHead>Modus wählen</SecHead>
           <div className="flex p-1.5 bg-panel/80 rounded-xl border border-line shrink-0">
-            {(['SSS', 'SWS', 'WSW'] as const).map(m => (
+            {(['SSS', 'SWS', 'WSW', 'Right'] as const).map(m => (
               <button
                 key={m}
                 onClick={() => updC({ mode: m })}
@@ -26,36 +26,83 @@ export const GeoTabConstruction = ({ cfg, updC, updQ }: GeoTabConstructionProps)
                     : 'text-muted hover:text-ink hover:bg-raised'
                   }`}
               >
-                {m}
+                {m === 'Right' ? 'Rechtwinklig' : m}
               </button>
             ))}
           </div>
 
           <div className="mt-6 mb-6">
             <SecHead>Eingabewerte</SecHead>
-            <div className="grid grid-cols-3 gap-4">
-              {cfg.construction.mode === 'SSS' && (
-                <>
-                  <Field label="Seite a"><NumberInput value={cfg.construction.a} step={0.5} min={0.1} onChange={e => updC({ a: +e.target.value })} className="bg-panel/50" /></Field>
-                  <Field label="Seite b"><NumberInput value={cfg.construction.b} step={0.5} min={0.1} onChange={e => updC({ b: +e.target.value })} className="bg-panel/50" /></Field>
-                  <Field label="Seite c"><NumberInput value={cfg.construction.c} step={0.5} min={0.1} onChange={e => updC({ c: +e.target.value })} className="bg-panel/50" /></Field>
-                </>
-              )}
-              {cfg.construction.mode === 'SWS' && (
-                <>
-                  <Field label="Seite c"><NumberInput value={cfg.construction.c} step={0.5} min={0.1} onChange={e => updC({ c: +e.target.value })} className="bg-panel/50" /></Field>
-                  <Field label="Winkel α"><NumberInput value={cfg.construction.alpha} step={1} min={1} max={179} onChange={e => updC({ alpha: +e.target.value })} className="bg-panel/50" /></Field>
-                  <Field label="Seite b"><NumberInput value={cfg.construction.b} step={0.5} min={0.1} onChange={e => updC({ b: +e.target.value })} className="bg-panel/50" /></Field>
-                </>
-              )}
-              {cfg.construction.mode === 'WSW' && (
-                <>
-                  <Field label="Winkel α"><NumberInput value={cfg.construction.alpha} step={1} min={1} max={179} onChange={e => updC({ alpha: +e.target.value })} className="bg-panel/50" /></Field>
-                  <Field label="Seite c"><NumberInput value={cfg.construction.c} step={0.5} min={0.1} onChange={e => updC({ c: +e.target.value })} className="bg-panel/50" /></Field>
-                  <Field label="Winkel β"><NumberInput value={cfg.construction.beta} step={1} min={1} max={179} onChange={e => updC({ beta: +e.target.value })} className="bg-panel/50" /></Field>
-                </>
-              )}
-            </div>
+            {cfg.construction.mode === 'Right' ? (
+              <>
+                <div className="mb-2 text-xs font-medium text-muted">Vorgabe (γ = 90° bei C)</div>
+                <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-panel/80 rounded-xl border border-line mb-4">
+                  {([
+                    { id: 'catheti', label: 'Katheten (a, b)' },
+                    { id: 'cathetus_hypotenuse', label: 'Kathete & Hyp. (a, c)' },
+                    { id: 'thales', label: 'Thaleskreis (c, α)' },
+                  ] as const).map(rm => {
+                    const activeRightMode = cfg.construction.right_mode ?? 'catheti'
+                    return (
+                      <button
+                        key={rm.id}
+                        onClick={() => updC({ right_mode: rm.id })}
+                        className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-300 ${activeRightMode === rm.id
+                            ? 'bg-primary text-white shadow-md'
+                            : 'text-muted hover:text-ink hover:bg-raised'
+                          }`}
+                      >
+                        {rm.label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {(cfg.construction.right_mode ?? 'catheti') === 'catheti' && (
+                    <>
+                      <Field label="Kathete a"><NumberInput value={cfg.construction.a} step={0.5} min={0.1} onChange={e => updC({ a: +e.target.value })} className="bg-panel/50" /></Field>
+                      <Field label="Kathete b"><NumberInput value={cfg.construction.b} step={0.5} min={0.1} onChange={e => updC({ b: +e.target.value })} className="bg-panel/50" /></Field>
+                    </>
+                  )}
+                  {(cfg.construction.right_mode ?? 'catheti') === 'cathetus_hypotenuse' && (
+                    <>
+                      <Field label="Kathete a"><NumberInput value={cfg.construction.a} step={0.5} min={0.1} onChange={e => updC({ a: +e.target.value })} className="bg-panel/50" /></Field>
+                      <Field label="Hypotenuse c"><NumberInput value={cfg.construction.c} step={0.5} min={0.1} onChange={e => updC({ c: +e.target.value })} className="bg-panel/50" /></Field>
+                    </>
+                  )}
+                  {(cfg.construction.right_mode ?? 'catheti') === 'thales' && (
+                    <>
+                      <Field label="Hypotenuse c"><NumberInput value={cfg.construction.c} step={0.5} min={0.1} onChange={e => updC({ c: +e.target.value })} className="bg-panel/50" /></Field>
+                      <Field label="Winkel α (0°–90°)"><NumberInput value={cfg.construction.alpha} step={1} min={1} max={89} onChange={e => updC({ alpha: +e.target.value })} className="bg-panel/50" /></Field>
+                    </>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                {cfg.construction.mode === 'SSS' && (
+                  <>
+                    <Field label="Seite a"><NumberInput value={cfg.construction.a} step={0.5} min={0.1} onChange={e => updC({ a: +e.target.value })} className="bg-panel/50" /></Field>
+                    <Field label="Seite b"><NumberInput value={cfg.construction.b} step={0.5} min={0.1} onChange={e => updC({ b: +e.target.value })} className="bg-panel/50" /></Field>
+                    <Field label="Seite c"><NumberInput value={cfg.construction.c} step={0.5} min={0.1} onChange={e => updC({ c: +e.target.value })} className="bg-panel/50" /></Field>
+                  </>
+                )}
+                {cfg.construction.mode === 'SWS' && (
+                  <>
+                    <Field label="Seite c"><NumberInput value={cfg.construction.c} step={0.5} min={0.1} onChange={e => updC({ c: +e.target.value })} className="bg-panel/50" /></Field>
+                    <Field label="Winkel α"><NumberInput value={cfg.construction.alpha} step={1} min={1} max={179} onChange={e => updC({ alpha: +e.target.value })} className="bg-panel/50" /></Field>
+                    <Field label="Seite b"><NumberInput value={cfg.construction.b} step={0.5} min={0.1} onChange={e => updC({ b: +e.target.value })} className="bg-panel/50" /></Field>
+                  </>
+                )}
+                {cfg.construction.mode === 'WSW' && (
+                  <>
+                    <Field label="Winkel α"><NumberInput value={cfg.construction.alpha} step={1} min={1} max={179} onChange={e => updC({ alpha: +e.target.value })} className="bg-panel/50" /></Field>
+                    <Field label="Seite c"><NumberInput value={cfg.construction.c} step={0.5} min={0.1} onChange={e => updC({ c: +e.target.value })} className="bg-panel/50" /></Field>
+                    <Field label="Winkel β"><NumberInput value={cfg.construction.beta} step={1} min={1} max={179} onChange={e => updC({ beta: +e.target.value })} className="bg-panel/50" /></Field>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </>
       ) : (
