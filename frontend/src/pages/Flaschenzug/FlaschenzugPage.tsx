@@ -22,6 +22,7 @@ import { FlascheTabSeile } from './components/FlascheTabSeile'
 import { FlascheTabMassen } from './components/FlascheTabMassen'
 import { FlascheTabGlobal } from './components/FlascheTabGlobal'
 import { FlascheCanvasEditor } from './components/FlascheCanvasEditor'
+import { FlascheQuickBuilder } from './components/FlascheQuickBuilder'
 
 const buildExportConfig = (cfg: FlaschenzugConfig): FlaschenzugConfig => {
   if (!cfg.global_opts.preview_grid || !cfg.global_opts.coordinate_helpers_preview_only) return cfg
@@ -102,6 +103,7 @@ export default function FlaschenzugPage() {
       <div className="flex gap-6 flex-1 overflow-hidden pb-4 relative">
         {/* Left Column: Config Panel */}
         <div className="w-[960px] flex-shrink-0 flex flex-col gap-5 overflow-y-auto pr-2 pb-24 text-ink">
+          <FlascheQuickBuilder onApply={history.commitImmediate} />
           <FlascheCanvasEditor cfg={cfg} setCfg={setCfg} />
           <FlascheTabRollen cfg={cfg} setCfg={setCfg} />
           <FlascheTabAnker cfg={cfg} setCfg={setCfg} />
