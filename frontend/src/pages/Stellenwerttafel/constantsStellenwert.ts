@@ -32,7 +32,12 @@ export const DEFAULT_CONFIG: StellenwertConfig = {
     color_column_rows: false,
     column_bg_opacity: 0.1,
     header_bg_opacity: 0.85,
-    column_bg_opacity_ratio: 0.80
+    column_bg_opacity_ratio: 0.80,
+    decimal_separator_style: 'ultra_thick',
+    decimal_separator_color: '#000000',
+    show_decimal_comma: false,
+    group_separator_style: null,
+    group_separator_color: '#000000',
   },
   decimal_separator_pos: null,
   font_size: 'Large',

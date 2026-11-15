@@ -16,6 +16,12 @@ class TokenStyle(str, Enum):
     OUTLINE = "outline"
     CROSS = "cross"
 
+class SeparatorLineStyle(str, Enum):
+    ULTRA_THICK = "ultra_thick"
+    THICK = "thick"
+    DASHED = "dashed"
+    DOUBLE = "double"
+
 class StellenwertColumn(BaseModel):
     id: str
     label: str
@@ -52,6 +58,11 @@ class StellenwertLayout(BaseModel):
     column_bg_opacity: float = 0.1
     header_bg_opacity: float = 0.85
     column_bg_opacity_ratio: float = 0.80
+    decimal_separator_style: SeparatorLineStyle = SeparatorLineStyle.ULTRA_THICK
+    decimal_separator_color: str = "#000000"
+    show_decimal_comma: bool = False
+    group_separator_style: Optional[SeparatorLineStyle] = None
+    group_separator_color: str = "#000000"
 
 class StellenwertConfig(BaseGeneratorConfig):
     columns: List[StellenwertColumn]

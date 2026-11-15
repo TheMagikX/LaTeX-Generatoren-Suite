@@ -1,0 +1,37 @@
+{
+  "columns": [
+    { "id": "t", "label": "T", "color": "#0891b2", "active": true },
+    { "id": "h", "label": "H", "color": "#16a34a", "active": true },
+    { "id": "z", "label": "Z", "color": "#dc2626", "active": true },
+    { "id": "e", "label": "E", "color": "#2563eb", "active": true },
+    { "id": "z_dec", "label": "z", "color": "#ea580c", "active": true },
+    { "id": "h_dec", "label": "h", "color": "#ca8a04", "active": true }
+  ],
+  "groups": [
+    { "id": "g1", "label": "Tausender", "start_col_id": "t", "end_col_id": "t", "color": "#e0f2fe" },
+    { "id": "g2", "label": "Einer", "start_col_id": "h", "end_col_id": "e", "color": "#f1f5f9" },
+    { "id": "g3", "label": "Dezimalbrüche", "start_col_id": "z_dec", "end_col_id": "h_dec", "color": "#ffedd5" }
+  ],
+  "rows": [
+    { "id": "r1", "label": "Zahl 1", "values": { "t": 1, "h": 2, "z": 3, "e": 4, "z_dec": 5, "h_dec": 6 }, "active": true, "is_placeholder": false },
+    { "id": "r2", "label": "Übung", "values": {}, "active": true, "is_placeholder": true }
+  ],
+  "mode": "Ziffern",
+  "decimal_separator_pos": 4,
+  "font_size": "Large",
+  "layout": {
+    "show_header": true,
+    "show_row_labels": true,
+    "show_grid": true,
+    "row_height": 1.4,
+    "col_width": 1.6,
+    "token_style": "filled",
+    "token_size": 0.18,
+    "max_tokens_per_row": 5,
+    "decimal_separator_style": "dashed",
+    "decimal_separator_color": "#dc2626",
+    "show_decimal_comma": true,
+    "group_separator_style": "double",
+    "group_separator_color": "#334155"
+  }
+}

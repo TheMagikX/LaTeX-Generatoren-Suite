@@ -23,6 +23,8 @@ export interface StellenwertRow {
   is_placeholder?: boolean
 }
 
+export type SeparatorLineStyle = 'ultra_thick' | 'thick' | 'dashed' | 'double'
+
 export interface StellenwertLayout {
   show_header: boolean
   show_row_labels: boolean
@@ -39,6 +41,11 @@ export interface StellenwertLayout {
   column_bg_opacity: number
   header_bg_opacity: number
   column_bg_opacity_ratio: number
+  decimal_separator_style: SeparatorLineStyle
+  decimal_separator_color: string
+  show_decimal_comma: boolean
+  group_separator_style: SeparatorLineStyle | null
+  group_separator_color: string
 }
 
 export interface StellenwertConfig {

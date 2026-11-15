@@ -2,7 +2,15 @@
 
 import math
 from typing import List, Tuple, Dict
-from models.stellenwerttafel import StellenwertConfig, StellenwertMode, TokenStyle, StellenwertColumn, StellenwertRow, StellenwertGroup
+from models.stellenwerttafel import (
+    StellenwertConfig,
+    StellenwertMode,
+    TokenStyle,
+    SeparatorLineStyle,
+    StellenwertColumn,
+    StellenwertRow,
+    StellenwertGroup,
+)
 from core.latex_document import (
     HEXCOL_TIKZ_KEY,
     LatexDocumentSpec,
@@ -12,6 +20,14 @@ from core.latex_document import (
     shared_package_input,
 )
 from core.math_utils import hex_to_rgb_csv as _hex_to_rgb
+
+SEP_STYLE_MAP: Dict[SeparatorLineStyle, str] = {
+    SeparatorLineStyle.ULTRA_THICK: "ultra thick",
+    SeparatorLineStyle.THICK: "very thick",
+    SeparatorLineStyle.DASHED: "very thick, dashed",
+    SeparatorLineStyle.DOUBLE: "thick, double, double distance=1.5pt",
+}
+
 
 def get_stellenwerttafel_color_defs(cfg: StellenwertConfig) -> list[str]:
     active_cols = [c for c in cfg.columns if c.active]
@@ -23,6 +39,13 @@ def get_stellenwerttafel_color_defs(cfg: StellenwertConfig) -> list[str]:
     for g_idx, group in enumerate(cfg.groups):
         rgb = _hex_to_rgb(group.color)
         defs.append(rf"\definecolor{{groupcolor{g_idx}}}{{rgb}}{{{rgb}}}")
+
+    if cfg.layout.decimal_separator_color.lower() != "#000000":
+        rgb = _hex_to_rgb(cfg.layout.decimal_separator_color)
+        defs.append(rf"\definecolor{{decsepcolor}}{{rgb}}{{{rgb}}}")
+    if cfg.layout.group_separator_color.lower() != "#000000":
+        rgb = _hex_to_rgb(cfg.layout.group_separator_color)
+        defs.append(rf"\definecolor{{grpsepcolor}}{{rgb}}{{{rgb}}}")
     return defs
 
 
@@ -65,16 +88,23 @@ def generate_stellenwerttafel_latex(cfg: StellenwertConfig, include_colors: bool
 
     lines.append(rf"\begin{{tikzpicture}}[x=1cm, y=1cm, font=\{cfg.font_size}]")
 
-    # ==================== STEP 1: BACKGROUND FILLS (DRAW FIRST) ====================
-    group_boundaries = set()
-    if cfg.layout.show_header and has_groups:
-        for g_idx, group in enumerate(cfg.groups):
+    group_boundaries: set[int] = set()
+    if has_groups:
+        for group in cfg.groups:
             if group.start_col_id in col_id_to_idx and group.end_col_id in col_id_to_idx:
                 start_idx = col_id_to_idx[group.start_col_id]
                 end_idx = col_id_to_idx[group.end_col_id]
                 s_idx, e_idx = min(start_idx, end_idx), max(start_idx, end_idx)
                 group_boundaries.add(s_idx)
                 group_boundaries.add(e_idx + 1)
+
+    # ==================== STEP 1: BACKGROUND FILLS (DRAW FIRST) ====================
+    if cfg.layout.show_header and has_groups:
+        for g_idx, group in enumerate(cfg.groups):
+            if group.start_col_id in col_id_to_idx and group.end_col_id in col_id_to_idx:
+                start_idx = col_id_to_idx[group.start_col_id]
+                end_idx = col_id_to_idx[group.end_col_id]
+                s_idx, e_idx = min(start_idx, end_idx), max(start_idx, end_idx)
                 x_start = s_idx * col_w
                 width = (e_idx - s_idx + 1) * col_w
                 lines.append(rf"  \fill[groupcolor{g_idx}] ({x_start}, {std_header_h}) rectangle ({x_start + width}, {std_header_h + group_header_h});")
@@ -171,9 +201,23 @@ def generate_stellenwerttafel_latex(cfg: StellenwertConfig, include_colors: bool
         for i in range(1, n_cols):
             x = i * col_w
             is_sep = cfg.decimal_separator_pos is not None and i == cfg.decimal_separator_pos
-            
-            y_line_start = grid_y_top if (i in group_boundaries or is_sep) else (std_header_h if cfg.layout.show_header else 0)
-            style = "ultra thick" if is_sep else grid_style
+            is_group_sep = i in group_boundaries
+
+            y_line_start = grid_y_top if (is_group_sep or is_sep) else (std_header_h if cfg.layout.show_header else 0)
+            if is_sep:
+                tikz_style = SEP_STYLE_MAP[cfg.layout.decimal_separator_style]
+                if cfg.layout.decimal_separator_color.lower() != "#000000":
+                    style = f"{tikz_style}, draw=decsepcolor"
+                else:
+                    style = tikz_style
+            elif is_group_sep and cfg.layout.group_separator_style is not None:
+                tikz_style = SEP_STYLE_MAP[cfg.layout.group_separator_style]
+                if cfg.layout.group_separator_color.lower() != "#000000":
+                    style = f"{tikz_style}, draw=grpsepcolor"
+                else:
+                    style = tikz_style
+            else:
+                style = grid_style
             lines.append(rf"  \draw[{style}] ({x}, {y_line_start}) -- ({x}, {grid_y_bottom});")
         
         if cfg.layout.show_header:
@@ -197,6 +241,14 @@ def generate_stellenwerttafel_latex(cfg: StellenwertConfig, include_colors: bool
 
         # Outer border
         lines.append(rf"  \draw[{grid_style}] ({grid_x_left}, {grid_y_top}) rectangle ({grid_x_right}, {grid_y_bottom});")
+
+    if cfg.decimal_separator_pos is not None and 1 <= cfg.decimal_separator_pos < n_cols and cfg.layout.show_decimal_comma:
+        x_sep = cfg.decimal_separator_pos * col_w
+        color_opt = ", text=decsepcolor" if cfg.layout.decimal_separator_color.lower() != "#000000" else ""
+        for r_idx, row in enumerate(rows):
+            if not getattr(row, 'is_placeholder', False):
+                y_comma = -(r_idx + 1) * row_h + 0.22 * row_h
+                lines.append(rf"  \node[anchor=base, font=\bfseries, fill=white, inner sep=1pt{color_opt}] at ({x_sep}, {round(y_comma, 4)}) {{,}};")
 
     lines.append(r"\end{tikzpicture}")
     return "\n".join(lines)

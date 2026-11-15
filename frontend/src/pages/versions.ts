@@ -25,7 +25,7 @@ export const COMPONENT_VERSIONS = {
     glucksradgenerator: "5.0.7",
     sitzplangenerator: "5.2.0",
     strahlenoptik: "5.0.5",
-    stellwerttafel: "5.0.6",
+    stellwerttafel: "5.1.0",
     statistik: "5.0.8",
     qrcode: "5.0.1",
 } as const;
