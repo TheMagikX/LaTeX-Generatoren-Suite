@@ -370,6 +370,8 @@ export const KoordPlotCard = ({
                             <Field label="b"><NumberInput step="0.1" value={bt.b ?? config.xmax} onChange={e => updateBetween(j, 'b', parseFloat(e.target.value))} className="h-7 text-xs" /></Field>
                             <Field label="Füllung"><Input value={bt.fill} onChange={e => updateBetween(j, 'fill', e.target.value)} className="h-7 text-xs" /></Field>
                             <PatternSel value={bt.pattern} onChange={v => updateBetween(j, 'pattern', v)} />
+                            <Field label="Alpha"><NumberInput step="0.1" min="0" max="1" value={bt.alpha ?? 0.5} onChange={e => { const v = parseFloat(e.target.value); updateBetween(j, 'alpha', Number.isNaN(v) ? 0.5 : Math.max(0, Math.min(1, v))) }} className="h-7 text-xs" /></Field>
+                            <Field label="Rand"><Input value={bt.draw ?? 'none'} onChange={e => updateBetween(j, 'draw', e.target.value)} className="h-7 text-xs" /></Field>
                           </div>
                           <IntegralHelper
                             func={`abs((${plot.func}) - (${config.plots[bt.other_index]?.func || '0'}))`}
@@ -395,6 +397,16 @@ export const KoordPlotCard = ({
                             <Field label="dx"><NumberInput step="0.5" value={sl.dx} onChange={e => updateSlope(j, 'dx', parseFloat(e.target.value))} className="h-7 text-xs" /></Field>
                             <Field label="Stil"><Input value={sl.style} onChange={e => updateSlope(j, 'style', e.target.value)} className="h-7 text-xs font-mono" /></Field>
                           </div>
+                          <div className="flex items-center justify-between pt-1">
+                            <Switch checked={sl.label_show ?? true} onChange={(v: boolean) => updateSlope(j, 'label_show', v)} label="Beschriftung anzeigen" />
+                          </div>
+                          {(sl.label_show ?? true) && (
+                            <div className="grid grid-cols-3 gap-2 pt-1">
+                              <Field label="Label Δx (LaTeX)"><Input value={sl.label_x ?? '$\\Delta x$'} onChange={e => updateSlope(j, 'label_x', e.target.value)} placeholder="z. B. $\Delta x$" className="h-7 text-xs font-mono" /></Field>
+                              <Field label="Label Δy (LaTeX)"><Input value={sl.label_y ?? '$\\Delta y$'} onChange={e => updateSlope(j, 'label_y', e.target.value)} placeholder="z. B. $\Delta y$" className="h-7 text-xs font-mono" /></Field>
+                              <Field label="Label-Stil"><Input value={sl.label_style ?? 'font=\\scriptsize'} onChange={e => updateSlope(j, 'label_style', e.target.value)} placeholder="font=\scriptsize" className="h-7 text-xs font-mono" /></Field>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

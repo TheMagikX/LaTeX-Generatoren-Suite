@@ -151,4 +151,101 @@ describe('KoordPage Integration Flow (Archetyp Generator-Page)', () => {
     expect(await screen.findByText('LaTeX Kompilierfehler')).toBeInTheDocument()
     expect(screen.getByText('! Undefined control sequence.')).toBeInTheDocument()
   })
+
+  it('rendert und übernimmt UI-Felder für Zwischen-Flächen (alpha, draw) und Steigungsdreieck-Beschriftung (label_show, label_x, label_y, label_style)', async () => {
+    const user = userEvent.setup()
+    const genSpy = vi.spyOn(api, 'generateKoordinatensystem').mockResolvedValue({
+      latex: '\\documentclass{standalone}\\begin{document}\\begin{tikzpicture}\\end{tikzpicture}\\end{document}',
+    })
+    vi.spyOn(api, 'compileLatex').mockResolvedValue({
+      ok: true,
+      png_base64: MOCK_PNG_BASE64,
+      compile_time: 0.1,
+      convert_time: 0.02,
+    })
+
+    renderKoordPage()
+
+    // 1. Tab "Inhalte (Layers)" und Accordion "Funktionen" öffnen, zwei Plots anlegen
+    await user.click(screen.getByRole('button', { name: /Inhalte \(Layers\)/i }))
+    await user.click(screen.getByRole('button', { name: /Funktionen \(0\)/i }))
+    const neuBtn = screen.getAllByRole('button', { name: /Neu/i })[0]
+    await user.click(neuBtn)
+    await user.click(neuBtn)
+
+    // 2. Ersten Plot aufklappen und "Weitere Optionen" öffnen
+    await user.click(screen.getAllByRole('button', { name: /Expand/i })[0])
+    await user.click(screen.getAllByRole('button', { name: /Weitere Optionen \(Definitionsbereich/i })[0])
+
+    // 3. Sub-Tab "Zw.-Fl." öffnen, Zwischen-Fläche anlegen, Alpha & Rand bearbeiten
+    await user.click(screen.getAllByRole('button', { name: /Zw\.-Fl\. \(0\)/i })[0])
+    const addBetweenBtn = screen.getByRole('button', { name: /Zwischen-Fläche \+/i })
+    expect(addBetweenBtn).not.toBeDisabled()
+    await user.click(addBetweenBtn)
+
+    const alphaInput = screen.getByText('Alpha').parentElement?.querySelector('input') as HTMLInputElement
+    const randInput = screen.getByText('Rand').parentElement?.querySelector('input') as HTMLInputElement
+    expect(alphaInput).toBeInTheDocument()
+    expect(randInput).toBeInTheDocument()
+
+    await user.clear(alphaInput)
+    await user.type(alphaInput, '0.8')
+    await user.clear(randInput)
+    await user.type(randInput, 'blue, thick')
+
+    // 4. Sub-Tab "Steig." öffnen, Steigungsdreieck anlegen, Switch & Label-Felder prüfen
+    await user.click(screen.getAllByRole('button', { name: /Steig\. \(0\)/i })[0])
+    await user.click(screen.getByRole('button', { name: /Steigungsdreieck \+/i }))
+
+    const labelSwitch = screen.getByLabelText('Beschriftung anzeigen') as HTMLInputElement
+    expect(labelSwitch).toBeChecked()
+
+    const labelXInput = screen.getByText('Label Δx (LaTeX)').parentElement?.querySelector('input') as HTMLInputElement
+    const labelYInput = screen.getByText('Label Δy (LaTeX)').parentElement?.querySelector('input') as HTMLInputElement
+    const labelStyleInput = screen.getByText('Label-Stil').parentElement?.querySelector('input') as HTMLInputElement
+    expect(labelXInput).toBeInTheDocument()
+    expect(labelYInput).toBeInTheDocument()
+    expect(labelStyleInput).toBeInTheDocument()
+
+    await user.clear(labelXInput)
+    await user.type(labelXInput, '$\\Delta x = 1$')
+    await user.clear(labelYInput)
+    await user.type(labelYInput, '$\\Delta y = 2$')
+    await user.clear(labelStyleInput)
+    await user.type(labelStyleInput, 'font=\\small')
+
+    // Ausblenden & Wiedereinblenden über Switch prüfen
+    await user.click(labelSwitch)
+    expect(screen.queryByText('Label Δx (LaTeX)')).not.toBeInTheDocument()
+    await user.click(labelSwitch)
+    expect(screen.getByText('Label Δx (LaTeX)')).toBeInTheDocument()
+
+    // 5. Kompilieren und Payload prüfen
+    await user.click(screen.getByRole('button', { name: /Kompilieren/i }))
+
+    await waitFor(() => {
+      expect(genSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          plots: expect.arrayContaining([
+            expect.objectContaining({
+              betweens: [
+                expect.objectContaining({
+                  alpha: 0.8,
+                  draw: 'blue, thick',
+                }),
+              ],
+              slopes: [
+                expect.objectContaining({
+                  label_show: true,
+                  label_x: '$\\Delta x = 1$',
+                  label_y: '$\\Delta y = 2$',
+                  label_style: 'font=\\small',
+                }),
+              ],
+            }),
+          ]),
+        })
+      )
+    })
+  })
 })
