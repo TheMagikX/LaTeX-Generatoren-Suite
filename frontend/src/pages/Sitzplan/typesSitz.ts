@@ -34,6 +34,7 @@ export interface SitzplanConfig {
   mutualFactor: number
   dislikeDistance: number
   hardRules: HardRules
+  seed?: number
 }
 
 export interface SitzplanRequest {
@@ -47,6 +48,7 @@ export interface SitzplanRequest {
   dislike_distance: number
   hard_rules: HardRules
   manual_assignment?: Record<string, number>
+  seed?: number
 }
 
 export interface StudentReport {
@@ -79,4 +81,5 @@ export interface SitzplanResponse {
   report: SitzplanReportRow[]
   per_student_report: Record<string, StudentReport>
   solver_used: 'ortools' | 'greedy' | 'manual'
+  seed_used?: number
 }

@@ -68,6 +68,11 @@ def solve_with_ortools(req: SitzplanRequest) -> Dict[str, int]:
         allowed_coords = {(r, c) for r in range(rows) for c in range(cols) if (r, c) not in blocked}
     
     available_seat_ids = [rc_to_id(r, c, cols) for (r, c) in sorted(allowed_coords)]
+    effective_seed = req.seed if req.seed is not None else 42
+    P = list(available_seat_ids)
+    if effective_seed != 42:
+        rng = np.random.default_rng(effective_seed)
+        rng.shuffle(P)
     
     # Front seats
     front_seat_ids = {
@@ -97,7 +102,6 @@ def solve_with_ortools(req: SitzplanRequest) -> Dict[str, int]:
         all_adj_id_pairs.append((q, p))
 
     S = list(range(len(students)))
-    P = available_seat_ids
     
     # Variables: x[s, p] is true if student s is in seat p
     x = {(s, p): model.NewBoolVar(f"x_{s}_{p}") for s in S for p in P}
@@ -276,10 +280,16 @@ def solve_with_ortools(req: SitzplanRequest) -> Dict[str, int]:
         FRONT_WEIGHT * sum(obj_soft)
     )
     
+    if effective_seed != 42:
+        ordered_vars = [x[s, p] for s in S for p in P]
+        model.AddDecisionStrategy(ordered_vars, cp_model.CHOOSE_FIRST, cp_model.SELECT_MAX_VALUE)
+
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = 15.0
     solver.parameters.num_search_workers = min(4, os.cpu_count() or 1)
-    solver.parameters.random_seed = 42
+    solver.parameters.random_seed = effective_seed
+    if effective_seed != 42:
+        solver.parameters.search_branching = cp_model.FIXED_SEARCH
     res = solver.Solve(model)
     
     if res in (cp_model.OPTIMAL, cp_model.FEASIBLE):
@@ -287,13 +297,14 @@ def solve_with_ortools(req: SitzplanRequest) -> Dict[str, int]:
         for s in S:
             for p in P:
                 if solver.Value(x[s, p]) == 1:
-                    assignment[students[s].name] = p
+                    assignment[students[s].name] = int(p)
                     break
         return assignment
     return {}
 
 def solve_greedy(req: SitzplanRequest) -> Dict[str, int]:
-    rng = np.random.default_rng(1)
+    effective_seed = req.seed if req.seed is not None else 42
+    rng = np.random.default_rng(1 if effective_seed == 42 else effective_seed)
     layout = req.layout
     rows, cols = layout.rows, layout.cols
     
@@ -331,7 +342,7 @@ def solve_greedy(req: SitzplanRequest) -> Dict[str, int]:
     used = set()
     
     def place(name, seat):
-        assignment[name] = seat
+        assignment[name] = int(seat)
         used.add(name)
         free.discard(seat)
         
@@ -342,7 +353,11 @@ def solve_greedy(req: SitzplanRequest) -> Dict[str, int]:
     for hub in hubs:
         if hub in used or not free: continue
         # Find a seat with free neighbors
-        seat = min(free)
+        if effective_seed == 42:
+            seat = min(free)
+        else:
+            free_list = sorted(free)
+            seat = int(rng.choice(free_list))
         place(hub, seat)
         
     # Then pairs
@@ -357,7 +372,10 @@ def solve_greedy(req: SitzplanRequest) -> Dict[str, int]:
     for a, b in pairs:
         if a in used or b in used: continue
         done = False
-        for p in sorted(free):
+        free_p = sorted(free)
+        if effective_seed != 42:
+            rng.shuffle(free_p)
+        for p in free_p:
             for q in sorted(adj_map[p]):
                 if q in free and not forbidden(a, b):
                     place(a, p); place(b, q)
@@ -560,5 +578,6 @@ def compute_reports(req: SitzplanRequest, assignment: Dict[str, int], solver_use
         assignment=assignment,
         report=records,
         per_student_report=per_student_report,
-        solver_used=solver_used
+        solver_used=solver_used,
+        seed_used=req.seed if req.seed is not None else 42
     )

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import React, { useState } from 'react'
-import { Play, Download, Users } from 'lucide-react'
+import { Play, Download, Users, Dices } from 'lucide-react'
 import Papa from 'papaparse'
 import { Label, Button, SecHead } from '../../../components/ui'
 import type { LayoutConfig, SitzplanResponse } from '../typesSitz'
@@ -10,6 +10,8 @@ interface SitzplanResultTabProps {
   result: SitzplanResponse | null
   isLoading: boolean
   handleCalculate: () => void
+  handleReroll: () => void
+  currentSeed: number
   onSwapAssignment: (newAssignment: Record<string, number>) => void
   layout: LayoutConfig
   studentsCount: number
@@ -19,6 +21,8 @@ const SitzplanResultTab: React.FC<SitzplanResultTabProps> = ({
   result,
   isLoading,
   handleCalculate,
+  handleReroll,
+  currentSeed,
   onSwapAssignment,
   layout,
   studentsCount
@@ -128,17 +132,38 @@ const SitzplanResultTab: React.FC<SitzplanResultTabProps> = ({
                 Greedy (Heuristik)
               </span>
             )}
+            <span className="text-caption text-muted font-mono px-2 py-0.5 rounded bg-raised border border-line">
+              Seed: {result.seed_used ?? currentSeed}
+            </span>
           </div>
-          <Button
-            onClick={() => {
-              setSelectedSeatId(null)
-              handleCalculate()
-            }}
-            disabled={isLoading}
-            className="text-caption py-1 bg-raised hover:bg-overlay"
-          >
-            Neu berechnen
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setSelectedSeatId(null)
+                handleReroll()
+              }}
+              disabled={isLoading}
+              title="Berechnet mit einem neuen Zufalls-Seed eine alternative Sitzordnung"
+              className="flex items-center gap-1.5"
+            >
+              <Dices size={14} /> Neue Variante würfeln
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedSeatId(null)
+                handleCalculate()
+              }}
+              disabled={isLoading}
+              title="Berechnet den Sitzplan erneut mit dem aktuellen Seed"
+              className="text-caption"
+            >
+              Neu berechnen
+            </Button>
+          </div>
         </div>
 
         {selectedSeatId !== null && selectedStudentName ? (

@@ -45,9 +45,11 @@ class SitzplanRequest(BaseModel):
     dislike_distance: int = 1  # min Manhattan distance between disliked students (1 = not adjacent)
     hard_rules: HardRuleConfig
     manual_assignment: Optional[Dict[str, int]] = None
+    seed: Optional[int] = Field(default=42, ge=1, le=2147483647)
 
 class SitzplanResponse(BaseModel):
     assignment: Dict[str, int]  # name -> seat_id
     report: List[Dict]
     per_student_report: Dict[str, Dict]
     solver_used: str = "greedy"
+    seed_used: int = 42

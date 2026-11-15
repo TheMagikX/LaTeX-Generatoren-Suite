@@ -404,6 +404,50 @@ def test_sitzplan_solve_greedy_deterministic():
         assert 0 <= int(seat) < 9
 
 
+def test_sitzplan_seed_variation_and_reproducibility():
+    from generators.sitzplan import solve_greedy
+
+    base_kwargs = dict(
+        students=[
+            StudentConfig(name="Anna"),
+            StudentConfig(name="Ben"),
+            StudentConfig(name="Clara"),
+            StudentConfig(name="David"),
+        ],
+        layout=LayoutConfig(rows=3, cols=3, front_rows=1),
+        hard_rules=HardRuleConfig(),
+    )
+
+    # 1. Reproducibility with seed=101
+    req_101 = SitzplanRequest(**base_kwargs, seed=101)
+    res_101_a = solve_sitzplan(req_101)
+    res_101_b = solve_sitzplan(req_101)
+    assert res_101_a.seed_used == 101
+    assert res_101_b.seed_used == 101
+    assert res_101_a.assignment == res_101_b.assignment
+    assert len(res_101_a.assignment) == 4
+    assert all(isinstance(v, int) for v in res_101_a.assignment.values())
+
+    # 2. Variance between seed=42 and seed=202
+    res_42 = solve_sitzplan(SitzplanRequest(**base_kwargs, seed=42))
+    res_202 = solve_sitzplan(SitzplanRequest(**base_kwargs, seed=202))
+    assert res_42.seed_used == 42
+    assert res_202.seed_used == 202
+    assert len(res_202.assignment) == 4
+    assert len(set(res_202.assignment.values())) == 4
+    assert res_42.assignment != res_202.assignment
+
+    # 3. Greedy determinism and variance
+    req_202 = SitzplanRequest(**base_kwargs, seed=202)
+    g_101_a = solve_greedy(req_101)
+    g_101_b = solve_greedy(req_101)
+    g_202_a = solve_greedy(req_202)
+    g_202_b = solve_greedy(req_202)
+    assert g_101_a == g_101_b
+    assert g_202_a == g_202_b
+    assert g_101_a != g_202_a
+
+
 def test_sitzplan_manual_assignment_and_hard_rule_report():
     from models.sitzplan import MinDistanceRule
 

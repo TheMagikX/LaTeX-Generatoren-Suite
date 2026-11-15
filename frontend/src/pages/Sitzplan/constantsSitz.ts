@@ -28,5 +28,6 @@ export const DEFAULT_SITZPLAN_CONFIG: SitzplanConfig = {
   includeDiagonal: true,
   mutualFactor: 2,
   dislikeDistance: 1,
-  hardRules: INITIAL_HARD_RULES
+  hardRules: INITIAL_HARD_RULES,
+  seed: 42
 }

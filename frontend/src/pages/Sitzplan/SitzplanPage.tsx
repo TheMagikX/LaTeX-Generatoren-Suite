@@ -28,7 +28,7 @@ const SitzplanPage: React.FC = () => {
     setConfig(prev => ({ ...prev, ...updates }))
   }
 
-  const buildRequestPayload = () => ({
+  const buildRequestPayload = (seedOverride?: number) => ({
     students: config.students,
     layout: {
       ...config.layout,
@@ -40,13 +40,18 @@ const SitzplanPage: React.FC = () => {
     include_diagonal: config.includeDiagonal,
     mutual_factor: config.mutualFactor,
     dislike_distance: config.dislikeDistance,
-    hard_rules: config.hardRules
+    hard_rules: config.hardRules,
+    seed: typeof seedOverride === 'number' ? seedOverride : (config.seed ?? 42)
   })
 
-  const handleCalculate = async () => {
+  const handleCalculate = async (overrideSeed?: number) => {
+    const effectiveSeed = typeof overrideSeed === 'number' ? overrideSeed : (config.seed ?? 42)
+    if (typeof overrideSeed === 'number') {
+      updateConfig({ seed: overrideSeed })
+    }
     setIsLoading(true)
     try {
-      const resp = await solveSitzplan(buildRequestPayload())
+      const resp = await solveSitzplan(buildRequestPayload(effectiveSeed))
       setResult(resp)
       setActiveTab('result')
     } catch (err) {
@@ -55,6 +60,13 @@ const SitzplanPage: React.FC = () => {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleReroll = () => {
+    const current = config.seed ?? 42
+    let nextSeed = Math.floor(Math.random() * 900000) + 100000
+    if (nextSeed === current) nextSeed += 1
+    handleCalculate(nextSeed)
   }
 
   const handleSwapAssignment = async (newAssignment: Record<string, number>) => {
@@ -147,7 +159,9 @@ const SitzplanPage: React.FC = () => {
                 <SitzplanResultTab 
                   result={result}
                   isLoading={isLoading}
-                  handleCalculate={handleCalculate}
+                  handleCalculate={() => handleCalculate()}
+                  handleReroll={handleReroll}
+                  currentSeed={config.seed ?? 42}
                   onSwapAssignment={handleSwapAssignment}
                   layout={config.layout}
                   studentsCount={config.students.length}
@@ -162,7 +176,7 @@ const SitzplanPage: React.FC = () => {
           studentsCount={config.students.length}
           availableSeatsCount={availableSeatsCount}
           isLoading={isLoading}
-          handleCalculate={handleCalculate}
+          handleCalculate={() => handleCalculate()}
         />
       </div>
     </div>
