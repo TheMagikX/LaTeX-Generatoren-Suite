@@ -4,26 +4,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ArbeitsblattPreview from './ArbeitsblattPreview'
-import { sanitizeFilename } from '../utilsArbeitsblatt'
 import * as utilsArbeitsblatt from '../utilsArbeitsblatt'
 import type { ArbeitsblattConfig } from '../typesArbeitsblatt'
 
-describe('sanitizeFilename (P6B-06)', () => {
-  it('bereinigt verbotene Dateisystemzeichen, Steuerzeichen und nachlaufende Punkte', () => {
-    expect(sanitizeFilename('Klasse 10a / Test: 1*?')).toBe('Klasse 10a _ Test_ 1_')
-    expect(sanitizeFilename('Mathe\\Physik|"<>')).toBe('Mathe_Physik_')
-    expect(sanitizeFilename('Titel.\nMit   Zeilenumbruch.')).toBe('Titel. Mit Zeilenumbruch')
-  })
-
-  it('liefert Fallback "Unbenannt" bei leerem oder rein aus Punkten/Leerzeichen bestehendem Titel', () => {
-    expect(sanitizeFilename('')).toBe('Unbenannt')
-    expect(sanitizeFilename('   ...   ')).toBe('Unbenannt')
-    expect(sanitizeFilename(undefined)).toBe('Unbenannt')
-    expect(sanitizeFilename(null)).toBe('Unbenannt')
-  })
-})
-
-describe('ArbeitsblattPreview PDF-Dateinamen (P6B-06)', () => {
+describe('ArbeitsblattPreview PDF-Dateinamen', () => {
   const baseConfig: ArbeitsblattConfig = {
     template_text: '',
     python_code: '',
@@ -64,17 +48,17 @@ describe('ArbeitsblattPreview PDF-Dateinamen (P6B-06)', () => {
 
     const pdfButtons = screen.getAllByRole('button', { name: /^PDF$/i })
     await user.click(pdfButtons[0])
-    expect(downloadPdfSpy).toHaveBeenCalledWith('dGFza3M=', 'Arbeitsblatt - Mathe 10a_ _ Test_.pdf')
+    expect(downloadPdfSpy).toHaveBeenCalledWith('dGFza3M=', 'Mathe 10a - Test.pdf')
 
     await user.click(pdfButtons[1])
-    expect(downloadPdfSpy).toHaveBeenCalledWith('c29scw==', 'Arbeitsblatt - Mathe 10a_ _ Test_ - Lösungen.pdf')
+    expect(downloadPdfSpy).toHaveBeenCalledWith('c29scw==', 'Mathe 10a - Test - Lösungen.pdf')
 
     // FloatingToolbar PDF button (dritter PDF-Button)
     await user.click(pdfButtons[2])
-    expect(downloadPdfSpy).toHaveBeenLastCalledWith('dGFza3M=', 'Arbeitsblatt - Mathe 10a_ _ Test_.pdf')
+    expect(downloadPdfSpy).toHaveBeenLastCalledWith('dGFza3M=', 'Mathe 10a - Test.pdf')
   })
 
-  it('nutzt Fallback "Unbenannt" bei leerem header_title', async () => {
+  it('nutzt Fallback "Arbeitsblatt.pdf" bei leerem header_title', async () => {
     const user = userEvent.setup()
     const downloadPdfSpy = vi.spyOn(utilsArbeitsblatt, 'downloadPdf').mockImplementation(() => {})
 
@@ -94,6 +78,6 @@ describe('ArbeitsblattPreview PDF-Dateinamen (P6B-06)', () => {
 
     const pdfButtons = screen.getAllByRole('button', { name: /^PDF$/i })
     await user.click(pdfButtons[0])
-    expect(downloadPdfSpy).toHaveBeenCalledWith('dGFza3M=', 'Arbeitsblatt - Unbenannt.pdf')
+    expect(downloadPdfSpy).toHaveBeenCalledWith('dGFza3M=', 'Arbeitsblatt.pdf')
   })
 })

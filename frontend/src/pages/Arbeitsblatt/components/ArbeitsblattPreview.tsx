@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { FileText, CheckCircle2, Printer, X } from 'lucide-react'
 import { Button, FloatingToolbar, CodeSection } from '../../../components/ui'
-import { downloadFile, downloadPdf, handlePrint, handleCopy, sanitizeFilename } from '../utilsArbeitsblatt'
+import { downloadFile, downloadPdf, handlePrint, handleCopy, sanitizeWorksheetFilename } from '../utilsArbeitsblatt'
 import type { ArbeitsblattConfig } from '../typesArbeitsblatt'
 import MultiPageViewer from './MultiPageViewer'
 
@@ -45,7 +45,6 @@ export default function ArbeitsblattPreview({
   genData
 }: Props) {
   const [fullscreenPages, setFullscreenPages] = useState<string[] | null>(null)
-  const safeTitle = sanitizeFilename(config.header_title)
 
   return (
     <div className="relative flex h-full min-h-0 flex-1 flex-col gap-4 min-w-0">
@@ -61,7 +60,7 @@ export default function ArbeitsblattPreview({
                 <Button
                   variant="primary"
                   className="h-7 px-2.5 text-mono-xs flex items-center justify-center gap-1"
-                  onClick={() => downloadPdf(compileTasks.pdf_base64!, `Arbeitsblatt - ${safeTitle}.pdf`)}
+                  onClick={() => downloadPdf(compileTasks.pdf_base64!, sanitizeWorksheetFilename(config.header_title, false))}
                 >
                   <FileText size={12} /> PDF
                 </Button>
@@ -96,7 +95,7 @@ export default function ArbeitsblattPreview({
                 <Button
                   variant="primary"
                   className="h-7 px-2.5 text-mono-xs flex items-center justify-center gap-1"
-                  onClick={() => downloadPdf(compileSols.pdf_base64!, `Arbeitsblatt - ${safeTitle} - Lösungen.pdf`)}
+                  onClick={() => downloadPdf(compileSols.pdf_base64!, sanitizeWorksheetFilename(config.header_title, true))}
                 >
                   <FileText size={12} /> PDF
                 </Button>
@@ -129,7 +128,7 @@ export default function ArbeitsblattPreview({
           if (compileTasks?.png_base64) downloadFile(compileTasks.png_base64, 'arbeitsblatt.png', 'image/png')
         }}
         onDownloadPdf={() => {
-          if (compileTasks?.pdf_base64) downloadPdf(compileTasks.pdf_base64, `Arbeitsblatt - ${safeTitle}.pdf`)
+          if (compileTasks?.pdf_base64) downloadPdf(compileTasks.pdf_base64, sanitizeWorksheetFilename(config.header_title, false))
         }}
         onDownloadSvg={compileTasks?.svg_base64 ? () => {
           downloadFile(compileTasks!.svg_base64!, 'arbeitsblatt.svg', 'image/svg+xml')
