@@ -184,11 +184,11 @@ describe('api/client – Netzwerk-Resilienz, Fehlerextraktion & Endpunkte', () =
       expect(listed).toHaveProperty('USER / Test')
 
       const saved = await savePreset('koord', 'USER / Neu', DEFAULT_KOORD_CONFIG)
-      expect(postSpy).toHaveBeenCalledWith('presets/koord/USER / Neu', DEFAULT_KOORD_CONFIG)
+      expect(postSpy).toHaveBeenCalledWith('presets/koord/USER%20/%20Neu', DEFAULT_KOORD_CONFIG)
       expect(saved.ok).toBe(true)
 
       const deleted = await deletePreset('koord', 'USER / Neu')
-      expect(deleteSpy).toHaveBeenCalledWith('presets/koord/USER / Neu')
+      expect(deleteSpy).toHaveBeenCalledWith('presets/koord/USER%20/%20Neu')
       expect(deleted.ok).toBe(true)
     })
 
