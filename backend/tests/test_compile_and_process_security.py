@@ -29,17 +29,21 @@ def test_compile_rejects_oversized_latex_payload():
 
 def test_browse_dialog_uses_payload_title_and_enforces_lock():
     """Ensure /api/settings/latex/browse passes payload.title and blocks concurrent requests via asyncio.Lock."""
-    with patch("api.settings._open_native_dialog", return_value="C:/fakepath/commands.tex") as mock_dlg:
+    with (
+        patch("sys.platform", "win32"),
+        patch.dict("os.environ", {"IS_DOCKER": ""}, clear=False),
+        patch("api.settings._open_native_dialog", return_value="C:/fakepath/commands.tex") as mock_dlg,
+    ):
         res = client.post("/api/settings/latex/browse", json={"title": "SPOOFED SYSTEM ALERT"})
         assert res.status_code == 200
         mock_dlg.assert_called_once_with("SPOOFED SYSTEM ALERT")
 
-    async def _hold_lock_and_test():
-        async with settings_api._BROWSE_DIALOG_LOCK:
-            res_locked = client.post("/api/settings/latex/browse", json={})
-            assert res_locked.status_code == 409
+        async def _hold_lock_and_test():
+            async with settings_api._BROWSE_DIALOG_LOCK:
+                res_locked = client.post("/api/settings/latex/browse", json={})
+                assert res_locked.status_code == 409
 
-    asyncio.run(_hold_lock_and_test())
+        asyncio.run(_hold_lock_and_test())
 
 
 def test_stop_ollama_uses_exact_pkill_match():

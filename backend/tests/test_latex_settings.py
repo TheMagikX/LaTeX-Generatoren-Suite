@@ -96,7 +96,11 @@ def test_upload_latex_file_exceeds_5mb_limit():
 
 def test_browse_latex_endpoint():
     """Test browse endpoint returns expected relative path schema."""
-    with patch("api.settings._open_native_dialog", return_value="C:/fakepath/commands.tex") as mock_open:
+    with (
+        patch("sys.platform", "win32"),
+        patch.dict("os.environ", {"IS_DOCKER": ""}, clear=False),
+        patch("api.settings._open_native_dialog", return_value="C:/fakepath/commands.tex") as mock_open,
+    ):
         response = client.post("/api/settings/latex/browse", json={"title": "Test Title"})
         assert response.status_code == 200
         mock_open.assert_called_once_with("Test Title")
